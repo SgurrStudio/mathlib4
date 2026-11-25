@@ -193,17 +193,65 @@ theorem IsAbsolutelyNormal.irrational (h : IsAbsolutelyNormal x) : Irrational x 
 theorem blockCount_succ {k : ℕ} (w : Fin k → Fin b) (N : ℕ) :
     blockCount b x w (N + 1) =
       blockCount b x w N + if ∀ j : Fin k, digit b x (N + j) = w j then 1 else 0 := by
-  sorry
+  classical
+  simp only [blockCount, Finset.range_add_one, Finset.filter_insert]
+  split_ifs with h
+  · rw [Finset.card_insert_of_notMem (by simp)]
+  · simp
 
 /-- Shifting the expansion by `r` digits: the blocks of `x * b ^ r` before position `N` are the
 blocks of `x` at positions `r, …, N + r - 1`. -/
 theorem blockCount_add {k : ℕ} (w : Fin k → Fin b) (N r : ℕ) :
     blockCount b x w (N + r) = blockCount b x w r + blockCount b (x * (b : ℝ) ^ r) w N := by
-  sorry
+  induction N with
+  | zero => simp [blockCount]
+  | succ N ih =>
+    have hd : ∀ j : Fin k, digit b x (N + r + j) = digit b (x * (b : ℝ) ^ r) (N + j) := by
+      intro j
+      rw [← digit_add, show r + (N + j) = N + r + j by ring]
+    rw [show N + 1 + r = N + r + 1 by ring, blockCount_succ, ih, blockCount_succ, add_assoc]
+    simp_rw [hd]
 
 /-- Normality in base `b` is invariant under multiplication by powers of `b`. -/
 @[simp]
 theorem isNormalIn_mul_pow_iff (r : ℕ) : IsNormalIn b (x * (b : ℝ) ^ r) ↔ IsNormalIn b x := by
-  sorry
+  have h1 : Tendsto (fun N : ℕ ↦ (N : ℝ) / (N + r)) atTop (𝓝 1) :=
+    tendsto_natCast_div_add_atTop (r : ℝ)
+  have h2 : Tendsto (fun N : ℕ ↦ ((N : ℝ) + r) / N) atTop (𝓝 1) := by
+    have := (tendsto_const_div_atTop_nhds_zero_nat (r : ℝ)).const_add 1
+    rw [add_zero] at this
+    refine this.congr' ?_
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    rw [add_div, div_self (by exact_mod_cast hN.ne')]
+  have hc : ∀ c : ℝ, Tendsto (fun N : ℕ ↦ c / N) atTop (𝓝 0) :=
+    tendsto_const_div_atTop_nhds_zero_nat
+  refine forall_congr' fun k ↦ forall_congr' fun w ↦ ?_
+  set f : ℕ → ℝ := fun N ↦ (blockCount b x w N : ℝ)
+  set L : ℝ := ((b : ℝ) ^ k)⁻¹
+  have key : ∀ N, (blockCount b (x * (b : ℝ) ^ r) w N : ℝ) = f (N + r) - f r := by
+    intro N
+    simp only [f, blockCount_add w N r, Nat.cast_add]
+    ring
+  simp_rw [key]
+  rw [← tendsto_add_atTop_iff_nat r (f := fun N ↦ f N / N)]
+  push_cast
+  constructor
+  · intro h
+    have h3 := (h.add (hc (f r))).mul h1
+    rw [add_zero, mul_one] at h3
+    refine h3.congr' ?_
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have : (N : ℝ) ≠ 0 := by exact_mod_cast hN.ne'
+    have : (N : ℝ) + r ≠ 0 := by positivity
+    field_simp
+    ring
+  · intro h
+    have h3 := (h.mul h2).sub (hc (f r))
+    rw [mul_one, sub_zero] at h3
+    refine h3.congr' ?_
+    filter_upwards [eventually_gt_atTop 0] with N hN
+    have : (N : ℝ) ≠ 0 := by exact_mod_cast hN.ne'
+    have : (N : ℝ) + r ≠ 0 := by positivity
+    field_simp
 
 end Real
