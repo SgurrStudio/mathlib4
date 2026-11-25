@@ -6694,6 +6694,7 @@ public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.NumberTheory.MulChar.Lemmas
 public import Mathlib.NumberTheory.Multiplicity
 public import Mathlib.NumberTheory.Niven
+public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
