@@ -6159,6 +6159,7 @@ public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.Normal.Champernowne
+public import Mathlib.NumberTheory.Normal.SqrtTwo
 public import Mathlib.NumberTheory.Normal.Wall
 public import Mathlib.NumberTheory.NumberField.AdeleRing
 public import Mathlib.NumberTheory.NumberField.Basic
