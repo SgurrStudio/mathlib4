@@ -6163,6 +6163,7 @@ public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Stoneham
 public import Mathlib.NumberTheory.Normal.Wall
+public import Mathlib.NumberTheory.Normal.Weyl
 public import Mathlib.NumberTheory.NumberField.AdeleRing
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.NumberTheory.NumberField.CMField
