@@ -77,38 +77,113 @@ def IsAbsolutelyNormal (x : ℝ) : Prop :=
 variable {b : ℕ} {x : ℝ}
 
 theorem digit_lt (hb : 0 < b) (x : ℝ) (n : ℕ) : digit b x n < b := by
-  sorry
+  have hb' : (0 : ℤ) < b := by exact_mod_cast hb
+  rw [digit, Int.toNat_lt (Int.emod_nonneg _ hb'.ne')]
+  exact Int.emod_lt_of_pos _ hb'
 
 @[simp]
 theorem digit_add_intCast (b : ℕ) (x : ℝ) (m : ℤ) (n : ℕ) :
     digit b (x + m) n = digit b x n := by
-  sorry
+  have : (x + m) * (b : ℝ) ^ (n + 1) =
+      x * (b : ℝ) ^ (n + 1) + ((m * (b : ℤ) ^ (n + 1) : ℤ) : ℝ) := by
+    push_cast; ring
+  have hd : (b : ℤ) ∣ m * (b : ℤ) ^ (n + 1) := (dvd_pow_self _ n.succ_ne_zero).mul_left _
+  rw [digit, digit, this, Int.floor_add_intCast, Int.add_emod, Int.emod_eq_zero_of_dvd hd,
+    add_zero, Int.emod_emod]
+
+/-- The digits of `x` from position `i` on are the digits of `x * b ^ i`. -/
+theorem digit_add (b : ℕ) (x : ℝ) (i j : ℕ) : digit b x (i + j) = digit b (x * (b : ℝ) ^ i) j := by
+  rw [digit, digit, mul_assoc, ← pow_add, add_assoc]
+
+@[simp]
+theorem digit_fract (b : ℕ) (x : ℝ) (n : ℕ) : digit b (Int.fract x) n = digit b x n := by
+  rw [Int.fract, sub_eq_add_neg, ← Int.cast_neg, digit_add_intCast]
+
+/-- The digits of `x` from position `i` on only depend on the fractional part of `x * b ^ i`. -/
+theorem digit_add_eq_digit_fract (b : ℕ) (x : ℝ) (i j : ℕ) :
+    digit b x (i + j) = digit b (Int.fract (x * (b : ℝ) ^ i)) j := by
+  rw [digit_fract, digit_add]
 
 @[simp]
 theorem blockCount_add_intCast (b : ℕ) (x : ℝ) (m : ℤ) {k : ℕ} (w : Fin k → Fin b) (N : ℕ) :
     blockCount b (x + m) w N = blockCount b x w N := by
-  sorry
+  simp [blockCount]
 
 theorem blockCount_le (b : ℕ) (x : ℝ) {k : ℕ} (w : Fin k → Fin b) (N : ℕ) :
-    blockCount b x w N ≤ N := by
-  sorry
+    blockCount b x w N ≤ N :=
+  (Finset.card_filter_le _ _).trans (Finset.card_range N).le
 
-theorem IsNormalIn.isSimplyNormalIn (h : IsNormalIn b x) : IsSimplyNormalIn b x := by
-  sorry
+theorem IsNormalIn.isSimplyNormalIn (h : IsNormalIn b x) : IsSimplyNormalIn b x := fun d ↦ by
+  simpa using h 1 (fun _ ↦ d)
 
 @[simp]
 theorem isNormalIn_add_intCast_iff (m : ℤ) : IsNormalIn b (x + m) ↔ IsNormalIn b x := by
-  sorry
+  simp [IsNormalIn]
 
 @[simp]
 theorem isAbsolutelyNormal_add_intCast_iff (m : ℤ) :
     IsAbsolutelyNormal (x + m) ↔ IsAbsolutelyNormal x := by
-  sorry
+  simp [IsAbsolutelyNormal]
+
+/-- If the block `w` never occurs in the expansion of `x`, then `x` is not normal. -/
+theorem not_isNormalIn_of_forall_ne {k : ℕ} (w : Fin k → Fin b)
+    (hw : ∀ i, ∃ j : Fin k, digit b x (i + j) ≠ w j) : ¬ IsNormalIn b x := by
+  intro h
+  have h0 : ∀ N, blockCount b x w N = 0 := fun N ↦ by
+    rw [blockCount, Finset.card_eq_zero, Finset.filter_eq_empty_iff]
+    intro i _ hi
+    obtain ⟨j, hj⟩ := hw i
+    exact hj (hi j)
+  have := h k w
+  simp only [h0, Nat.cast_zero, zero_div] at this
+  have hbk : ((b : ℝ) ^ k)⁻¹ ≠ 0 := by
+    rcases Nat.eq_zero_or_pos k with rfl | hk
+    · simp
+    · exact inv_ne_zero (pow_ne_zero _ (Nat.cast_ne_zero.2 (Fin.pos (w ⟨0, hk⟩)).ne'))
+  exact hbk (tendsto_nhds_unique tendsto_const_nhds this).symm
 
 /-- A rational number is not normal in any base `b ≥ 2`: its expansion only contains finitely
 many distinct blocks of each length, so long enough blocks are missing. -/
 theorem IsNormalIn.irrational (hb : 2 ≤ b) (h : IsNormalIn b x) : Irrational x := by
-  sorry
+  rintro ⟨r, rfl⟩
+  have hb0 : 0 < b := by omega
+  set q := r.den with hq
+  -- the block of length `q` starting at position `i`
+  let blk : ℝ → Fin q → Fin b := fun y j ↦ ⟨digit b y j, digit_lt hb0 y j⟩
+  -- the fractional parts of `r * b ^ i` lie in `{t / q | t < q}`
+  have key : ∀ i, ∃ t ∈ Finset.range q, ∀ j : Fin q,
+      digit b r (i + j) = (blk ((t : ℝ) / q) j : ℕ) := by
+    intro i
+    refine ⟨((r.num * (b : ℤ) ^ i) % (q : ℤ)).toNat, ?_, fun j ↦ ?_⟩
+    · have hq0 : (0 : ℤ) < q := by exact_mod_cast r.pos
+      rw [Finset.mem_range, ← Int.ofNat_lt, Int.toNat_of_nonneg (Int.emod_nonneg _ hq0.ne')]
+      exact Int.emod_lt_of_pos _ hq0
+    · have hq0 : (0 : ℤ) ≤ (r.num * (b : ℤ) ^ i) % (q : ℤ) :=
+        Int.emod_nonneg _ (by exact_mod_cast r.pos.ne')
+      have hfr : Int.fract ((r : ℝ) * (b : ℝ) ^ i) =
+          (((r.num * (b : ℤ) ^ i) % (q : ℤ)).toNat : ℝ) / q := by
+        have : (r : ℝ) * (b : ℝ) ^ i = ((r.num * (b : ℤ) ^ i : ℤ) : ℝ) / (q : ℕ) := by
+          rw [hq]; push_cast
+          rw [Rat.cast_def]; ring
+        rw [this, Int.fract_div_intCast_eq_div_intCast_mod]
+        congr 1
+        exact_mod_cast (Int.toNat_of_nonneg hq0).symm
+      simp only [blk]
+      rw [digit_add_eq_digit_fract, hfr]
+  classical
+  have hcard : ((Finset.range q).image fun t : ℕ ↦ blk ((t : ℝ) / q)).card <
+      Fintype.card (Fin q → Fin b) := by
+    refine Finset.card_image_le.trans_lt ?_
+    rw [Finset.card_range, Fintype.card_fun, Fintype.card_fin, Fintype.card_fin]
+    calc q < 2 ^ q := Nat.lt_two_pow_self
+      _ ≤ b ^ q := Nat.pow_le_pow_left hb q
+  obtain ⟨w, -, hw⟩ := Finset.exists_mem_notMem_of_card_lt_card
+    (t := Finset.univ) (s := (Finset.range q).image fun t : ℕ ↦ blk ((t : ℝ) / q))
+    (by simpa using hcard)
+  refine not_isNormalIn_of_forall_ne w (fun i ↦ ?_) h
+  obtain ⟨t, ht, hblk⟩ := key i
+  by_contra! hall
+  exact hw (Finset.mem_image.2 ⟨t, ht, funext fun j ↦ Fin.ext ((hblk j).symm.trans (hall j))⟩)
 
 theorem IsAbsolutelyNormal.irrational (h : IsAbsolutelyNormal x) : Irrational x :=
   (h 2 le_rfl).irrational le_rfl
