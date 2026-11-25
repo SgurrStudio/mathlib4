@@ -6156,6 +6156,7 @@ public import Mathlib.NumberTheory.MulChar.Lemmas
 public import Mathlib.NumberTheory.Multiplicity
 public import Mathlib.NumberTheory.Niven
 public import Mathlib.NumberTheory.Normal.Basic
+public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.NumberField.AdeleRing
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.NumberTheory.NumberField.CMField
