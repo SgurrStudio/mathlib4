@@ -5,8 +5,9 @@ Authors: Rob
 -/
 module
 
+public import Mathlib.Analysis.Real.OfDigits
 public import Mathlib.NumberTheory.Chebyshev
-public import Mathlib.NumberTheory.Normal.Champernowne
+public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.PrimeCounting
 public import Mathlib.Probability.Moments.SubGaussian
 
@@ -20,7 +21,8 @@ Let `a₀ < a₁ < a₂ < …` be positive integers such that for every `θ < 1`
 `≤ N` is at least `N ^ θ` for all large `N`. **Copeland and Erdős** (1946) proved that the real
 number `0.a₀ a₁ a₂ …` obtained by concatenating the base-`b` expansions of the `aᵢ` is normal in
 base `b`. Applied to the primes this shows that the *Copeland–Erdős constant*
-`0.2357111317192329…` is normal in base ten.
+`0.2357111317192329…` is normal in base ten. The special case `aₙ = n + 1` is Champernowne's
+theorem (`Mathlib.NumberTheory.Normal.Champernowne`).
 
 ## Main definitions
 
@@ -32,6 +34,8 @@ base `b`. Applied to the primes this shows that the *Copeland–Erdős constant*
 
 ## Main statements
 
+* `Real.val_digits_eq_digit`, `Real.digit_ofDigits`: `Real.digit` agrees with Mathlib's
+  `Real.digits`, and recovers the digits of `Real.ofDigits` not ending in `b - 1`s.
 * `Real.measureReal_le_abs_blockCount_sub`: a large deviation (Hoeffding) bound for the number of
   occurrences of a block among the first `n` digits of a uniform random `x ∈ [0, 1)`.
 * `Real.isNormalIn_ofDigits`: a real number whose digit sequence is normal is normal.
@@ -65,6 +69,53 @@ def IsNormalSeq (b : ℕ) (d : ℕ → ℕ) : Prop :=
   ∀ (k : ℕ) (w : Fin k → Fin b), Tendsto (fun N : ℕ ↦
     (((Finset.range N).filter fun i ↦ ∀ j : Fin k, d (i + j) = w j).card : ℝ) / N) atTop
       (𝓝 ((b : ℝ) ^ k)⁻¹)
+
+/-- `Real.digit` agrees with Mathlib's `Real.digits` on `[0, 1)`. -/
+theorem val_digits_eq_digit [NeZero b] {x : ℝ} (hx : x ∈ Set.Ico (0 : ℝ) 1) (n : ℕ) :
+    (digits x b n : ℕ) = digit b x n := by
+  rw [digit_eq_floor_mod hx.1, digits, Fin.val_ofNat]
+
+theorem ofDigits_lt_one {b : ℕ} (hb : 1 < b) (c : ℕ → Fin b) {m : ℕ} (hm : (c m : ℕ) + 1 < b) :
+    ofDigits c < 1 := by
+  rw [← ofDigits_const_last_eq_one' hb]
+  refine Summable.tsum_lt_tsum_of_nonneg (i := m) (fun _ ↦ ofDigitsTerm_nonneg) (fun i ↦ ?_) ?_
+    summable_ofDigitsTerm
+  · exact mul_le_mul_of_nonneg_right (Nat.cast_le.2 (by simp; omega)) (by positivity)
+  · exact mul_lt_mul_of_pos_right (Nat.cast_lt.2 (by simp; omega)) (by positivity)
+
+/-- If a digit sequence does not end in an infinite string of `b - 1`s, then it is the
+base-`b` expansion of the real number it represents. -/
+theorem digit_ofDigits {b : ℕ} (hb : 1 < b) (a : ℕ → Fin b)
+    (ha : ∀ n, ∃ m, n < m ∧ (a m : ℕ) + 1 < b) (n : ℕ) : digit b (ofDigits a) n = a n := by
+  set S : ℕ := ∑ i ∈ Finset.range (n + 1), (a i : ℕ) * b ^ (n - i) with hS_def
+  have hS : (∑ i ∈ Finset.range (n + 1), ofDigitsTerm a i) * (b : ℝ) ^ (n + 1) = S := by
+    rw [Finset.sum_mul, hS_def, Nat.cast_sum]
+    refine Finset.sum_congr rfl fun i hi ↦ ?_
+    have hi : i ≤ n := Nat.lt_succ_iff.1 (Finset.mem_range.1 hi)
+    have hb0 : (b : ℝ) ≠ 0 := by positivity
+    rw [ofDigitsTerm, Nat.cast_mul, Nat.cast_pow,
+      show (b : ℝ) ^ (n + 1) = (b : ℝ) ^ (i + 1) * (b : ℝ) ^ (n - i) by
+        rw [← pow_add]; congr 1; omega]
+    field_simp
+  set y := ofDigits fun i ↦ a (i + (n + 1))
+  have hy0 : 0 ≤ y := ofDigits_nonneg _
+  have hy1 : y < 1 := by
+    obtain ⟨m, hm, hm'⟩ := ha n
+    exact ofDigits_lt_one hb _ (m := m - (n + 1)) (by rwa [Nat.sub_add_cancel hm])
+  have hx : ofDigits a * (b : ℝ) ^ (n + 1) = S + y := by
+    rw [ofDigits_eq_sum_add_ofDigits a (n + 1), add_mul, hS, mul_comm _ y, mul_assoc,
+      inv_mul_cancel₀ (by positivity), mul_one]
+  have hfl : ⌊ofDigits a * (b : ℝ) ^ (n + 1)⌋ = S := by
+    rw [hx, Int.floor_eq_iff]
+    push_cast
+    constructor <;> linarith
+  have hmod : S % b = a n := by
+    rw [hS_def, Finset.sum_range_succ, Nat.sub_self, pow_zero, mul_one]
+    obtain ⟨q, hq⟩ : b ∣ ∑ i ∈ Finset.range n, (a i : ℕ) * b ^ (n - i) :=
+      Finset.dvd_sum fun i hi ↦
+        (dvd_pow_self b (by have := Finset.mem_range.1 hi; omega)).mul_left _
+    rw [hq, Nat.mul_add_mod, Nat.mod_eq_of_lt (a n).isLt]
+  rw [digit, hfl, ← Int.natCast_mod, Int.toNat_natCast, hmod]
 
 theorem isNormalIn_iff_isNormalSeq : IsNormalIn b x ↔ IsNormalSeq b (digit b x) := by
   simp only [IsNormalIn, IsNormalSeq, blockCount]
@@ -667,21 +718,48 @@ theorem succ_le_of_strictMono (ha : StrictMono a) (ha0 : 0 < a 0) (t : ℕ) : t 
   | zero => exact ha0
   | succ t ih => have := ha (show t < t + 1 by omega); omega
 
-theorem champernowneStart_le_concatStart (ha : StrictMono a) (ha0 : 0 < a 0) (T : ℕ) :
-    champernowneStart b T ≤ concatStart b a T :=
-  Finset.sum_le_sum fun t _ ↦ by
-    have := Nat.log_mono_right (b := b) (succ_le_of_strictMono ha ha0 t)
-    omega
+/-- Terms `a t` with `t ≥ b ^ L` have at least `L + 1` digits. -/
+theorem mul_le_concatStart (hb : 1 < b) (ha : StrictMono a) (ha0 : 0 < a 0) (L T : ℕ) :
+    (T - b ^ L) * (L + 1) ≤ concatStart b a T := by
+  induction T with
+  | zero => simp
+  | succ T ih =>
+    rw [concatStart_succ]
+    by_cases h : b ^ L ≤ T
+    · have hL : L ≤ Nat.log b (a T) :=
+        (Nat.le_log_iff_pow_le hb (by have := succ_le_of_strictMono ha ha0 T; omega)).2
+          (by have := succ_le_of_strictMono ha ha0 T; omega)
+      rw [show T + 1 - b ^ L = (T - b ^ L) + 1 by omega, add_mul, one_mul]
+      omega
+    · rw [show T + 1 - b ^ L = 0 by omega, zero_mul]
+      exact Nat.zero_le _
 
 /-- The number of digits of `a 0, …, a (T - 1)` grows faster than `T`. -/
 theorem tendsto_succ_div_concatStart (hb : 1 < b) (ha : StrictMono a) (ha0 : 0 < a 0) :
     Tendsto (fun T : ℕ ↦ ((T : ℝ) + 1) / concatStart b a T) atTop (𝓝 0) := by
-  refine squeeze_zero' (Eventually.of_forall fun T ↦ by positivity) ?_
-    (tendsto_succ_div_champernowneStart hb)
-  filter_upwards [eventually_ge_atTop 1] with T hT
-  exact div_le_div_of_nonneg_left (by positivity)
-    (by exact_mod_cast champernowneStart_pos hT)
-    (by exact_mod_cast champernowneStart_le_concatStart ha ha0 T)
+  rw [tendsto_order]
+  refine ⟨fun c hc ↦ Eventually.of_forall fun T ↦ hc.trans_le (by positivity), fun c hc ↦ ?_⟩
+  obtain ⟨L, hL⟩ := exists_nat_gt (4 / c)
+  have hL' : 4 / ((L : ℝ) + 1) < c := by
+    rw [div_lt_iff₀ (by positivity)]
+    rw [div_lt_iff₀ hc] at hL
+    nlinarith
+  filter_upwards [eventually_ge_atTop (2 * b ^ L + 1)] with T hT
+  have h3 : ((T : ℝ) + 1) / 4 * (L + 1) ≤ concatStart b a T := by
+    have : (((T - b ^ L) * (L + 1) : ℕ) : ℝ) ≤ concatStart b a T := by
+      exact_mod_cast mul_le_concatStart hb ha ha0 L T
+    push_cast at this
+    rw [Nat.cast_sub (by omega)] at this
+    have hT' : (2 : ℝ) * (b : ℝ) ^ L + 1 ≤ T := by exact_mod_cast hT
+    push_cast at this
+    nlinarith
+  have hS : (0 : ℝ) < concatStart b a T := by
+    refine lt_of_lt_of_le ?_ h3
+    have : (1 : ℝ) ≤ T := by exact_mod_cast (show 1 ≤ T by omega)
+    positivity
+  refine lt_of_le_of_lt ?_ hL'
+  rw [div_le_div_iff₀ hS (by positivity)]
+  nlinarith
 
 /-- The density hypothesis of the Copeland–Erdős theorem implies `a T ^ θ ≤ T + 1`. -/
 theorem eventually_rpow_le_succ (ha : StrictMono a)
