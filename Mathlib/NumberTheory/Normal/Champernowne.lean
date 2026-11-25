@@ -118,7 +118,7 @@ theorem champernowneDigit_eq {n t : ℕ} (ht : champernowneStart b t ≤ n)
 /-- `Real.digit` agrees with Mathlib's `Real.digits` on `[0, 1)`. -/
 theorem val_digits_eq_digit [NeZero b] {x : ℝ} (hx : x ∈ Set.Ico (0 : ℝ) 1) (n : ℕ) :
     (digits x b n : ℕ) = digit b x n := by
-  sorry
+  rw [digit_eq_floor_mod hx.1, digits, Fin.val_ofNat]
 
 theorem ofDigits_lt_one {b : ℕ} (hb : 1 < b) (c : ℕ → Fin b) {m : ℕ} (hm : (c m : ℕ) + 1 < b) :
     ofDigits c < 1 := by
