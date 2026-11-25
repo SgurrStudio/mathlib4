@@ -296,6 +296,30 @@ theorem digit_eq_floor_mod (hx : 0 ≤ x) (n : ℕ) : digit b x n = ⌊x * (b : 
 def blockCode {k : ℕ} (w : Fin k → Fin b) : Fin (b ^ k) :=
   finFunctionFinEquiv (w ∘ Fin.rev)
 
+/-- The base-`b` digits of `F` at positions `k - 1, …, 0` (most significant first) form the
+word `w` iff `F ≡ blockCode w [MOD b ^ k]`. -/
+theorem forall_div_pow_mod_eq_iff {k : ℕ} (hb : 0 < b) (F : ℕ) (w : Fin k → Fin b) :
+    (∀ j : Fin k, F / b ^ (k - 1 - j) % b = w j) ↔ F % b ^ k = blockCode w := by
+  have hlt : F % b ^ k < b ^ k := Nat.mod_lt _ (pow_pos hb k)
+  have hkey : ∀ e < k, F / b ^ e % b = F % b ^ k / b ^ e % b := fun e he ↦ by
+    rw [← Nat.mod_mul_right_div_self, ← Nat.mod_mul_right_div_self, Nat.mod_mod_of_dvd]
+    rw [← pow_succ]
+    exact pow_dvd_pow b he
+  rw [blockCode, ← Fin.val_mk hlt, Fin.val_inj, ← Equiv.symm_apply_eq]
+  constructor
+  · intro h
+    funext i
+    apply Fin.ext
+    have := h (Fin.rev i)
+    rw [Fin.val_rev, hkey _ (by omega), show k - 1 - (k - (i + 1)) = (i : ℕ) by omega] at this
+    change F % b ^ k / b ^ (i : ℕ) % b = (w (Fin.rev i) : ℕ)
+    exact this
+  · intro h j
+    have := congrArg Fin.val (congrFun h (Fin.rev j))
+    change F % b ^ k / b ^ ((Fin.rev j : Fin k) : ℕ) % b = (w (Fin.rev (Fin.rev j)) : ℕ) at this
+    rw [Fin.rev_rev, Fin.val_rev] at this
+    rw [hkey _ (by omega), ← this, show k - 1 - (j : ℕ) = k - (j + 1) by omega]
+
 /-- A block of `k` base-`b` digits of `x` starting at position `r + m * k` is the `m`-th
 base-`b ^ k` digit of `x * b ^ r`. -/
 theorem forall_digit_eq_iff_digit_pow {k : ℕ} (hb : 0 < b) (w : Fin k → Fin b) (r m : ℕ) :
@@ -320,27 +344,9 @@ theorem forall_digit_eq_iff_digit_pow {k : ℕ} (hb : 0 < b) (w : Fin k → Fin 
     rw [digit_eq_floor_mod (by positivity), Nat.cast_pow, mul_assoc, ← pow_mul, ← pow_add, hF]
     congr 4
     ring
-  have hlt : F % b ^ k < b ^ k := Nat.mod_lt _ (pow_pos hb k)
-  have hkey : ∀ e < k, F / b ^ e % b = F % b ^ k / b ^ e % b := fun e he ↦ by
-    rw [← Nat.mod_mul_right_div_self, ← Nat.mod_mul_right_div_self, Nat.mod_mod_of_dvd]
-    rw [← pow_succ]
-    exact pow_dvd_pow b he
   rw [hdigk]
   simp_rw [hdig]
-  rw [blockCode, ← Fin.val_mk hlt, Fin.val_inj, ← Equiv.symm_apply_eq]
-  constructor
-  · intro h
-    funext i
-    apply Fin.ext
-    have := h (Fin.rev i)
-    rw [Fin.val_rev, hkey _ (by omega), show k - 1 - (k - (i + 1)) = (i : ℕ) by omega] at this
-    change F % b ^ k / b ^ (i : ℕ) % b = (w (Fin.rev i) : ℕ)
-    exact this
-  · intro h j
-    have := congrArg Fin.val (congrFun h (Fin.rev j))
-    change F % b ^ k / b ^ ((Fin.rev j : Fin k) : ℕ) % b = (w (Fin.rev (Fin.rev j)) : ℕ) at this
-    rw [Fin.rev_rev, Fin.val_rev] at this
-    rw [hkey _ (by omega), ← this, show k - 1 - (j : ℕ) = k - (j + 1) by omega]
+  exact forall_div_pow_mod_eq_iff hb F w
 
 /-- Splitting positions according to their residue modulo `k`. -/
 theorem blockCount_eq_sum {k : ℕ} (hk : 0 < k) (hb : 0 < b) (w : Fin k → Fin b) (N : ℕ) :
