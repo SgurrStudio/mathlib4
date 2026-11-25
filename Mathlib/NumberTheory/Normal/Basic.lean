@@ -31,6 +31,8 @@ occurs with asymptotic frequency `b⁻ᵏ`. It is *absolutely normal* if it is n
 * `Real.IsNormalIn.isSimplyNormalIn`: normal numbers are simply normal.
 * `Real.isNormalIn_add_intCast_iff`: normality only depends on the fractional part.
 * `Real.IsNormalIn.irrational`: a number normal in some base `b ≥ 2` is irrational.
+* `Real.isNormalIn_mul_pow_iff`: normality in base `b` is invariant under multiplication by
+  powers of `b`.
 
 Borel's conjecture, that every irrational algebraic number is absolutely normal, is stated in
 `Wanted/NumberTheory/Normal/Basic.lean`.
@@ -187,5 +189,21 @@ theorem IsNormalIn.irrational (hb : 2 ≤ b) (h : IsNormalIn b x) : Irrational x
 
 theorem IsAbsolutelyNormal.irrational (h : IsAbsolutelyNormal x) : Irrational x :=
   (h 2 le_rfl).irrational le_rfl
+
+theorem blockCount_succ {k : ℕ} (w : Fin k → Fin b) (N : ℕ) :
+    blockCount b x w (N + 1) =
+      blockCount b x w N + if ∀ j : Fin k, digit b x (N + j) = w j then 1 else 0 := by
+  sorry
+
+/-- Shifting the expansion by `r` digits: the blocks of `x * b ^ r` before position `N` are the
+blocks of `x` at positions `r, …, N + r - 1`. -/
+theorem blockCount_add {k : ℕ} (w : Fin k → Fin b) (N r : ℕ) :
+    blockCount b x w (N + r) = blockCount b x w r + blockCount b (x * (b : ℝ) ^ r) w N := by
+  sorry
+
+/-- Normality in base `b` is invariant under multiplication by powers of `b`. -/
+@[simp]
+theorem isNormalIn_mul_pow_iff (r : ℕ) : IsNormalIn b (x * (b : ℝ) ^ r) ↔ IsNormalIn b x := by
+  sorry
 
 end Real
