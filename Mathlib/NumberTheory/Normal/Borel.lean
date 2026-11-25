@@ -132,52 +132,64 @@ theorem volume_restrict_floor_mul_pow_eq (hb : 0 < b) (n : ℕ) {c : ℕ} (hc : 
     add_sub_cancel_left, one_div, ENNReal.ofReal_inv_of_pos hB, ← Nat.cast_pow,
     ENNReal.ofReal_natCast, Nat.cast_pow]
 
-/-- Under the uniform measure on `[0, 1)`, the probability that the digits at all positions
-`i ∈ S` equal `a` is `b ^ (-#S)`. -/
-theorem volume_restrict_biInter_digit_eq (hb : 0 < b) {a : ℕ} (ha : a < b) (S : Finset ℕ) :
-    volume.restrict (Ico (0 : ℝ) 1) (⋂ i ∈ S, {x | digit b x i = a}) =
+/-- Under the uniform measure on `[0, 1)`, the probability that `⌊x * b ^ n⌋₊` lies in a set `G`
+of integers `< b ^ n` is `#G / b ^ n`. -/
+theorem volume_restrict_floor_mul_pow_mem (hb : 0 < b) (n : ℕ) (G : Finset ℕ)
+    (hG : ∀ c ∈ G, c < b ^ n) :
+    volume.restrict (Ico (0 : ℝ) 1) {x | ⌊x * (b : ℝ) ^ n⌋₊ ∈ G} = G.card * ((b : ℝ≥0∞) ^ n)⁻¹ := by
+  have hmeas : ∀ c : ℕ, MeasurableSet {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ = c} := fun c ↦
+    (Nat.measurable_floor.comp (measurable_id.mul_const _)) (measurableSet_singleton c)
+  have hset : {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ ∈ G} = ⋃ c ∈ G, {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ = c} := by
+    ext x; simp
+  rw [hset, measure_biUnion_finset _ (fun c _ ↦ hmeas c)]
+  · rw [Finset.sum_congr rfl fun c hc ↦ volume_restrict_floor_mul_pow_eq hb n (hG c hc),
+      Finset.sum_const, nsmul_eq_mul]
+  · intro c _ c' _ hcc'
+    exact Set.disjoint_left.2 fun x hx hx' ↦ hcc' (hx.symm.trans hx')
+
+/-- Under the uniform measure on `[0, 1)`, the probability that the digit at each position
+`i ∈ S` equals the prescribed value `a i` is `b ^ (-#S)`. -/
+theorem volume_restrict_biInter_digit_eq (hb : 0 < b) (S : Finset ℕ) {a : ℕ → ℕ}
+    (ha : ∀ i ∈ S, a i < b) :
+    volume.restrict (Ico (0 : ℝ) 1) (⋂ i ∈ S, {x | digit b x i = a i}) =
       ((b : ℝ≥0∞) ^ S.card)⁻¹ := by
   classical
   set n := S.sup id + 1 with hn_def
   have hS : ∀ i ∈ S, i < n := fun i hi ↦ Nat.lt_succ_of_le (Finset.le_sup (f := id) hi)
   have hSn : S ⊆ Finset.range n := fun i hi ↦ Finset.mem_range.2 (hS i hi)
-  set G := (Finset.range (b ^ n)).filter fun c ↦ ∀ i < n, (n - 1 - i ∈ S → c / b ^ i % b = a)
-  have hset : (⋂ i ∈ S, {x : ℝ | digit b x i = a}) ∩ Ico 0 1 =
-      (⋃ c ∈ G, {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ = c}) ∩ Ico 0 1 := by
+  set G := (Finset.range (b ^ n)).filter fun c ↦
+    ∀ i < n, (n - 1 - i ∈ S → c / b ^ i % b = a (n - 1 - i))
+  have hset : (⋂ i ∈ S, {x : ℝ | digit b x i = a i}) ∩ Ico 0 1 =
+      {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ ∈ G} ∩ Ico 0 1 := by
     ext x
     by_cases hx : x ∈ Ico (0 : ℝ) 1
     · have hlt : ⌊x * (b : ℝ) ^ n⌋₊ < b ^ n := by
         rw [Nat.floor_lt (mul_nonneg hx.1 (by positivity))]
         push_cast
         exact mul_lt_of_lt_one_left (by positivity) hx.2
-      simp only [mem_inter_iff, mem_iInter, mem_ofPred_eq, mem_iUnion, hx, and_true,
-        exists_prop, exists_eq_right', G, Finset.mem_filter, Finset.mem_range, hlt, true_and]
+      simp only [mem_inter_iff, mem_iInter, mem_ofPred_eq, hx, and_true, G, Finset.mem_filter,
+        Finset.mem_range, hlt, true_and]
       constructor
       · intro h j hj hjS
         have := h _ hjS
         rwa [digit_eq_floor_div_mod (i := n - 1 - j) (n := n) hb hx (by omega),
           show n - 1 - (n - 1 - j) = j by omega] at this
       · intro h i hi
-        rw [digit_eq_floor_div_mod hb hx (hS i hi)]
-        exact h _ (by have := hS i hi; omega) (by rwa [show n - 1 - (n - 1 - i) = i by
-          have := hS i hi; omega])
+        have hi' := hS i hi
+        have := h (n - 1 - i) (by omega) (by rwa [show n - 1 - (n - 1 - i) = i by omega])
+        rw [digit_eq_floor_div_mod hb hx hi']
+        rwa [show n - 1 - (n - 1 - i) = i by omega] at this
     · simp [hx]
-  have hmeas : ∀ c : ℕ, MeasurableSet {x : ℝ | ⌊x * (b : ℝ) ^ n⌋₊ = c} := fun c ↦
-    (Nat.measurable_floor.comp (measurable_id.mul_const _)) (measurableSet_singleton c)
   rw [Measure.restrict_apply' measurableSet_Ico, hset, ← Measure.restrict_apply' measurableSet_Ico,
-    measure_biUnion_finset _ (fun c _ ↦ hmeas c)]
-  swap
-  · intro c _ c' _ hcc'
-    exact Set.disjoint_left.2 fun x hx hx' ↦ hcc' (hx.symm.trans hx')
-  rw [Finset.sum_congr rfl fun c hc ↦ volume_restrict_floor_mul_pow_eq hb n
-    (Finset.mem_range.1 (Finset.mem_filter.1 hc).1), Finset.sum_const]
+    volume_restrict_floor_mul_pow_mem hb n G fun c hc ↦
+      Finset.mem_range.1 (Finset.mem_filter.1 hc).1]
   have hG : G.card = b ^ (n - S.card) := by
-    rw [card_filter_range_pow hb n (fun i d ↦ n - 1 - i ∈ S → d = a)]
-    have : ∀ i, ((Finset.range b).filter fun d ↦ n - 1 - i ∈ S → d = a).card =
+    rw [card_filter_range_pow hb n (fun i d ↦ n - 1 - i ∈ S → d = a (n - 1 - i))]
+    have : ∀ i, ((Finset.range b).filter fun d ↦ n - 1 - i ∈ S → d = a (n - 1 - i)).card =
         if n - 1 - i ∈ S then 1 else b := by
       intro i
       split_ifs with h
-      · simp [h, Finset.filter_eq', ha]
+      · simp [h, Finset.filter_eq', ha _ h]
       · simp [h]
     simp_rw [this]
     rw [Finset.prod_range_reflect (fun i ↦ if i ∈ S then 1 else b) n, Finset.prod_ite,
@@ -187,7 +199,7 @@ theorem volume_restrict_biInter_digit_eq (hb : 0 < b) {a : ℕ} (ha : a < b) (S 
   have hb0 : (b : ℝ≥0∞) ≠ 0 := by exact_mod_cast hb.ne'
   have hpow : (b : ℝ≥0∞) ^ n = (b : ℝ≥0∞) ^ (n - S.card) * (b : ℝ≥0∞) ^ S.card := by
     rw [← pow_add, Nat.sub_add_cancel hcard]
-  rw [hG, nsmul_eq_mul, Nat.cast_pow, hpow, ENNReal.mul_inv (Or.inl (pow_ne_zero _ hb0))
+  rw [hG, Nat.cast_pow, hpow, ENNReal.mul_inv (Or.inl (pow_ne_zero _ hb0))
       (Or.inl (ENNReal.pow_ne_top (ENNReal.natCast_ne_top b))), ← mul_assoc,
     ENNReal.mul_inv_cancel (pow_ne_zero _ hb0) (ENNReal.pow_ne_top (ENNReal.natCast_ne_top b)),
     one_mul]
@@ -196,7 +208,7 @@ theorem volume_restrict_biInter_digit_eq (hb : 0 < b) {a : ℕ} (ha : a < b) (S 
 probability `1 / b`. -/
 theorem volume_restrict_digit_eq (hb : 0 < b) (n : ℕ) {a : ℕ} (ha : a < b) :
     volume.restrict (Ico (0 : ℝ) 1) {x | digit b x n = a} = (b : ℝ≥0∞)⁻¹ := by
-  simpa using volume_restrict_biInter_digit_eq hb ha {n}
+  simpa using volume_restrict_biInter_digit_eq hb {n} (a := fun _ ↦ a) (by simpa)
 
 instance : IsProbabilityMeasure (volume.restrict (Ico (0 : ℝ) 1)) :=
   ⟨by simp [Measure.restrict_apply MeasurableSet.univ]⟩
@@ -208,7 +220,7 @@ theorem iIndepSet_digit_eq (hb : 0 < b) {a : ℕ} (ha : a < b) :
   rw [iIndepSet_iff_meas_biInter fun n ↦ show MeasurableSet {x : ℝ | digit b x n = a} from
     measurable_digit b n (measurableSet_singleton a)]
   intro S
-  rw [volume_restrict_biInter_digit_eq hb ha S,
+  rw [volume_restrict_biInter_digit_eq hb S (a := fun _ ↦ a) fun _ _ ↦ ha,
     Finset.prod_congr rfl fun n _ ↦ volume_restrict_digit_eq hb n ha, Finset.prod_const,
     ENNReal.inv_pow]
 
