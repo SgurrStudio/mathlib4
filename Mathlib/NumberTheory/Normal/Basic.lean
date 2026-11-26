@@ -132,7 +132,18 @@ theorem IsNormalIn.isSimplyNormalIn (h : IsNormalIn b x) : IsSimplyNormalIn b x 
 
 /-- Normal numbers are disjunctive: every block of digits occurs. -/
 theorem IsNormalIn.isDisjunctiveIn (h : IsNormalIn b x) : IsDisjunctiveIn b x := by
-  sorry
+  intro k w
+  rcases Nat.eq_zero_or_pos k with rfl | hk
+  · exact ⟨0, fun j ↦ j.elim0⟩
+  have hb : 0 < b := Fin.pos (w ⟨0, hk⟩)
+  obtain ⟨N, hN⟩ := ((h k w).eventually
+    (lt_mem_nhds (inv_pos.2 (pow_pos (Nat.cast_pos.2 hb) k)))).exists
+  have hpos : 0 < blockCount b x w N := by
+    rcases Nat.eq_zero_or_pos (blockCount b x w N) with h0 | h0
+    · simp [h0] at hN
+    · exact h0
+  obtain ⟨i, hi⟩ := Finset.card_pos.1 hpos
+  exact ⟨i, (Finset.mem_filter.1 hi).2⟩
 
 @[simp]
 theorem isNormalIn_add_intCast_iff (m : ℤ) : IsNormalIn b (x + m) ↔ IsNormalIn b x := by
