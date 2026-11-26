@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Gelfond
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.IndexRename
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Polynomial.RootMultiplicity
 
 /-!
 # Roth's lemma in one variable
@@ -88,31 +88,6 @@ theorem mulHeight₁_pow_le_mulHeight_X_sub_C_pow (a : K) (k : ℕ) :
   refine le_of_eq_of_le ?_ hle
   rw [← mulHeight₁_eq_mulHeight, mulHeight₁_pow, mulHeight₁_neg]
 
-/-- **Roth's lemma in one variable** (Bombieri–Gubler, Lemma 6.3.9). -/
-theorem rootMultiplicity_mul_logHeight₁_le {q : K[X]} (hq : q ≠ 0) (a : K) :
-    (q.rootMultiplicity a : ℝ) * logHeight₁ a
-      ≤ q.logHeight + (q.natDegree : ℝ) * totalWeight K * Real.log 2 := by
-  obtain ⟨R, hR⟩ := pow_rootMultiplicity_dvd q a
-  have hp0 : (((X : K[X]) - C a) ^ q.rootMultiplicity a) ≠ 0 :=
-    pow_ne_zero _ (X_sub_C_ne_zero a)
-  have hR0 : R ≠ 0 := fun h ↦ hq (by rw [hR, h, mul_zero])
-  have hdegsum : (((X : K[X]) - C a) ^ q.rootMultiplicity a).natDegree + R.natDegree
-      = q.natDegree := by
-    conv_rhs => rw [hR]
-    rw [natDegree_mul hp0 hR0]
-  have hgel := mulHeight_mul_mulHeight_le hp0 hR0
-  rw [hdegsum, ← hR] at hgel
-  have hstep : mulHeight₁ a ^ q.rootMultiplicity a
-      ≤ 2 ^ (q.natDegree * totalWeight K) * q.mulHeight := by
-    refine le_trans (mulHeight₁_pow_le_mulHeight_X_sub_C_pow a _) (le_trans ?_ hgel)
-    exact le_mul_of_one_le_right (mulHeight_pos _).le R.one_le_mulHeight
-  have hlog := Real.log_le_log (by positivity) hstep
-  rw [Real.log_pow, ← logHeight₁_eq_log_mulHeight₁, ← logHeight₁_pow,
-    Real.log_mul (by positivity) (mulHeight_ne_zero q), Real.log_pow,
-    ← logHeight_eq_log_mulHeight] at hlog
-  refine le_trans (le_of_eq ?_) (le_of_le_of_eq hlog (by push_cast; ring))
-  rw [logHeight₁_pow]
-
 end Polynomial
 
 namespace MvPolynomial
@@ -130,7 +105,8 @@ noncomputable def uniqueSingleEquiv (σ : Type*) [Unique σ] : ℕ ≃ (σ →�
 corresponds to. -/
 theorem mulHeight_uniqueAlgEquiv (P : MvPolynomial σ K) :
     (uniqueAlgEquiv K σ P).mulHeight = P.mulHeight := by
-  rw [Polynomial.mulHeight, MvPolynomial.mulHeight, ← Finsupp.mulHeight_coe_eq,
+  rw [Polynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp,
+    ← Finsupp.mulHeight_coe_eq,
     ← Finsupp.mulHeight_coe_eq, ← Height.mulHeight_comp_equiv (uniqueSingleEquiv σ)]
   exact congrArg Height.mulHeight (funext fun n ↦ coeff_uniqueAlgEquiv (R := K) (σ := σ) P n)
 
@@ -162,7 +138,11 @@ theorem index_le_base {P : MvPolynomial σ K} (hP : P ≠ 0) {e : ℕ} (he : 1 �
     by_contra hle
     push Not at hle
     nlinarith [hheight, hL, h4, mul_pos hs hep, hle]
-  have hbase := Polynomial.rootMultiplicity_mul_logHeight₁_le hq0 (ξ default)
+  have hbase : (q.rootMultiplicity (ξ default) : ℝ) * logHeight₁ (ξ default)
+      ≤ q.logHeight + q.natDegree * totalWeight K * Real.log 2 := by
+    have := Polynomial.rootMultiplicity_mul_logHeight₁_le q (ξ default)
+    rw [NumberField.totalWeight_eq_finrank]
+    linarith
   rw [Polynomial.logHeight_eq_log_mulHeight, mulHeight_uniqueAlgEquiv,
     ← MvPolynomial.logHeight_eq_log_mulHeight] at hbase
   have hdq : (q.natDegree : ℝ) ≤ e := by exact_mod_cast natDegree_uniqueAlgEquiv_le hdeg

@@ -12,7 +12,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesO
 import Mathlib.NumberTheory.NumberField.InfinitePlace.Embeddings
 import Mathlib.RingTheory.QuasiFinite.Basic
 
-
 /-!
 # Above every place of a number field there are finitely many, and at least one
 
@@ -85,7 +84,7 @@ theorem finite_setOf_liesOver_finitePlace (v : FinitePlace K) :
     exact_mod_cast Nat.mul_pos (P.asIdeal.ramificationIdx_pos (𝓞 K))
       (P.asIdeal.inertiaDeg_pos (𝓞 K))
   set Φ : HeightOneSpectrum (𝓞 F) → AbsoluteValue F ℝ := fun P =>
-    AbsoluteValue.nonarchRpow (FinitePlace.isNonarchimedean_mk P) (hexp P) with hΦ
+    AbsoluteValue.nonarchRpow _ (FinitePlace.isNonarchimedean_mk P) (hexp P) with hΦ
   set S : Set (HeightOneSpectrum (𝓞 F)) :=
     {P | P.asIdeal.LiesOver v.maximalIdeal.asIdeal} with hS
   have hSfin : S.Finite := by
@@ -97,7 +96,9 @@ theorem finite_setOf_liesOver_finitePlace (v : FinitePlace K) :
   intro w hw
   have : w.LiesOver v.1 := hw
   obtain ⟨P, hover, hPt⟩ := exists_finitePlace_rpow_inv_eq_of_liesOver (K := K) v w
-  exact ⟨P, hover, (AbsoluteValue.ext fun y => (hPt y).symm)⟩
+  refine ⟨P, hover, AbsoluteValue.ext fun y => ?_⟩
+  rw [hΦ, AbsoluteValue.nonarchRpow_apply]
+  exact (hPt y).symm
 
 /-- **Layer 0.1, the fibre.** Above every place of `K` there are finitely many absolute values of
 `F`, and at least one. -/

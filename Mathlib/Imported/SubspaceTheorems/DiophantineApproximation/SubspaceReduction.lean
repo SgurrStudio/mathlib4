@@ -11,7 +11,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.Approxi
 -- Used only inside proofs.
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.UnitNormalization
 
-
 /-!
 # The reduction of the Subspace Theorem to approximation domains
 
@@ -430,11 +429,11 @@ theorem exists_finset_forall_exists_smul_mem_approxDomain [Fintype ι]
     rw [map_smul, smul_eq_mul]; exact mul_ne_zero hs (hLF v hv i)
   have hbI : ∀ (w : InfinitePlace K) i, |Real.log (w (L w.1 i (s • x)))| ≤ Real.log Q + C := by
     intro w i
-    refine le_trans ?_ ((w.abs_mult_mul_log_le_logHeight₁ (hLIy w i)).trans (hHI w i))
+    refine le_trans ?_ ((w.abs_mult_mul_log_le_logHeight₁ _).trans (hHI w i))
     rw [abs_mul, Nat.abs_cast]
     exact le_mul_of_one_le_left (abs_nonneg _) (by exact_mod_cast w.mult_pos)
   have hbF : ∀ v ∈ Sfin, ∀ i, |Real.log (v (L v.1 i (s • x)))| ≤ Real.log Q + C := fun v hv i ↦
-    (v.abs_log_le_logHeight₁ (hLFy v hv i)).trans (hHF v hv i)
+    (v.abs_log_le_logHeight₁ _).trans (hHF v hv i)
   have hratio : ∀ a : ℝ, |Real.log a| ≤ Real.log Q + C → |Real.log a / Real.log Q| ≤ 2 := by
     intro a ha
     rw [abs_div, abs_of_pos hlogQpos, div_le_iff₀ hlogQpos]

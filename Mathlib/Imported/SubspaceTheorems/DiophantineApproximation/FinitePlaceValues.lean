@@ -8,11 +8,11 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
 
 -- Used only inside proofs.
 import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.FinitePlaceIdeal
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesOverFinite
-
 
 /-!
 # The values of a finite place
@@ -124,35 +124,6 @@ theorem exists_apply_eq_one_forall_apply_lt_one (v₀ : FinitePlace K) (T : Fins
   · rw [apply_eq_mk_maximalIdeal, FinitePlace.mk_lt_one_iff_mem]
     have := v.maximalIdeal.isPrime
     exact Ideal.IsPrime.prod_mem_iff.2 ⟨v, hv, (hp v (hne v hv)).1⟩
-
-/-- **Approximation at finitely many places**: an algebraic integer which is a unit at `v₀` and
-as small as prescribed at every place of `T`. -/
-theorem exists_apply_eq_one_forall_apply_le (v₀ : FinitePlace K) (T : Finset (FinitePlace K))
-    (hv₀ : v₀ ∉ T) {ε : FinitePlace K → ℝ} (hε : ∀ v ∈ T, 0 < ε v) :
-    ∃ s : 𝓞 K, v₀ (s : K) = 1 ∧ ∀ v ∈ T, v (s : K) ≤ ε v := by
-  obtain ⟨t, ht₀, ht⟩ := exists_apply_eq_one_forall_apply_lt_one v₀ T hv₀
-  obtain ⟨m, hm⟩ := exists_pow_le ht hε
-  exact ⟨t ^ m, by push_cast; rw [map_pow, ht₀, one_pow],
-    fun v hv ↦ by push_cast; exact hm v hv⟩
-
-/-- A nonzero algebraic integer as small as prescribed at every place of `T`. -/
-theorem exists_ne_zero_forall_apply_le (T : Finset (FinitePlace K)) {ε : FinitePlace K → ℝ}
-    (hε : ∀ v ∈ T, 0 < ε v) : ∃ d : 𝓞 K, d ≠ 0 ∧ ∀ v ∈ T, v (d : K) ≤ ε v := by
-  have hp : ∀ v : FinitePlace K, ∃ p : 𝓞 K, p ∈ v.maximalIdeal.asIdeal ∧ p ≠ 0 :=
-    fun v ↦ Submodule.exists_mem_ne_zero_of_ne_bot v.maximalIdeal.ne_bot
-  choose p hp hp0 using hp
-  have ht : ∀ v ∈ T, v ((∏ w ∈ T, p w : 𝓞 K) : K) < 1 := by
-    intro v hv
-    rw [apply_eq_mk_maximalIdeal, FinitePlace.mk_lt_one_iff_mem]
-    have := v.maximalIdeal.isPrime
-    exact Ideal.IsPrime.prod_mem_iff.2 ⟨v, hv, hp v⟩
-  obtain ⟨m, hm⟩ := exists_pow_le ht hε
-  refine ⟨(∏ w ∈ T, p w) ^ m, pow_ne_zero _ (Finset.prod_ne_zero_iff.2 fun w _ ↦ hp0 w),
-    fun v hv ↦ ?_⟩
-  have := hm v hv
-  push_cast at this ⊢
-  exact this
-
 
 /-- The ultrametric inequality for a finite sum, against a common bound. -/
 theorem apply_sum_le_of_forall_le (v : FinitePlace K) {α : Type*} {s : Finset α} {f : α → K} {R : ℝ}

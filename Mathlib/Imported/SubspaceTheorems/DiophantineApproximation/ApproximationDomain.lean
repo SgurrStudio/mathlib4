@@ -15,7 +15,6 @@ import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.FinitePlaceIdeal
 import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
-
 /-!
 # Approximation domains
 
@@ -147,7 +146,6 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {ι : Type*}
 
-
 /-- **The approximation domain of level `Q`** (Bombieri–Gubler 7.5.6): a set of points of `Kⁱ`,
 with a condition at every infinite place, at every place of `Sfin`, and integrality elsewhere. -/
 def approxDomain (Sfin : Finset (FinitePlace K)) (L : AbsoluteValue K ℝ → ι → Dual K (ι → K))
@@ -227,7 +225,6 @@ theorem approxDomain_eq (Sfin : Finset (FinitePlace K))
   simp only [approxDomain, Set.mem_ofPred_eq, approxBody, approxModule, Submodule.mem_mk,
     AddSubmonoid.mem_mk, AddSubsemigroup.mem_mk, hform, abs_of_nonneg hQ]
   tauto
-
 
 omit [NumberField K] in
 private theorem sum_mixedEmbedding_mul_eq [DecidableEq ι] (l : Dual K (ι → K))
@@ -385,7 +382,6 @@ theorem isBounded_approxBody {L : AbsoluteValue K ℝ → ι → Dual K (ι → 
   rw [norm_eq_sup'_normAtPlace]
   exact Finset.sup'_le _ _ fun w _ ↦ (hloc z hz w j).trans (hle w j)
 
-
 omit [Fintype ι] in
 /-- The finite part of an approximation domain is finitely generated: its coordinates have
 bounded denominators at the places of `Sfin`. -/
@@ -541,7 +537,6 @@ private theorem apply_det_le_approxDetBound [DecidableEq ι] {Sfin : Finset (Fin
   · refine (FinitePlace.apply_det_le_prod v _ (fun _ ↦ zero_le_one) fun k j ↦ ?_).trans_eq (by simp)
     exact (hx k).2 v hv j
 
-
 omit [Fintype ι] in
 /-- The scaling step: a family of vectors with a controlled value of `v` on its forms at `v` can
 be moved into the module by one algebraic integer that is a unit at `v`. -/
@@ -591,7 +586,7 @@ private theorem exists_smul_mem_approxModule [Finite ι] {Sfin : Finset (FiniteP
     rintro w ⟨k, j, hkj, hw⟩
     exact Set.mem_iUnion.2 ⟨⟨(k, j), hkj⟩, hw⟩
   set T : Finset (FinitePlace K) := (Sfin ∪ hbad.toFinset).erase v with hT
-  obtain ⟨s, hs1, hsT⟩ := FinitePlace.exists_apply_eq_one_forall_apply_le v T
+  obtain ⟨s, hs1, hsT⟩ := FinitePlace.exists_apply_eq_one_forall_apply_le v (T := T)
     (Finset.notMem_erase v _) (ε := fun w ↦ (1 + S w)⁻¹)
     fun w _ ↦ inv_pos.2 (by linarith [hS0 w])
   refine ⟨s, hs1, fun k ↦ ⟨fun w hw i ↦ ?_, fun w hw j ↦ ?_⟩⟩
@@ -629,7 +624,6 @@ private theorem exists_smul_mem_approxModule [Finite ι] {Sfin : Finset (FiniteP
         linarith
       exact (mul_le_mul (FinitePlace.apply_le_one w s) hgood (apply_nonneg _ _)
         zero_le_one).trans_eq (one_mul 1)
-
 
 private theorem exists_det_eq_approxDetBound [DecidableEq ι] {Sfin : Finset (FinitePlace K)}
     {L : AbsoluteValue K ℝ → ι → Dual K (ι → K)} (hL : ∀ v ∈ Sfin, LinearIndependent K (L v.1))

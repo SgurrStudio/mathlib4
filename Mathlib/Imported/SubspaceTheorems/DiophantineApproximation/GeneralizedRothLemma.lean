@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.FormSpecialization
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.RothLemma
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Basic
 
 /-!
 # The generalized Roth lemma
@@ -29,7 +29,8 @@ one of the `n` ratios carries at least `1 / n` of it.
 ## Main results
 
 * `Height.mulHeight_le_prod_mulHeight₁_div` and
-  `Height.exists_logHeight_le_mul_logHeight₁_div`: **the height of a tuple against the heights
+  `Height.exists_logHeight_le_card_erase_mul_logHeight₁_div`: **the height of a tuple against the
+  heights
   of its ratios**, in multiplicative and logarithmic form. The second is the book's
   `h(b) ≤ n max_i h((b 0, b i))`.
 * `MvPolynomial.mulHeight_le_of_coeff_subfamily` and
@@ -89,50 +90,11 @@ namespace Height
 
 variable {K : Type*} [Field K] [AdmissibleAbsValues K] {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- **The height of a tuple is at most the product of the heights of its ratios** to one
-nonvanishing coordinate. The ratios normalize that coordinate to `1`, and then each local factor
-is a maximum of numbers at least one of which is `1`, hence at most the product. -/
-theorem mulHeight_le_prod_mulHeight₁_div (b : ι → K) (i₀ : ι) (hb : b i₀ ≠ 0) :
-    mulHeight b ≤ ∏ i ∈ univ.erase i₀, mulHeight₁ (b i / b i₀) := by
-  classical
-  have hci₀ : b i₀ / b i₀ = 1 := div_self hb
-  have hbc : mulHeight (fun i ↦ b i / b i₀) = mulHeight b := by
-    have hsmul : (fun i ↦ b i / b i₀) = (b i₀)⁻¹ • b := by
-      funext i
-      simp [div_eq_inv_mul, mul_comm]
-    rw [hsmul, mulHeight_smul_eq_mulHeight b (inv_ne_zero hb)]
-  have hx : ∀ a : {i : ι // i ∈ univ.erase i₀},
-      (![b a.val / b i₀, 1] : Fin 2 → K) ≠ 0 := by
-    intro a hc0
-    have h1 := congrFun hc0 1
-    simp at h1
-  have htab := mulHeight_fun_prod_eq (x := fun a : {i : ι // i ∈ univ.erase i₀} ↦
-    (![b a.val / b i₀, 1] : Fin 2 → K)) hx
-  have hcomp : (fun i ↦ b i / b i₀)
-      = (fun I : {i : ι // i ∈ univ.erase i₀} → Fin 2 ↦
-          ∏ a, (![b a.val / b i₀, 1] : Fin 2 → K) (I a)) ∘
-        (fun i ↦ fun a : {i : ι // i ∈ univ.erase i₀} ↦ if a.val = i then 0 else 1) := by
-    funext i
-    simp only [Function.comp_apply]
-    by_cases hi : i = i₀
-    · rw [hi, hci₀]
-      refine (Finset.prod_eq_one fun a _ ↦ ?_).symm
-      have hane : a.val ≠ i₀ := (Finset.mem_erase.mp a.prop).1
-      simp [hane]
-    · have hmem : i ∈ univ.erase i₀ := Finset.mem_erase.mpr ⟨hi, Finset.mem_univ i⟩
-      rw [Finset.prod_eq_single_of_mem (⟨i, hmem⟩ : {i : ι // i ∈ univ.erase i₀})
-        (Finset.mem_univ _) (fun a _ ha ↦ ?_)]
-      · simp
-      · have hav : a.val ≠ i := fun hc2 ↦ ha (Subtype.ext hc2)
-        simp [hav]
-  rw [← hbc, hcomp]
-  refine le_trans (mulHeight_comp_le _ _) ?_
-  rw [htab, ← Finset.prod_coe_sort (univ.erase i₀) (fun i ↦ mulHeight₁ (b i / b i₀))]
-  exact le_of_eq (Finset.prod_congr rfl fun a _ ↦ (mulHeight₁_eq_mulHeight _).symm)
-
 /-- **The logarithmic form**: some ratio to a nonvanishing coordinate carries at least the
-fraction `1 / (card ι - 1)` of the height of the tuple. -/
-theorem exists_logHeight_le_mul_logHeight₁_div (b : ι → K) (i₀ : ι) (hb : b i₀ ≠ 0)
+fraction `1 / (card ι - 1)` of the height of the tuple. (Named
+`exists_logHeight_le_mul_logHeight₁_div` in the source; Tau Ceti's lemma of that name lets both
+indices vary.) -/
+theorem exists_logHeight_le_card_erase_mul_logHeight₁_div (b : ι → K) (i₀ : ι) (hb : b i₀ ≠ 0)
     (hne : (univ.erase i₀).Nonempty) :
     ∃ i₁, i₁ ≠ i₀ ∧
       logHeight b ≤ (#(univ.erase i₀) : ℝ) * logHeight₁ (b i₁ / b i₀) := by
@@ -143,14 +105,13 @@ theorem exists_logHeight_le_mul_logHeight₁_div (b : ι → K) (i₀ : ι) (hb 
   have h1 : logHeight b ≤ ∑ i ∈ univ.erase i₀, logHeight₁ (b i / b i₀) := by
     simp only [logHeight_eq_log_mulHeight, logHeight₁_eq_log_mulHeight₁]
     rw [← Real.log_prod (fun i (_ : i ∈ univ.erase i₀) ↦ (mulHeight₁_pos (b i / b i₀)).ne')]
-    exact Real.log_le_log (mulHeight_pos b) (mulHeight_le_prod_mulHeight₁_div b i₀ hb)
+    exact Real.log_le_log (mulHeight_pos b) (mulHeight_le_prod_mulHeight₁_div hb)
   refine h1.trans ?_
   have h2 := Finset.sum_le_card_nsmul (univ.erase i₀) (fun i ↦ logHeight₁ (b i / b i₀))
     (logHeight₁ (b i₁ / b i₀)) hmax
   rwa [nsmul_eq_mul] at h2
 
 end Height
-
 
 namespace MvPolynomial
 
@@ -163,7 +124,7 @@ theorem mulHeight_le_of_coeff_subfamily {σ τ : Type*} {P : MvPolynomial σ K}
     P.mulHeight ≤ Q.mulHeight := by
   classical
   choose f hf hval using h
-  rw [MvPolynomial.mulHeight, MvPolynomial.mulHeight,
+  rw [MvPolynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp,
     Finsupp.mulHeight_eq_mulHeight_subtype P.coeff (le_of_eq rfl),
     Finsupp.mulHeight_eq_mulHeight_subtype Q.coeff (le_of_eq rfl)]
   have key := Height.mulHeight_comp_le
@@ -175,9 +136,9 @@ theorem mulHeight_le_of_coeff_subfamily {σ τ : Type*} {P : MvPolynomial σ K}
 
 theorem logHeight_le_of_coeff_subfamily {σ τ : Type*} {P : MvPolynomial σ K}
     {Q : MvPolynomial τ K} (h : ∀ ν ∈ P.support, ∃ μ ∈ Q.support, P.coeff ν = Q.coeff μ) :
-    P.logHeight ≤ Q.logHeight :=
-  Real.log_le_log (Finsupp.mulHeight_pos _) (mulHeight_le_of_coeff_subfamily h)
-
+    P.logHeight ≤ Q.logHeight := by
+  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight]
+  exact Real.log_le_log (mulHeight_pos _) (mulHeight_le_of_coeff_subfamily h)
 
 /-! ### The generalized Roth lemma -/
 
@@ -220,7 +181,7 @@ theorem formIndex_le_of_degree_ratio {n m : ℕ} (hn : 1 ≤ n) (hcard : Fintype
       rw [← Finset.card_pos, hcarde]
       omega
     obtain ⟨i₁, hi₁ne, hi₁le⟩ :=
-      Height.exists_logHeight_le_mul_logHeight₁_div (N h) (i₀ h) (hN0 h) hnee
+      Height.exists_logHeight_le_card_erase_mul_logHeight₁_div (N h) (i₀ h) (hN0 h) hnee
     exact ⟨i₁, hi₁ne, by rwa [hcarde, hN1 h, div_one] at hi₁le⟩
   choose i₁ hi₁ne hi₁le using hchoice
   obtain ⟨T, hTmem⟩ : ∃ T : Finset (Fin (m + 1) × ι),

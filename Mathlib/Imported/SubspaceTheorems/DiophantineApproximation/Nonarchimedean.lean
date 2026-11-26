@@ -8,12 +8,12 @@ module
 public import Mathlib.Algebra.Order.Ring.IsNonarchimedean
 public import Mathlib.Analysis.AbsoluteValue.Equivalence
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Imported.TauCeti.Analysis.AbsoluteValue.Nonarchimedean
 
 -- Used only inside proofs.
 import Mathlib.Analysis.MeanInequalitiesPow
 import Mathlib.Analysis.SpecificLimits.Basic
 import Mathlib.RingTheory.IntegralClosure.IsIntegral.Basic
-
 
 /-!
 # When an absolute value is nonarchimedean, and what follows
@@ -150,31 +150,6 @@ theorem le_one_of_isIntegral {w : AbsoluteValue F ℝ} (hna : IsNonarchimedean (
   have hbn : b + 1 ≤ n := Finset.mem_range.mp hb
   have : w y ^ b < w y ^ n := pow_lt_pow_right₀ hcon (by omega)
   linarith
-
-/-- The `t`-th power of a nonarchimedean absolute value, for `0 < t`. The ultrametric inequality
-is what makes this an absolute value at every positive exponent; an archimedean absolute value
-admits only the exponents `t ≤ 1`. -/
-@[expose] noncomputable def nonarchRpow {w : AbsoluteValue F ℝ} (hna : IsNonarchimedean (w : F → ℝ))
-    {t : ℝ} (ht : 0 < t) : AbsoluteValue F ℝ where
-  toFun x := w x ^ t
-  map_mul' x y := by rw [map_mul, Real.mul_rpow (w.nonneg x) (w.nonneg y)]
-  nonneg' x := Real.rpow_nonneg (w.nonneg x) t
-  eq_zero' x := by
-    rw [Real.rpow_eq_zero_iff_of_nonneg (w.nonneg x)]
-    simp [ht.ne', w.eq_zero]
-  add_le' x y := by
-    have h1 : w (x + y) ^ t ≤ max (w x) (w y) ^ t :=
-      Real.rpow_le_rpow (w.nonneg _) (hna x y) ht.le
-    have h2 : max (w x) (w y) ^ t = max (w x ^ t) (w y ^ t) := by
-      rcases max_cases (w x) (w y) with ⟨he, hle⟩ | ⟨he, hlt⟩
-      · rw [he, max_eq_left (Real.rpow_le_rpow (w.nonneg y) hle ht.le)]
-      · rw [he, max_eq_right (Real.rpow_le_rpow (w.nonneg x) hlt.le ht.le)]
-    rw [h2] at h1
-    exact h1.trans (max_le_add_of_nonneg (Real.rpow_nonneg (w.nonneg x) t)
-      (Real.rpow_nonneg (w.nonneg y) t))
-
-@[simp] theorem nonarchRpow_apply {w : AbsoluteValue F ℝ} (hna : IsNonarchimedean (w : F → ℝ))
-    {t : ℝ} (ht : 0 < t) (x : F) : nonarchRpow hna ht x = w x ^ t := rfl
 
 end AbsoluteValue
 

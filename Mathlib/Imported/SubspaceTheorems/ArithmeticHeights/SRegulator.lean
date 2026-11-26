@@ -9,7 +9,6 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.SUnitTheorem
 public import Mathlib.NumberTheory.NumberField.ProductFormula
 public import Mathlib.NumberTheory.NumberField.Units.Regulator
 
-
 /-!
 # The `S`-logarithmic embedding and the `S`-regulator
 
@@ -636,7 +635,7 @@ theorem comap_unitLattice_empty :
           Finset (IsDedekindDomain.HeightOneSpectrum (𝓞 K)))
           : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))).unit K)) : Kˣ) : K) = 1 :=
       fun v => (Additive.toMul z).2 v (by simp)
-    obtain ⟨u, hu⟩ := Set.mem_unit_empty_iff.mp fun v _ => hall v
+    obtain ⟨u, hu⟩ := (Set.mem_unit_empty_iff (R := 𝓞 K) K).mp fun v _ => hall v
     have hz' : (↑(∅ : Finset (IsDedekindDomain.HeightOneSpectrum (𝓞 K)))
         : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))).unitOfUnits u = Additive.toMul z :=
       Subtype.ext (Units.ext hu)

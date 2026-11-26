@@ -10,7 +10,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MultiHo
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MvHasseDerivTaylor
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PolynomialGrid
 
-
 /-!
 # Non-vanishing at a small point
 
@@ -132,7 +131,7 @@ theorem coeff_shift (c : σ → R) (P : MvPolynomial σ R) (μ : σ →₀ ℕ) 
     · simp [shift]
   have h := congrArg (fun f ↦ (f P).coeff μ) hmap
   simp only [RingHom.coe_comp, Function.comp_apply, coeff_map, RingHom.coe_coe] at h
-  rw [← h, coeff_taylor]
+  rw [← h, coeff_aeval_C_X_add_X]
 
 end Shift
 
@@ -229,7 +228,7 @@ theorem IsMultiHomogeneous.linSubst {d : κ → ℕ} {P : MvPolynomial (κ × ι
     IsMultiHomogeneous d (MvPolynomial.linSubst y P) := by
   classical
   rw [isMultiHomogeneous_iff] at hP ⊢
-  refine IsWeightedHomogeneous.aeval (fun p ↦ ?_) hP
+  refine hP.aeval (fun p ↦ ?_)
   obtain ⟨h, i⟩ := p
   refine IsWeightedHomogeneous.finset_sum fun l _ ↦ ?_
   have hX : IsWeightedHomogeneous (blockWeight κ ρ)
@@ -286,7 +285,7 @@ theorem exists_eval_hasseDeriv_add_ne_zero {d : κ → ℕ} {P : MvPolynomial (�
     exact hval
   rw [shift_linSubst] at h1
   obtain ⟨μ, hμ, hdegs⟩ := exists_coeff_ne_zero_of_coeff_linSubst_ne_zero y _ h1
-  rw [coeff_shift, hasseDeriv_comp] at hμ
+  rw [coeff_shift, hasseDeriv_comp_apply] at hμ
   refine ⟨fun h l ↦ Z (h, l), fun h l ↦ hZ (h, l), μ, fun h ↦ ?_, ?_⟩
   · calc B * ∑ i, μ (h, i) = B * ∑ l, J (h, l) := by rw [hdegs h]
       _ = ∑ l, B * J (h, l) := Finset.mul_sum _ _ _

@@ -9,10 +9,10 @@ public import Mathlib.Algebra.MvPolynomial.Equiv
 public import Mathlib.Algebra.MvPolynomial.PDeriv
 public import Mathlib.Algebra.Polynomial.HasseDeriv
 public import Mathlib.RingTheory.MvPolynomial.Basic
+public import Mathlib.Imported.TauCeti.Algebra.MvPolynomial.HasseDeriv.Basic
 
 -- Used only by the acceptance criteria.
 import Mathlib.Data.ZMod.Basic
-
 
 /-!
 # Hasse derivatives in several variables
@@ -130,61 +130,13 @@ theorem prod_choose_eq_zero {μ m : σ →₀ ℕ} (h : ¬ μ ≤ m) :
 
 /-! ### The definition and its two computation rules -/
 
-/-- The `μ`-th **Hasse derivative** `∂_μ = (1 / μ!) ∂^μ` of a polynomial in several variables,
-defined on monomials by Bombieri–Gubler's (6.1),
-`∂_μ (a X^m) = (∏ j, (m j).choose (μ j)) a X^(m - μ)`. The truncated subtraction is harmless: a
-binomial coefficient `(m j).choose (μ j)` with `μ j > m j` vanishes. -/
-def hasseDeriv (μ : σ →₀ ℕ) : MvPolynomial σ R →ₗ[R] MvPolynomial σ R :=
-  (basisMonomials σ R).constr R fun m ↦
-    monomial (m - μ) ((μ.prod fun j k ↦ (m j).choose k : ℕ) : R)
-
 /-- The Hasse derivative as a sum over the support. -/
 theorem hasseDeriv_apply (μ : σ →₀ ℕ) (P : MvPolynomial σ R) :
     hasseDeriv μ P = ∑ m ∈ P.support,
       monomial (m - μ) ((μ.prod fun j k ↦ (m j).choose k : ℕ) * P.coeff m) := by
-  rw [hasseDeriv, Module.Basis.constr_apply]
-  rw [show (basisMonomials σ R).repr P = AddMonoidAlgebra.coeff P from rfl, sum_def]
-  exact Finset.sum_congr rfl fun m _ ↦ by rw [smul_monomial, smul_eq_mul, mul_comm]
-
-/-- **The value on a monomial**, Bombieri–Gubler's (6.1). -/
-@[simp]
-theorem hasseDeriv_monomial (μ m : σ →₀ ℕ) (a : R) :
-    hasseDeriv μ (monomial m a) = monomial (m - μ) ((μ.prod fun j k ↦ (m j).choose k : ℕ) * a) := by
-  classical
-  rcases eq_or_ne a 0 with rfl | ha
-  · simp
-  · rw [hasseDeriv_apply]
-    simp [support_monomial, ha, coeff_monomial]
-
-/-- **The coefficients of a Hasse derivative**, the several-variable form of
-`Polynomial.hasseDeriv_coeff`. -/
-theorem hasseDeriv_coeff (μ : σ →₀ ℕ) (P : MvPolynomial σ R) (n : σ →₀ ℕ) :
-    (hasseDeriv μ P).coeff n
-      = ((μ.prod fun j k ↦ (n j + k).choose k : ℕ) : R) * P.coeff (n + μ) := by
-  classical
-  rw [hasseDeriv_apply, coeff_sum]
-  simp only [coeff_monomial]
-  rw [Finset.sum_eq_single (n + μ)]
-  · rw [ite_eq_left (add_tsub_cancel_right n μ)]
-    have h : (μ.prod fun j k ↦ ((n + μ) j).choose k) = μ.prod fun j k ↦ (n j + k).choose k :=
-      Finsupp.prod_congr fun j _ ↦ by rw [Finsupp.add_apply]
-    rw [h]
-  · intro m _ hne
-    by_cases h : m - μ = n
-    · rw [ite_eq_left h]
-      have hle : ¬ μ ≤ m := fun hle ↦ hne (by rw [← h, tsub_add_cancel_of_le hle])
-      rw [prod_choose_eq_zero hle]
-      simp
-    · rw [ite_eq_right h]
-  · intro h
-    rw [notMem_support_iff.mp h]
-    simp
-
-/-- The zeroth Hasse derivative is the identity. -/
-@[simp]
-theorem hasseDeriv_zero : (hasseDeriv 0 : MvPolynomial σ R →ₗ[R] MvPolynomial σ R) = .id := by
-  ext P n
-  simp [hasseDeriv_coeff]
+  conv_lhs => rw [P.as_sum]
+  rw [map_sum]
+  exact Finset.sum_congr rfl fun m _ ↦ hasseDeriv_monomial μ m _
 
 /-- The zeroth Hasse derivative is the identity, applied form. -/
 theorem hasseDeriv_zero_apply (P : MvPolynomial σ R) : hasseDeriv 0 P = P := by
@@ -214,17 +166,15 @@ theorem prod_choose_comp (μ ν n : σ →₀ ℕ) :
   rw [h1, h2, h3, h4, ← Finset.prod_mul_distrib, ← Finset.prod_mul_distrib]
   exact Finset.prod_congr rfl fun j _ ↦ choose_add_mul_choose (n j) (μ j) (ν j)
 
-/-- **The composition law**, `∂_μ ∘ ∂_ν = (∏ j, (μ j + ν j).choose (μ j)) • ∂_(μ + ν)`, the
-several-variable form of `Polynomial.hasseDeriv_comp`. The scalar is written as a `Finsupp.prod`
-over `μ.support`, where the omitted factors are `(ν j).choose 0 = 1`. -/
-theorem hasseDeriv_comp (μ ν : σ →₀ ℕ) (P : MvPolynomial σ R) :
+/-- **The composition law**, applied to a polynomial:
+`∂_μ (∂_ν P) = (∏ j, (μ j + ν j).choose (μ j)) • ∂_(μ + ν) P`, the several-variable form of
+`Polynomial.hasseDeriv_comp`. The scalar is written as a `Finsupp.prod` over `μ.support`, where the
+omitted factors are `(ν j).choose 0 = 1`. Tau Ceti's `MvPolynomial.hasseDeriv_comp` is the same law
+stated for the linear maps. -/
+theorem hasseDeriv_comp_apply (μ ν : σ →₀ ℕ) (P : MvPolynomial σ R) :
     hasseDeriv μ (hasseDeriv ν P)
       = (μ.prod fun j k ↦ (k + ν j).choose k) • hasseDeriv (μ + ν) P := by
-  ext n
-  rw [AddMonoidAlgebra.coeff_smul_apply, hasseDeriv_coeff, hasseDeriv_coeff, hasseDeriv_coeff,
-    nsmul_eq_mul,
-    ← add_assoc, ← mul_assoc, ← mul_assoc, ← Nat.cast_mul, ← Nat.cast_mul,
-    prod_choose_comp μ ν n]
+  rw [← LinearMap.comp_apply, hasseDeriv_comp, LinearMap.smul_apply]
 
 /-- **Hasse derivatives commute.** -/
 theorem hasseDeriv_commute (μ ν : σ →₀ ℕ) (P : MvPolynomial σ R) :
@@ -238,14 +188,14 @@ theorem hasseDeriv_commute (μ ν : σ →₀ ℕ) (P : MvPolynomial σ R) :
       Finsupp.prod_of_support_subset _ Finset.subset_union_right _ (by simp)
     rw [h1, h2]
     exact Finset.prod_congr rfl fun j _ ↦ by rw [add_comm (ν j) (μ j), Nat.choose_symm_add]
-  rw [hasseDeriv_comp, hasseDeriv_comp, add_comm ν μ, key]
+  rw [hasseDeriv_comp_apply, hasseDeriv_comp_apply, add_comm ν μ, key]
 
 /-- **The composition law is exact when the orders use disjoint variables**: every binomial
 factor is then `k.choose k = 1`. -/
 theorem hasseDeriv_comp_of_disjoint {μ ν : σ →₀ ℕ} (h : Disjoint μ.support ν.support)
     (P : MvPolynomial σ R) :
     hasseDeriv μ (hasseDeriv ν P) = hasseDeriv (μ + ν) P := by
-  rw [hasseDeriv_comp]
+  rw [hasseDeriv_comp_apply]
   have : (μ.prod fun j k ↦ (k + ν j).choose k) = 1 := by
     refine Finset.prod_eq_one fun j hj ↦ ?_
     have hν : ν j = 0 := Finsupp.notMem_support_iff.mp (Finset.disjoint_left.mp h hj)
@@ -264,18 +214,6 @@ theorem hasseDeriv_single_one (j : σ) (P : MvPolynomial σ R) :
       rw [Nat.choose_one_right, mul_comm]
   | add p q hp hq => rw [map_add, map_add, hp, hq]
 
-/-- **`k ! • ∂_(single j k)` is the `k`-th iterate of `pderiv j`**, the several-variable form of
-`Polynomial.factorial_smul_hasseDeriv`. -/
-theorem factorial_smul_hasseDeriv_single (j : σ) (k : ℕ) (P : MvPolynomial σ R) :
-    (k ! : ℕ) • hasseDeriv (Finsupp.single j k) P = (pderiv j)^[k] P := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-      rw [Function.iterate_succ_apply', ← ih, ← hasseDeriv_single_one, map_nsmul,
-        hasseDeriv_comp, Finsupp.prod_single_index (by simp), Finsupp.single_eq_same,
-        ← Finsupp.single_add, smul_smul, Nat.choose_one_right, Nat.factorial_succ,
-        add_comm 1 k, Nat.mul_comm]
-
 /-! ### Agreement with the one-variable Hasse derivative -/
 
 /-- **Agreement with `Polynomial.hasseDeriv`** along `MvPolynomial.uniqueAlgEquiv`, the
@@ -291,20 +229,6 @@ theorem uniqueAlgEquiv_hasseDeriv [Unique σ] (k : ℕ) (P : MvPolynomial σ R) 
   | add p q hp hq => rw [map_add, map_add, map_add, map_add, hp, hq]
 
 /-! ### Degrees -/
-
-/-- A Hasse derivative of order `μ` drops the degree in the variable `j` by at least `μ j`. -/
-theorem degreeOf_hasseDeriv_le (μ : σ →₀ ℕ) (P : MvPolynomial σ R) (j : σ) :
-    (hasseDeriv μ P).degreeOf j ≤ P.degreeOf j - μ j := by
-  classical
-  rw [degreeOf_le_iff]
-  intro m hm
-  have hne : P.coeff (m + μ) ≠ 0 := by
-    intro h
-    rw [mem_support_iff, hasseDeriv_coeff, h, mul_zero] at hm
-    exact hm rfl
-  have := (degreeOf_le_iff).mp (le_refl (P.degreeOf j)) (m + μ) (mem_support_iff.mpr hne)
-  rw [Finsupp.add_apply] at this
-  omega
 
 /-- A Hasse derivative of order `μ` drops the total degree by at least the degree of `μ`. -/
 theorem totalDegree_hasseDeriv_le (μ : σ →₀ ℕ) (P : MvPolynomial σ R) :
@@ -331,7 +255,7 @@ example (μ m : σ →₀ ℕ) (a : R) :
 example (μ ν : σ →₀ ℕ) (P : MvPolynomial σ R) :
     hasseDeriv μ (hasseDeriv ν P)
       = (μ.prod fun j k ↦ (k + ν j).choose k) • hasseDeriv (μ + ν) P :=
-  hasseDeriv_comp μ ν P
+  hasseDeriv_comp_apply μ ν P
 
 /-- **Rejection test: the iterated `pderiv` is not the Hasse derivative, and in characteristic
 `p` it is not even a substitute.** Over `ZMod 2` the second Hasse derivative of `X ^ 2` is `1`

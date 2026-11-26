@@ -14,7 +14,6 @@ public import Mathlib.Basic.ENNReal.Real
 -- Used only by the acceptance criteria.
 import Mathlib.Data.ZMod.Basic
 
-
 /-!
 # The index of a polynomial at a point
 
@@ -153,7 +152,7 @@ theorem map_eval_aeval (α : σ → R) (P : MvPolynomial σ R) :
 identity is the whole of Layer 2.3. -/
 theorem coeff_taylorAt (α : σ → R) (P : MvPolynomial σ R) (μ : σ →₀ ℕ) :
     (taylorAt α P).coeff μ = eval α (hasseDeriv μ P) := by
-  rw [← map_eval_aeval, coeff_map, coeff_taylor]
+  rw [← map_eval_aeval, coeff_map, coeff_aeval_C_X_add_X]
 
 /-- Translation commutes with a change of coefficient ring. -/
 theorem map_taylorAt {S : Type*} [CommRing S] (f : R →+* S) (α : σ → R) (P : MvPolynomial σ R) :
@@ -258,7 +257,7 @@ theorem index_le_hasseDeriv_add (hd : ∀ j, 0 ≤ d j) (α : σ → R) (P : MvP
       ≤ index d α (hasseDeriv μ P) + ENNReal.ofReal (μ.sum fun j k ↦ k / d j) := by
   rw [index_eq_weightedOrder d hd, index_eq_weightedOrder d hd, ← Finsupp.weight_ofReal_inv d hd]
   refine le_weightedOrder_add_const fun ν hν ↦ ?_
-  rw [coeff_taylorAt, hasseDeriv_comp, map_nsmul] at hν
+  rw [coeff_taylorAt, hasseDeriv_comp_apply, map_nsmul] at hν
   have hne : eval α (hasseDeriv (ν + μ) P) ≠ 0 := fun h ↦ hν (by rw [h, smul_zero])
   calc weightedOrder (fun j ↦ ENNReal.ofReal (d j)⁻¹) (taylorAt α P)
       ≤ Finsupp.weight (fun j ↦ ENNReal.ofReal (d j)⁻¹) (ν + μ) :=

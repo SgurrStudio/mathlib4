@@ -7,7 +7,8 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MvHasseDeriv
 public import Mathlib.Data.Finsupp.Antidiagonal
-
+public import Mathlib.Imported.TauCeti.RingTheory.MvPolynomial.HasseDeriv.Taylor
+public import Mathlib.Imported.TauCeti.Algebra.MvPolynomial.HasseDeriv.Basic
 
 /-!
 # The Taylor expansion and the Leibniz rule for Hasse derivatives
@@ -186,46 +187,13 @@ theorem prod_choose_pascal {μ n : σ →₀ ℕ} {j : σ} (hn : n j ≠ 0) (hμ
 theorem coeff_add_apply (p q : MvPolynomial σ R) (n : σ →₀ ℕ) :
     (p + q).coeff n = p.coeff n + q.coeff n := by simp
 
-/-- **The product rule against a variable**: `∂_μ (P X j)` is `(∂_μ P) X j`, with the extra term
-`∂_(μ - single j 1) P` when `μ j ≠ 0`. It is Pascal's rule, and it is the only differentiation
-the substitution formula below needs. -/
-theorem hasseDeriv_mul_X (μ : σ →₀ ℕ) (P : MvPolynomial σ R) (j : σ) :
-    hasseDeriv μ (P * X j)
-      = hasseDeriv μ P * X j
-        + if μ j = 0 then 0 else hasseDeriv (μ - (Finsupp.single j 1 : σ →₀ ℕ)) P := by
-  classical
-  by_cases hm : μ j = 0
-  · rw [ite_eq_left hm, add_zero]
-    ext n
-    rw [hasseDeriv_coeff, coeff_mul_X', coeff_mul_X']
-    by_cases hn : n j = 0
-    · have h1 : j ∉ (n + μ).support := by
-        simp [Finsupp.mem_support_iff, Finsupp.add_apply, hn, hm]
-      rw [ite_eq_right h1, ite_eq_right (by simpa using hn), mul_zero]
-    · have h1 : j ∈ (n + μ).support := by
-        rw [Finsupp.mem_support_iff, Finsupp.add_apply]; omega
-      rw [ite_eq_left h1, ite_eq_left (by simpa using hn), hasseDeriv_coeff,
-        add_sub_single_left hn, prod_choose_sub_single_left (n := n) hm]
-  · rw [ite_eq_right hm]
-    ext n
-    have h1 : j ∈ (n + μ).support := by
-      rw [Finsupp.mem_support_iff, Finsupp.add_apply]; omega
-    rw [coeff_add_apply, hasseDeriv_coeff, coeff_mul_X', coeff_mul_X', ite_eq_left h1]
-    by_cases hn : n j = 0
-    · rw [ite_eq_right (by simpa using hn), zero_add, hasseDeriv_coeff,
-        add_sub_single_right hm, prod_choose_sub_single_right hn hm]
-    · rw [ite_eq_left (by simpa using hn), hasseDeriv_coeff, hasseDeriv_coeff,
-        prod_choose_pascal hn hm, Nat.cast_add, add_mul]
-      congr 1
-      · rw [add_sub_single_left hn]
-      · rw [add_sub_single_right hm]
-
 /-! ### The substitution formula -/
 
 /-- **The substitution formula.** Inside `MvPolynomial σ (MvPolynomial σ R)`, substituting
 `C (X j) + X j` for `X j` produces the polynomial whose coefficient at `μ` is the `μ`-th Hasse
-derivative: `P (X + Y) = ∑ μ, (∂_μ P)(X) Y^μ`. -/
-theorem coeff_taylor (P : MvPolynomial σ R) (μ : σ →₀ ℕ) :
+derivative: `P (X + Y) = ∑ μ, (∂_μ P)(X) Y^μ`. (Named `coeff_taylor` in the source; Tau Ceti's
+`MvPolynomial.coeff_taylor` is the specialization at a point.) -/
+theorem coeff_aeval_C_X_add_X (P : MvPolynomial σ R) (μ : σ →₀ ℕ) :
     (aeval (fun j ↦ C (X j) + X j) P : MvPolynomial σ (MvPolynomial σ R)).coeff μ
       = hasseDeriv μ P := by
   classical
@@ -241,23 +209,14 @@ theorem coeff_taylor (P : MvPolynomial σ R) (μ : σ →₀ ℕ) :
   | add p q hp hq => rw [map_add, coeff_add_apply, hp, hq, map_add]
   | mul_X p j hp =>
       rw [map_mul, aeval_X, mul_add, coeff_add_apply, mul_comm (aeval _ p) (C (X j)),
-        coeff_C_mul, coeff_mul_X', hp, hasseDeriv_mul_X, mul_comm (X j) (hasseDeriv μ p)]
+        coeff_C_mul, coeff_mul_X', hp, hasseDeriv_mul_X, add_comm (ite _ _ _),
+        mul_comm (X j) (hasseDeriv μ p)]
       congr 1
       by_cases h : μ j = 0
       · rw [ite_eq_right (by simpa using h), ite_eq_left h]
       · rw [ite_eq_left (Finsupp.mem_support_iff.mpr h), ite_eq_right h, hp]
 
 /-! ### The Leibniz rule -/
-
-/-- **The Leibniz rule**, `∂_μ (P Q) = ∑_(ν + ρ = μ) (∂_ν P) (∂_ρ Q)`, the several-variable form
-of `Polynomial.hasseDeriv_mul`. It is the substitution formula together with the fact that the
-substitution is a ring homomorphism. -/
-theorem hasseDeriv_mul [DecidableEq σ] (μ : σ →₀ ℕ) (P Q : MvPolynomial σ R) :
-    hasseDeriv μ (P * Q)
-      = ∑ x ∈ Finset.antidiagonal μ, hasseDeriv x.1 P * hasseDeriv x.2 Q := by
-  classical
-  rw [← coeff_taylor, map_mul, coeff_mul]
-  exact Finset.sum_congr rfl fun x _ ↦ by rw [coeff_taylor, coeff_taylor]
 
 /-! ### The Taylor expansion at a point -/
 
@@ -279,11 +238,11 @@ theorem eval_add_eq_sum_hasseDeriv (P : MvPolynomial σ R) (x y : σ → R)
         simp [Pi.add_apply]
   have hsub : (aeval (fun j ↦ C (X j) + X j) P :
       MvPolynomial σ (MvPolynomial σ R)).support ⊆ s := fun μ hμ ↦
-    hs μ (by rw [← coeff_taylor]; exact mem_support_iff.mp hμ)
+    hs μ (by rw [← coeff_aeval_C_X_add_X]; exact mem_support_iff.mp hμ)
   rw [← hev P, eval₂_eq]
   refine Eq.trans (Finset.sum_subset hsub fun μ _ hμ ↦ ?_) (Finset.sum_congr rfl fun μ _ ↦ ?_)
   · rw [notMem_support_iff.mp hμ, map_zero, zero_mul]
-  · rw [coeff_taylor]
+  · rw [coeff_aeval_C_X_add_X]
     rfl
 
 /-! ### Acceptance criteria -/

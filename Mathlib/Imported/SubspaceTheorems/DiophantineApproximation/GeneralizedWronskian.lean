@@ -9,10 +9,10 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MvHasse
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PolynomialIndex
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.Wronskian
 public import Mathlib.Algebra.Polynomial.Roots
+public import Mathlib.Imported.TauCeti.RingTheory.MvPolynomial.HasseDeriv.Wronskian
 
 -- Used only by the acceptance criteria.
 import Mathlib.Data.ZMod.Basic
-
 
 /-!
 # Generalized Wronskians
@@ -297,114 +297,9 @@ theorem eval_hasseDeriv_kroneckerHom (e : σ → ℕ) (a : R) (f : MvPolynomial 
 def genWronskianMatrix (μ : Fin n → (σ →₀ ℕ)) (φ : Fin n → MvPolynomial σ R) :
     Matrix (Fin n) (Fin n) (MvPolynomial σ R) := .of fun i j ↦ hasseDeriv (μ i) (φ j)
 
-/-- The **generalized Wronskian** of a family of polynomials at a family of orders. -/
-def genWronskian (μ : Fin n → (σ →₀ ℕ)) (φ : Fin n → MvPolynomial σ R) : MvPolynomial σ R :=
-  (genWronskianMatrix μ φ).det
-
 @[simp]
 theorem genWronskianMatrix_apply (μ : Fin n → (σ →₀ ℕ)) (φ : Fin n → MvPolynomial σ R)
     (i j : Fin n) : genWronskianMatrix μ φ i j = hasseDeriv (μ i) (φ j) := rfl
-
-/-- **The easy half**, in any characteristic and at every family of orders: a linear relation
-between the polynomials is a linear relation between the columns of the matrix, which kills the
-determinant over the integral domain `MvPolynomial σ K`. -/
-theorem genWronskian_eq_zero_of_not_linearIndependent {K : Type*} [Field K]
-    {φ : Fin n → MvPolynomial σ K} (hφ : ¬ LinearIndependent K φ) (μ : Fin n → (σ →₀ ℕ)) :
-    genWronskian μ φ = 0 := by
-  classical
-  obtain ⟨c, hc, i₀, hi₀⟩ := Fintype.not_linearIndependent_iff.mp hφ
-  have hker : (genWronskianMatrix μ φ).mulVec (fun j ↦ C (c j)) = 0 := by
-    funext i
-    have hz : (hasseDeriv (μ i)) (∑ j, c j • φ j) = 0 := by rw [hc, map_zero]
-    rw [map_sum] at hz
-    simp only [Matrix.mulVec, dotProduct, genWronskianMatrix_apply, Pi.zero_apply]
-    rw [← hz]
-    exact Finset.sum_congr rfl fun j _ ↦ by rw [map_smul, smul_eq_C_mul, mul_comm]
-  exact Matrix.exists_mulVec_eq_zero_iff.mp
-    ⟨fun j ↦ C (c j), fun h ↦ hi₀ (by simpa using congrFun h i₀), hker⟩
-
-/-- **The hard half.** A linearly independent family over a field of characteristic zero has a
-nonzero generalized Wronskian of admissible orders: substitute `X s ↦ T ^ e s` for weights that
-separate the exponents occurring, apply the one-variable criterion to the images, evaluate at a
-point where that Wronskian survives, and expand each row in the several-variable Hasse derivatives
-the chain rule produces — all of total order at most the row index. -/
-theorem exists_genWronskian_ne_zero {K : Type*} [Field K] [CharZero K]
-    {φ : Fin n → MvPolynomial σ K} (hφ : LinearIndependent K φ) :
-    ∃ μ : Fin n → (σ →₀ ℕ), (∀ i, (μ i).degree ≤ (i : ℕ)) ∧ genWronskian μ φ ≠ 0 := by
-  classical
-  obtain ⟨e, he⟩ := Finsupp.exists_weight_injOn (Finset.univ.biUnion fun j ↦ (φ j).support)
-  have hsupp : ∀ j, (φ j).support ⊆ Finset.univ.biUnion fun j ↦ (φ j).support :=
-    fun j μ hμ ↦ Finset.mem_biUnion.mpr ⟨j, Finset.mem_univ j, hμ⟩
-  have hW := Polynomial.hasseWronskianDet_ne_zero (linearIndependent_kroneckerHom he hsupp hφ)
-  obtain ⟨a, ha⟩ : ∃ a : K, Polynomial.eval a
-      (Polynomial.hasseWronskianDet fun j ↦ kroneckerHom e (φ j)) ≠ 0 := by
-    by_contra hcon
-    simp only [not_exists, not_not] at hcon
-    have : Infinite K := Infinite.of_injective (Nat.cast : ℕ → K) Nat.cast_injective
-    refine hW (Polynomial.eq_zero_of_infinite_isRoot _ ?_)
-    have huniv : {x : K | (Polynomial.hasseWronskianDet fun j ↦ kroneckerHom e (φ j)).IsRoot x}
-        = Set.univ := Set.eq_univ_of_forall fun x ↦ hcon x
-    rw [huniv]
-    exact Set.infinite_univ
-  obtain ⟨S, hS⟩ : ∃ S : Finset (σ →₀ ℕ),
-      S = Finset.univ.biUnion fun j ↦ (taylorAt (fun t ↦ a ^ e t) (φ j)).support := ⟨_, rfl⟩
-  obtain ⟨Sf, hSf⟩ : ∃ Sf : Fin n → Finset (σ →₀ ℕ),
-      Sf = fun (i : Fin n) ↦ S.filter fun ν ↦ ν.degree ≤ (i : ℕ) := ⟨_, rfl⟩
-  obtain ⟨lam, hlam⟩ : ∃ lam : Fin n → (σ →₀ ℕ) → K,
-      lam = fun (i : Fin n) ν ↦ (kroneckerShift e a (monomial ν (1 : K))).coeff (i : ℕ) :=
-    ⟨_, rfl⟩
-  obtain ⟨v, hv⟩ : ∃ v : (σ →₀ ℕ) → (Fin n → K),
-      v = fun ν j ↦ eval (fun t ↦ a ^ e t) (hasseDeriv ν (φ j)) := ⟨_, rfl⟩
-  obtain ⟨A, hA⟩ : ∃ A : Matrix (Fin n) (Fin n) K, A = (Polynomial.hasseWronskianMatrix
-      fun j ↦ kroneckerHom e (φ j)).map (Polynomial.evalRingHom a) := ⟨_, rfl⟩
-  have hAdet : A.det ≠ 0 := by
-    rw [hA, ← RingHom.mapMatrix_apply, ← RingHom.map_det]
-    exact ha
-  have hrows : (fun i ↦ A i) = fun i ↦ ∑ ν ∈ Sf i, lam i ν • v ν := by
-    funext i
-    funext j
-    rw [hA]
-    simp only [Matrix.map_apply, Polynomial.hasseWronskianMatrix_apply,
-      Polynomial.coe_evalRingHom]
-    rw [eval_hasseDeriv_kroneckerHom e a (φ j) S (hS ▸ fun ν hν ↦
-      Finset.mem_biUnion.mpr ⟨j, Finset.mem_univ j, hν⟩) (i : ℕ)]
-    rw [hSf, hlam, hv, Finset.sum_apply]
-    rfl
-  have hexp : A.det = ∑ p ∈ Fintype.piFinset Sf,
-      (∏ i, lam i (p i)) * (Matrix.of fun i j ↦ v (p i) j).det := by
-    calc A.det
-        = Matrix.detRowAlternating.toMultilinearMap (fun i ↦ ∑ ν ∈ Sf i, lam i ν • v ν) := by
-          rw [← hrows]; rfl
-      _ = ∑ p ∈ Fintype.piFinset Sf,
-            Matrix.detRowAlternating.toMultilinearMap (fun i ↦ lam i (p i) • v (p i)) :=
-          MultilinearMap.map_sum_finset _ _ _
-      _ = _ := by
-          refine Finset.sum_congr rfl fun p _ ↦ ?_
-          rw [MultilinearMap.map_smul_univ]
-          rfl
-  rw [hexp] at hAdet
-  obtain ⟨p, hp, hpne⟩ := Finset.exists_ne_zero_of_sum_ne_zero hAdet
-  refine ⟨p, fun i ↦ ?_, fun hz ↦ right_ne_zero_of_mul hpne ?_⟩
-  · rw [hSf] at hp
-    exact (Finset.mem_filter.mp (Fintype.mem_piFinset.mp hp i)).2
-  · have hmat : (Matrix.of fun i j ↦ v (p i) j)
-        = (genWronskianMatrix p φ).map (eval fun t ↦ a ^ e t) := by
-      refine Matrix.ext fun i j ↦ ?_
-      rw [hv]
-      rfl
-    rw [hmat, ← RingHom.mapMatrix_apply, ← RingHom.map_det, ← genWronskian, hz, map_zero]
-
-/-- **The generalized Wronskian criterion** (Bombieri–Gubler, Proposition 6.3.10). Over a field of
-characteristic zero, polynomials in any number of variables are linearly independent over the
-field exactly when some generalized Wronskian, the `i`-th row differentiating at total order at
-most `i`, is not the zero polynomial. -/
-theorem linearIndependent_iff_exists_genWronskian_ne_zero {K : Type*} [Field K] [CharZero K]
-    (φ : Fin n → MvPolynomial σ K) :
-    LinearIndependent K φ ↔
-      ∃ μ : Fin n → (σ →₀ ℕ), (∀ i, (μ i).degree ≤ (i : ℕ)) ∧ genWronskian μ φ ≠ 0 := by
-  refine ⟨exists_genWronskian_ne_zero, fun ⟨μ, _, hμ⟩ ↦ ?_⟩
-  by_contra hn
-  exact hμ (genWronskian_eq_zero_of_not_linearIndependent hn μ)
 
 /-! ### Acceptance criteria -/
 
@@ -415,16 +310,17 @@ example : genWronskian ![0, Finsupp.single 0 1, Finsupp.single 1 1]
     ∀ i, ((![0, Finsupp.single 0 1, Finsupp.single 1 1] : Fin 3 → (Fin 2 →₀ ℕ)) i).degree
       ≤ (i : ℕ) := by
   refine ⟨?_, fun i ↦ ?_⟩
-  · rw [genWronskian, Matrix.det_fin_three]
-    simp [genWronskianMatrix, hasseDeriv_single_one, pderiv_X]
+  · rw [genWronskian_def, Matrix.det_fin_three]
+    simp [genWronskianMatrix, Matrix.of_apply, hasseDeriv_single_one, pderiv_X,
+      Finsupp.single_eq_single_iff]
   · fin_cases i <;> simp [Finsupp.degree_single]
 
 /-- **Acceptance test (the roadmap's): every generalized Wronskian of `X, Y, X + Y` vanishes**,
 at every family of orders, because the three are linearly dependent. -/
 example (μ : Fin 3 → (Fin 2 →₀ ℕ)) :
     genWronskian μ (![X 0, X 1, X 0 + X 1] : Fin 3 → MvPolynomial (Fin 2) ℚ) = 0 := by
-  refine genWronskian_eq_zero_of_not_linearIndependent (Fintype.not_linearIndependent_iff.mpr
-    ⟨![1, 1, -1], ?_, 0, by norm_num⟩) μ
+  refine genWronskian_eq_zero_of_not_linearIndependent μ (Fintype.not_linearIndependent_iff.mpr
+    ⟨![1, 1, -1], ?_, 0, by norm_num⟩)
   simp [Fin.sum_univ_three]
   ring
 
@@ -453,9 +349,9 @@ example : LinearIndependent (ZMod 2) (![1, X () ^ 2] : Fin 2 → MvPolynomial Un
       have := hμ 0
       simp only [Fin.isValue, Fin.val_zero, Nat.le_zero] at this
       exact (Finsupp.degree_eq_zero_iff (μ 0)).mp this
-    rw [genWronskian, Matrix.det_fin_two]
+    rw [genWronskian_def, Matrix.det_fin_two]
     rcases eq_or_ne (μ 1) 0 with h1 | h1
-    · simp [genWronskianMatrix, h0, h1, mul_comm]
+    · simp [genWronskianMatrix, Matrix.of_apply, h0, h1, mul_comm]
     · have hval : μ 1 = Finsupp.single () 1 := by
         have hu := Finsupp.unique_single (μ 1)
         have hle : (μ 1) default ≤ 1 := by

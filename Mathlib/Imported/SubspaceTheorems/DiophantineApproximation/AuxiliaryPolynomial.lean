@@ -9,7 +9,6 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.BombieriVaaler
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.IndexConditions
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MonomialHeight
 
-
 /-!
 # The auxiliary polynomial
 
@@ -261,7 +260,6 @@ theorem auxiliaryPolynomial_numeric_bound {r S κ ε δ Δ lm G D L : ℝ}
     = r / (1 - r * S) * (δ * S * D) + r / (1 - r * S) * G by ring]
   linarith
 
-
 end MvPolynomial
 
 /-! ### The absolute height of a condition row -/
@@ -298,7 +296,7 @@ theorem absLogHeight_hasseDerivRow_le {F : Type*} [Field F] [NumberField F] {m :
   have h1 := Real.log_le_log (arakelovMulHeight_pos (hasseDerivRow d α μ))
     (arakelovMulHeight_le_mulHeight (hasseDerivRow d α μ))
   rw [Real.log_mul (by positivity) hpos1.ne', Real.log_rpow hcard, htw] at h1
-  have h2 := Real.log_le_log hpos1 (mulHeight_hasseDerivRow_le α hmu)
+  have h2 := Real.log_le_log hpos1 (mulHeight_hasseDerivRow_le d α μ)
   rw [Real.log_mul (by positivity) (by positivity),
     Real.log_prod (fun j _ ↦ by positivity)] at h2
   have h3 : Real.log (((2 : ℝ) ^ (∑ j, d j)) ^ Height.totalWeight F)

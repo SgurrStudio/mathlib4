@@ -7,7 +7,10 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.UnitHeight
 public import Mathlib.RingTheory.DedekindDomain.SInteger
-
+public import Mathlib.Imported.TauCeti.RingTheory.DedekindDomain.SInteger.Unit
+public import Mathlib.Imported.TauCeti.RingTheory.DedekindDomain.SInteger.Basic
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.SInteger
 
 /-!
 # `S`-integers, `S`-units, and where their height lives
@@ -113,24 +116,6 @@ variable {K : Type*} [Field K] [NumberField K]
 
 namespace FinitePlace
 
-/-- **An element is `v`-integral iff its absolute value at the corresponding finite place is at
-most `1`.** -/
-theorem mk_apply_le_one_iff (v : HeightOneSpectrum (𝓞 K)) (x : K) :
-    mk v x ≤ 1 ↔ v.valuation K x ≤ 1 := by
-  rw [mk_apply, norm_embedding, HeightOneSpectrum.adicAbv_def,
-    show (1 : ℝ) = ((1 : NNReal) : ℝ) from rfl, NNReal.coe_le_coe]
-  exact WithZeroMulInt.toNNReal_le_one_iff (HeightOneSpectrum.one_lt_absNorm_nnreal v)
-
-/-- **An element is a `v`-unit iff its absolute value at the corresponding finite place is `1`.**
-This is the dictionary the whole file runs on; Mathlib's
-`NumberField.FinitePlace.norm_eq_one_iff_notMem` is its restriction to algebraic integers. -/
-theorem mk_apply_eq_one_iff (v : HeightOneSpectrum (𝓞 K)) (x : K) :
-    mk v x = 1 ↔ v.valuation K x = 1 := by
-  rw [mk_apply, norm_embedding, HeightOneSpectrum.adicAbv_def,
-    show (1 : ℝ) = ((1 : NNReal) : ℝ) from rfl, NNReal.coe_inj]
-  exact WithZeroMulInt.toNNReal_eq_one_iff _ (HeightOneSpectrum.absNorm_ne_zero v)
-    (HeightOneSpectrum.one_lt_absNorm_nnreal v).ne'
-
 /-- `mk_apply_le_one_iff` for a finite place presented as such. -/
 theorem apply_le_one_iff (w : FinitePlace K) (x : K) :
     w x ≤ 1 ↔ w.maximalIdeal.valuation K x ≤ 1 := by
@@ -146,18 +131,6 @@ end FinitePlace
 /-!
 ### Membership in the `S`-integers and the `S`-units
 -/
-
-/-- **An `S`-integer is an element whose absolute values at the finite places outside `S` are at
-most `1`.** -/
-theorem _root_.Set.mem_integer_iff_finitePlace (S : Set (HeightOneSpectrum (𝓞 K))) (x : K) :
-    x ∈ S.integer K ↔ ∀ v ∉ S, FinitePlace.mk v x ≤ 1 :=
-  forall₂_congr fun v _ ↦ (FinitePlace.mk_apply_le_one_iff v x).symm
-
-/-- **An `S`-unit is an element of `Kˣ` whose absolute values at the finite places outside `S` are
-all `1`.** The backwards direction is the converse the milestone asks for. -/
-theorem _root_.Set.mem_unit_iff_finitePlace (S : Set (HeightOneSpectrum (𝓞 K))) (x : Kˣ) :
-    x ∈ S.unit K ↔ ∀ v ∉ S, FinitePlace.mk v (x : K) = 1 :=
-  forall₂_congr fun v _ ↦ (FinitePlace.mk_apply_eq_one_iff v (x : K)).symm
 
 /-- `Set.mem_unit_iff_finitePlace` for a nonzero element of `K` rather than an element of `Kˣ`. -/
 theorem _root_.Set.mk0_mem_unit_iff_finitePlace (S : Set (HeightOneSpectrum (𝓞 K))) {x : K}
@@ -183,65 +156,7 @@ private theorem max_mk_apply_one_eq_one {x : K} (hx : x ∈ S.integer K)
     {v : HeightOneSpectrum (𝓞 K)} (hv : v ∉ S) : max (FinitePlace.mk v x) 1 = 1 :=
   max_eq_right ((FinitePlace.mk_apply_le_one_iff v x).mpr (hx v hv))
 
-/-- **The height of an `S`-integer is carried by the infinite places and the places of `S`.**
-The `S`-unit case of this is Bombieri–Gubler 1.5.10; the hypothesis the proof uses is only that
-`x` is an `S`-integer. -/
-theorem mulHeight₁_eq_of_mem_integer {x : K} (hx : x ∈ S.integer K) :
-    mulHeight₁ x
-      = (∏ w : InfinitePlace K, max (w x) 1 ^ w.mult)
-        * ∏ᶠ v ∈ S, max (FinitePlace.mk v x) 1 := by
-  rw [NumberField.mulHeight₁_eq]
-  congr 1
-  rw [← finprod_comp_equiv (FinitePlace.equivHeightOneSpectrum (K := K)).symm]
-  simp only [FinitePlace.equivHeightOneSpectrum_symm_apply, ← FinitePlace.mk_apply]
-  rw [← finprod_mem_univ]
-  refine finprod_mem_inter_mulSupport_eq' _ Set.univ S fun v hv ↦ ?_
-  simp only [Set.mem_univ, true_iff]
-  by_contra hvS
-  exact hv (max_mk_apply_one_eq_one S hx hvS)
-
-/-- The logarithmic form of `NumberField.mulHeight₁_eq_of_mem_integer`. -/
-theorem logHeight₁_eq_of_mem_integer {x : K} (hx : x ∈ S.integer K) :
-    logHeight₁ x
-      = (∑ w : InfinitePlace K, w.mult * log⁺ (w x))
-        + ∑ᶠ v ∈ S, log⁺ (FinitePlace.mk v x) := by
-  rw [NumberField.logHeight₁_eq]
-  congr 1
-  rw [← finsum_comp_equiv (FinitePlace.equivHeightOneSpectrum (K := K)).symm]
-  simp only [FinitePlace.equivHeightOneSpectrum_symm_apply, ← FinitePlace.mk_apply]
-  rw [← finsum_mem_univ]
-  refine finsum_mem_inter_support_eq' _ Set.univ S fun v hv ↦ ?_
-  simp only [Set.mem_univ, true_iff]
-  by_contra hvS
-  refine hv ?_
-  change log⁺ (FinitePlace.mk v x) = 0
-  rw [posLog_eq_log_max_one (apply_nonneg _ _), max_comm,
-    max_mk_apply_one_eq_one S hx hvS, log_one]
-
-/-- **The height of an `S`-unit**, the statement of Bombieri–Gubler 1.5.10. -/
-theorem mulHeight₁_eq_of_mem_unit {x : Kˣ} (hx : x ∈ S.unit K) :
-    mulHeight₁ (x : K)
-      = (∏ w : InfinitePlace K, max (w (x : K)) 1 ^ w.mult)
-        * ∏ᶠ v ∈ S, max (FinitePlace.mk v (x : K)) 1 :=
-  mulHeight₁_eq_of_mem_integer S (Set.mem_integer_of_mem_unit hx)
-
-/-- The logarithmic form of `NumberField.mulHeight₁_eq_of_mem_unit`. -/
-theorem logHeight₁_eq_of_mem_unit {x : Kˣ} (hx : x ∈ S.unit K) :
-    logHeight₁ (x : K)
-      = (∑ w : InfinitePlace K, w.mult * log⁺ (w (x : K)))
-        + ∑ᶠ v ∈ S, log⁺ (FinitePlace.mk v (x : K)) :=
-  logHeight₁_eq_of_mem_integer S (Set.mem_integer_of_mem_unit hx)
-
 end Height
-
-/-- `NumberField.mulHeight₁_eq_of_mem_integer` with `S` a `Finset`, so that the finite part is an
-ordinary product. This is the form Layer 6.5 consumes, `S` there being finite. -/
-theorem mulHeight₁_eq_prod_of_mem_integer (S : Finset (HeightOneSpectrum (𝓞 K))) {x : K}
-    (hx : x ∈ (S : Set (HeightOneSpectrum (𝓞 K))).integer K) :
-    mulHeight₁ x
-      = (∏ w : InfinitePlace K, max (w x) 1 ^ w.mult)
-        * ∏ v ∈ S, max (FinitePlace.mk v x) 1 := by
-  rw [mulHeight₁_eq_of_mem_integer _ hx, finprod_mem_coe_finset]
 
 /-!
 ### The identity characterizes the `S`-integers
@@ -258,50 +173,6 @@ private theorem hasFiniteMulSupport_max_mk_apply_one {x : K} (hx : x ≠ 0) :
   intro hone
   exact hv (by rw [show FinitePlace.mk v x = 1 from hone, max_self])
 
-/-- **The display of `NumberField.mulHeight₁_eq_of_mem_integer` characterizes the `S`-integers.**
-Every local factor is at least `1`, so a finite place outside `S` at which `x` has absolute value
-greater than `1` makes the full finite product strictly larger than its part over `S`. -/
-theorem mulHeight₁_eq_iff_mem_integer (S : Set (HeightOneSpectrum (𝓞 K))) {x : K} (hx : x ≠ 0) :
-    mulHeight₁ x
-        = (∏ w : InfinitePlace K, max (w x) 1 ^ w.mult)
-          * ∏ᶠ v ∈ S, max (FinitePlace.mk v x) 1
-      ↔ x ∈ S.integer K := by
-  refine ⟨fun h v hv ↦ ?_, mulHeight₁_eq_of_mem_integer S⟩
-  rw [← FinitePlace.mk_apply_le_one_iff]
-  have hone : ∀ w : HeightOneSpectrum (𝓞 K), (1 : ℝ) ≤ max (FinitePlace.mk w x) 1 :=
-    fun w ↦ le_max_right _ _
-  have hfin := hasFiniteMulSupport_max_mk_apply_one (K := K) hx
-  have harch : (∏ w : InfinitePlace K, max (w x) 1 ^ w.mult) ≠ 0 :=
-    (Finset.prod_pos fun w _ ↦ pow_pos (lt_of_lt_of_le zero_lt_one (le_max_right _ _)) _).ne'
-  -- the full finite product coincides with its part over `S`
-  have hall : ∏ᶠ w : HeightOneSpectrum (𝓞 K), max (FinitePlace.mk w x) 1
-      = ∏ᶠ w ∈ S, max (FinitePlace.mk w x) 1 := by
-    rw [NumberField.mulHeight₁_eq] at h
-    replace h := mul_left_cancel₀ harch h
-    rw [← finprod_comp_equiv (FinitePlace.equivHeightOneSpectrum (K := K)).symm] at h
-    simpa only [FinitePlace.equivHeightOneSpectrum_symm_apply, ← FinitePlace.mk_apply] using h
-  -- so the part outside `S` is trivial
-  have hsplit := finprod_mem_inter_mul_sdiff'
-    (f := fun w : HeightOneSpectrum (𝓞 K) ↦ max (FinitePlace.mk w x) 1) (s := Set.univ) S
-    (by rw [Set.univ_inter]; exact hfin)
-  rw [Set.univ_inter, ← Set.compl_eq_univ_sdiff, finprod_mem_univ, hall] at hsplit
-  have hSpos : (0 : ℝ) < ∏ᶠ w ∈ S, max (FinitePlace.mk w x) 1 :=
-    lt_of_lt_of_le zero_lt_one (one_le_finprod fun w ↦ one_le_finprod fun _ ↦ hone w)
-  have hcompl : ∏ᶠ w ∈ Sᶜ, max (FinitePlace.mk w x) 1 = 1 :=
-    mul_left_cancel₀ hSpos.ne' (by rw [mul_one]; exact hsplit)
-  -- and then so is the single factor at `v`
-  have hsing := finprod_mem_inter_mul_sdiff'
-    (f := fun w : HeightOneSpectrum (𝓞 K) ↦ max (FinitePlace.mk w x) 1) (s := Sᶜ) {v}
-    (hfin.subset Set.inter_subset_right)
-  rw [Set.inter_eq_self_of_subset_right (Set.singleton_subset_iff.mpr hv), finprod_mem_singleton,
-    hcompl] at hsing
-  have hrest : (1 : ℝ) ≤ ∏ᶠ w ∈ (Sᶜ \ {v} : Set (HeightOneSpectrum (𝓞 K))),
-      max (FinitePlace.mk w x) 1 :=
-    one_le_finprod fun w ↦ one_le_finprod fun _ ↦ hone w
-  have key := mul_le_mul_of_nonneg_left hrest (le_trans zero_le_one (hone v))
-  rw [mul_one, hsing] at key
-  exact le_of_max_le_left key
-
 /-!
 ### `S = ∅`
 -/
@@ -315,33 +186,6 @@ theorem valuation_eq_one (v : HeightOneSpectrum (𝓞 K)) (u : (𝓞 K)ˣ) :
   (FinitePlace.mk_apply_eq_one_iff v _).mp (FinitePlace.apply_units_eq_one (FinitePlace.mk v) u)
 
 end Units
-
-/-- **The `∅`-integers are the algebraic integers.** This is Mathlib's
-`IsDedekindDomain.integer_empty` on elements. -/
-theorem _root_.Set.mem_integer_empty_iff {x : K} :
-    x ∈ (∅ : Set (HeightOneSpectrum (𝓞 K))).integer K ↔ ∃ a : 𝓞 K, algebraMap (𝓞 K) K a = x :=
-  ⟨fun hx ↦ HeightOneSpectrum.mem_integers_of_valuation_le_one K x
-      fun v ↦ hx v (Set.notMem_empty v),
-    fun ⟨a, ha⟩ v _ ↦ ha ▸ v.valuation_le_one a⟩
-
-/-- **The `∅`-units are the units of `𝓞 K`.** Mathlib reaches this through `integer_empty` and
-`Set.unitEquivUnitsInteger`; the argument here is direct, and is the statement rather than the
-equivalence. -/
-theorem _root_.Set.mem_unit_empty_iff {x : Kˣ} :
-    x ∈ (∅ : Set (HeightOneSpectrum (𝓞 K))).unit K ↔ ∃ u : (𝓞 K)ˣ, ((u : 𝓞 K) : K) = (x : K) := by
-  constructor
-  · intro hx
-    obtain ⟨a, ha⟩ := HeightOneSpectrum.mem_integers_of_valuation_le_one K (x : K)
-      fun v ↦ (hx v (Set.notMem_empty v)).le
-    obtain ⟨b, hb⟩ := HeightOneSpectrum.mem_integers_of_valuation_le_one K ((x⁻¹ : Kˣ) : K)
-      fun v ↦ ((inv_mem hx) v (Set.notMem_empty v)).le
-    have hab : a * b = 1 := by
-      apply FaithfulSMul.algebraMap_injective (𝓞 K) K
-      rw [map_mul, ha, hb, map_one, ← Units.val_mul, mul_inv_cancel, Units.val_one]
-    exact ⟨⟨a, b, hab, by rw [mul_comm]; exact hab⟩, ha⟩
-  · rintro ⟨u, hu⟩ v -
-    rw [← hu]
-    exact Units.valuation_eq_one v u
 
 /-!
 ### The finite part of the height of a rational
@@ -386,7 +230,7 @@ example (u : (𝓞 K)ˣ) :
 `Set.mem_unit_empty_iff` on elements. -/
 example (u : (𝓞 K)ˣ) (hu : ((u : 𝓞 K) : K) ≠ 0) :
     Units.mk0 _ hu ∈ (∅ : Set (HeightOneSpectrum (𝓞 K))).unit K :=
-  Set.mem_unit_empty_iff.mpr ⟨u, rfl⟩
+  (Set.mem_unit_empty_iff (R := 𝓞 K) K).2 ⟨u, rfl⟩
 
 /-- **Acceptance test: the finite part of the height of a rational.** The roadmap names
 `∏ᶠ w, w q = (|q| ^ [K : ℚ])⁻¹` as the check for this layer. At `q = 2` it says that the finite

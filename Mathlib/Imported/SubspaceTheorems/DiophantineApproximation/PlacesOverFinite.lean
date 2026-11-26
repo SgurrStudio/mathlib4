@@ -12,7 +12,6 @@ public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 import Mathlib.RingTheory.DedekindDomain.AdicValuation.Completion
 import Mathlib.RingTheory.DedekindDomain.AdicValuation.Valuation
 
-
 /-!
 # The absolute values of a number field lying over a finite place
 
@@ -385,9 +384,10 @@ theorem exists_apply_algebraMap_eq_mk_rpow (P : HeightOneSpectrum (𝓞 K)) {t :
   have hn0 : 0 < n :=
     Nat.mul_pos (R.asIdeal.ramificationIdx_pos (𝓞 K)) (R.asIdeal.inertiaDeg_pos (𝓞 K))
   have hnR : (0 : ℝ) < ((n : ℕ) : ℝ) := by exact_mod_cast hn0
-  refine ⟨AbsoluteValue.nonarchRpow (FinitePlace.isNonarchimedean_mk R) (div_pos ht hnR),
+  refine ⟨AbsoluteValue.nonarchRpow _ (FinitePlace.isNonarchimedean_mk R) (div_pos ht hnR),
     fun u => ?_⟩
   have hb : (0 : ℝ) ≤ FinitePlace.mk P u := apply_nonneg _ u
+  rw [AbsoluteValue.nonarchRpow_apply]
   change FinitePlace.mk R (algebraMap K F u) ^ (t / (n : ℝ)) = FinitePlace.mk P u ^ t
   rw [FinitePlace.mk_algebraMap P R u, ← Real.rpow_natCast _ n, ← Real.rpow_mul hb]
   congr 1

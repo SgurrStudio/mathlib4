@@ -6,7 +6,7 @@ Authors: Ralf Stephan
 module
 
 public import Mathlib.NumberTheory.Height.NumberField
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Affine
 
 /-!
 # The affine height of a tuple
@@ -73,25 +73,6 @@ namespace Height
 
 variable {K : Type*} [Field K] [AdmissibleAbsValues K] {ι ι' : Type*}
 
-/-- The **affine height** of a tuple: the projective height of the tuple with a coordinate `1`
-appended.
-
-Unlike `Height.mulHeight` this is not invariant under scaling
-(`Height.exists_mulHeightAff_smul_ne`), and that is exactly what a bound on a non-homogeneous
-quantity needs: the value `∑ i, a i * x i` of a linear form is not a function on projective
-space, so no scaling-invariant quantity can bound its height. The affine height dominates the
-projective height (`Height.mulHeight_le_mulHeightAff`) and the height of every single coordinate
-(`Height.mulHeight₁_le_mulHeightAff`), neither of which `mulHeight` does. -/
-@[expose] noncomputable def mulHeightAff (x : ι → K) : ℝ := mulHeight fun o : Option ι ↦ o.elim 1 x
-
-/-- The affine logarithmic height of a tuple. As everywhere in this development, the logarithmic
-height is *defined* as the logarithm of the multiplicative one. -/
-@[expose] noncomputable def logHeightAff (x : ι → K) : ℝ := log (mulHeightAff x)
-
-theorem logHeightAff_eq_log_mulHeightAff (x : ι → K) :
-    logHeightAff x = log (mulHeightAff x) :=
-  rfl
-
 omit [AdmissibleAbsValues K] in
 /-- The tuple whose height is `Height.mulHeightAff x` is never zero: its coordinate at `none`
 is `1`. This is what makes the affine height positive with no hypothesis on `x`, and it is the
@@ -103,118 +84,12 @@ section Affine
 
 variable [Finite ι]
 
-theorem one_le_mulHeightAff (x : ι → K) : 1 ≤ mulHeightAff x := one_le_mulHeight _
-
-theorem mulHeightAff_pos (x : ι → K) : 0 < mulHeightAff x := mulHeight_pos _
-
-theorem mulHeightAff_ne_zero (x : ι → K) : mulHeightAff x ≠ 0 := mulHeight_ne_zero _
-
-theorem logHeightAff_nonneg (x : ι → K) : 0 ≤ logHeightAff x := logHeight_nonneg _
-
-/-- The projective height of a tuple is at most its affine height. -/
-theorem mulHeight_le_mulHeightAff (x : ι → K) : mulHeight x ≤ mulHeightAff x :=
-  mulHeight_comp_le some fun o : Option ι ↦ o.elim 1 x
-
-/-- The logarithmic form of `Height.mulHeight_le_mulHeightAff`. -/
-theorem logHeight_le_logHeightAff (x : ι → K) : logHeight x ≤ logHeightAff x :=
-  log_le_log (mulHeight_pos _) (mulHeight_le_mulHeightAff x)
-
-/-- The affine height of a tuple dominates the affine height of each of its coordinates. This is
-false for `Height.mulHeight`, which is invariant under scaling. -/
-theorem mulHeight₁_le_mulHeightAff (x : ι → K) (i : ι) : mulHeight₁ (x i) ≤ mulHeightAff x := by
-  have h : (![x i, 1] : Fin 2 → K) = (fun o : Option ι ↦ o.elim 1 x) ∘ ![some i, none] := by
-    ext j
-    fin_cases j <;> rfl
-  rw [mulHeight₁_eq_mulHeight, h]
-  exact mulHeight_comp_le _ _
-
-/-- The logarithmic form of `Height.mulHeight₁_le_mulHeightAff`. -/
-theorem logHeight₁_le_logHeightAff (x : ι → K) (i : ι) : logHeight₁ (x i) ≤ logHeightAff x :=
-  log_le_log (mulHeight₁_pos _) (mulHeight₁_le_mulHeightAff x i)
-
-/-- The affine height is monotone under re-indexing: the appended coordinate `1` is common to
-both tuples, so re-indexing along `f` is re-indexing along `Option.map f`. -/
-theorem mulHeightAff_comp_le [Finite ι'] (f : ι → ι') (x : ι' → K) :
-    mulHeightAff (x ∘ f) ≤ mulHeightAff x := by
-  have h : (fun o : Option ι ↦ o.elim 1 (x ∘ f))
-      = (fun o : Option ι' ↦ o.elim 1 x) ∘ Option.map f := by
-    funext o
-    cases o <;> rfl
-  rw [mulHeightAff, mulHeightAff, h]
-  exact mulHeight_comp_le _ _
-
-/-- The logarithmic form of `Height.mulHeightAff_comp_le`. -/
-theorem logHeightAff_comp_le [Finite ι'] (f : ι → ι') (x : ι' → K) :
-    logHeightAff (x ∘ f) ≤ logHeightAff x :=
-  log_le_log (mulHeightAff_pos _) (mulHeightAff_comp_le f x)
-
-omit [Finite ι] in
-/-- The affine height does not change under a bijective re-indexing. -/
-theorem mulHeightAff_comp_equiv (e : ι ≃ ι') (x : ι' → K) :
-    mulHeightAff (x ∘ e) = mulHeightAff x := by
-  have h : (fun o : Option ι ↦ o.elim 1 (x ∘ e))
-      = (fun o : Option ι' ↦ o.elim 1 x) ∘ Equiv.optionCongr e := by
-    funext o
-    cases o <;> rfl
-  rw [mulHeightAff, mulHeightAff, h]
-  exact mulHeight_comp_equiv _ _
-
-omit [Finite ι] in
-/-- The logarithmic form of `Height.mulHeightAff_comp_equiv`. -/
-theorem logHeightAff_comp_equiv (e : ι ≃ ι') (x : ι' → K) :
-    logHeightAff (x ∘ e) = logHeightAff x := by
-  rw [logHeightAff_eq_log_mulHeightAff, logHeightAff_eq_log_mulHeightAff, mulHeightAff_comp_equiv]
-
-/-- The affine height of the zero tuple is `1` — not by a junk-value convention but because the
-tuple whose height is taken is `(1, 0, …, 0)`. -/
-@[simp]
-theorem mulHeightAff_zero : mulHeightAff (0 : ι → K) = 1 := by
-  have hsup (v : AbsoluteValue K ℝ) :
-      (⨆ o : Option ι, v (Option.elim o 1 (0 : ι → K))) = 1 :=
-    le_antisymm (ciSup_le fun o ↦ by cases o <;> simp)
-      (Finite.le_ciSup_of_le none (by simp))
-  rw [mulHeightAff, mulHeight_eq (optionElim_one_ne_zero (0 : ι → K))]
-  simp [hsup]
-
-@[simp]
-theorem logHeightAff_zero : logHeightAff (0 : ι → K) = 0 := by
-  rw [logHeightAff_eq_log_mulHeightAff, mulHeightAff_zero, log_one]
-
 end Affine
-
-/-- **The affine height extends Mathlib's `Height.mulHeight₁`**: on a one-element tuple the two
-agree. This is the check that the appended coordinate is the right one; a definition that
-appended a different constant, or that normalized by the degree, would fail it. -/
-theorem mulHeightAff_fin_one (x : K) : mulHeightAff ![x] = mulHeight₁ x := by
-  have h : (fun o : Option (Fin 1) ↦ o.elim 1 ![x]) ∘ finSuccEquiv 1 = ![(1 : K), x] := by
-    ext j
-    fin_cases j <;> rfl
-  rw [mulHeightAff, ← mulHeight_comp_equiv (finSuccEquiv 1), h, mulHeight_swap,
-    ← mulHeight₁_eq_mulHeight]
-
-/-- The logarithmic form of `Height.mulHeightAff_fin_one`. -/
-theorem logHeightAff_fin_one (x : K) : logHeightAff ![x] = logHeight₁ x := by
-  rw [logHeightAff_eq_log_mulHeightAff, logHeight₁_eq_log_mulHeight₁, mulHeightAff_fin_one]
 
 /-- The affine height of `![2]` over `ℚ` is `2`. -/
 private lemma mulHeightAff_two : mulHeightAff (![2] : Fin 1 → ℚ) = 2 := by
   rw [show (![2] : Fin 1 → ℚ) = ![((2 : ℕ) : ℚ)] by norm_num, mulHeightAff_fin_one,
     Rat.mulHeight₁_natCast]
-  norm_num
-
-/-- **The affine height is not invariant under scaling.** Over `ℚ`, doubling the tuple `![1]`
-doubles its affine height. This is the whole point of the definition: a bound on a quantity that
-scales with its argument — the value of a linear form, the determinant of a matrix — cannot have
-a scaling-invariant right-hand side, so `Height.mulHeight` cannot appear there and
-`Height.mulHeightAff` must. -/
-theorem exists_mulHeightAff_smul_ne :
-    ∃ (c : ℚ) (x : Fin 1 → ℚ), c ≠ 0 ∧ mulHeightAff (c • x) ≠ mulHeightAff x := by
-  refine ⟨2, ![1], two_ne_zero, ?_⟩
-  have h : (2 : ℚ) • (![1] : Fin 1 → ℚ) = ![2] := by
-    ext j
-    fin_cases j
-    norm_num
-  rw [h, mulHeightAff_two, mulHeightAff_fin_one, mulHeight₁_one]
   norm_num
 
 /-!

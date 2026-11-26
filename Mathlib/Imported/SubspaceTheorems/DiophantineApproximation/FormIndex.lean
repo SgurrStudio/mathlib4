@@ -10,7 +10,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.Polynom
 public import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 public import Mathlib.RingTheory.Ideal.Span
 
-
 /-!
 # The index of a polynomial along a family of linear forms
 
@@ -431,7 +430,7 @@ theorem isMultiHomogeneous_aeval {d : κ → ℕ} {g : κ × ι → MvPolynomial
     {P : MvPolynomial (κ × ι) K} (hP : IsMultiHomogeneous d P) :
     IsMultiHomogeneous d (aeval g P) := by
   rw [isMultiHomogeneous_iff] at hP ⊢
-  exact IsWeightedHomogeneous.aeval hg hP
+  exact hP.aeval hg
 
 omit [DecidableEq κ] in
 /-- **The change of coordinates preserves multihomogeneity**: it is linear in each block. -/

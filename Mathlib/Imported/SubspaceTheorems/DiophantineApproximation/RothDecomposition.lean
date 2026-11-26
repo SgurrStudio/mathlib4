@@ -11,7 +11,6 @@ public import Mathlib.Algebra.MvPolynomial.Equiv
 public import Mathlib.LinearAlgebra.Dimension.Finrank
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 
-
 /-!
 # The separation of the last variable, and the two Wronskians
 
@@ -315,7 +314,7 @@ theorem det_hasseDerivMatrix {p : ℕ} {P : MvPolynomial (Fin (m + 1)) K}
       exact Finset.sum_congr rfl fun l _ ↦ hasseDeriv_add_rename_mul _ _ _ _
     rw [hij, Matrix.mul_apply]
     rfl
-  rw [hmat, Matrix.det_mul, Matrix.det_transpose, genWronskian, genWronskian,
+  rw [hmat, Matrix.det_mul, Matrix.det_transpose, genWronskian_def, genWronskian_def,
     AlgHom.map_det, AlgHom.map_det]
   rfl
 

@@ -16,7 +16,6 @@ import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesOverFini
 import Mathlib.Algebra.Module.ZLattice.Basic
 import Mathlib.Algebra.Ring.GeomSum
 
-
 /-!
 # Simultaneous approximation by `S`-integers
 
@@ -89,7 +88,7 @@ theorem exists_apply_add_le_one (v₀ : FinitePlace K) (γ : K) :
   · exact ⟨0, by simp, fun w _ ↦ by simp⟩
   set T : Finset (FinitePlace K) := (FinitePlace.hasFiniteMulSupport hγ).toFinset.erase v₀
     with hT
-  obtain ⟨s, hs₀, hsT⟩ := exists_apply_eq_one_forall_apply_le v₀ T (Finset.notMem_erase v₀ _)
+  obtain ⟨s, hs₀, hsT⟩ := exists_apply_eq_one_forall_apply_le v₀ (T := T) (Finset.notMem_erase v₀ _)
     (ε := fun w ↦ (w γ)⁻¹) fun w _ ↦ inv_pos.2 ((pos_iff).2 hγ)
   have hsnot : s ∉ v₀.maximalIdeal.asIdeal := by
     rw [← FinitePlace.mk_eq_one_iff_notMem, ← apply_eq_mk_maximalIdeal]

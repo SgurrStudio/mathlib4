@@ -13,10 +13,10 @@ public import Mathlib.Algebra.MvPolynomial.PDeriv
 public import Mathlib.Algebra.Order.Antidiag.FinsuppEquiv
 public import Mathlib.Data.Matrix.Mul
 public import Mathlib.RingTheory.MvPolynomial.WeightedHomogeneous
+public import Mathlib.Imported.TauCeti.RingTheory.MvPolynomial.WeightedHomogeneous
 
 -- Used only inside proofs.
 import Mathlib.RingTheory.MvPolynomial.Ideal
-
 
 /-!
 # Multihomogeneous polynomials and the substitution by linear forms
@@ -175,28 +175,6 @@ theorem IsWeightedHomogeneous.finset_sum {α : Type*} {s : Finset α}
       exact (h a (Finset.mem_insert_self a s)).add
         (ih fun b hb ↦ h b (Finset.mem_insert_of_mem hb))
 
-/-- **A substitution that respects the weights preserves weighted homogeneity.** The substituted
-variables may live in another type, carrying their own weights: what is asked of the substitution
-is that the polynomial put in place of `X s` be homogeneous of the weight of `s`. -/
-theorem IsWeightedHomogeneous.aeval {τ : Type*} {w' : τ → M} {g : σ → MvPolynomial τ R}
-    (hg : ∀ s, IsWeightedHomogeneous w' (g s) (w s)) {P : MvPolynomial σ R} {m : M}
-    (hP : IsWeightedHomogeneous w P m) :
-    IsWeightedHomogeneous w' (MvPolynomial.aeval g P) m := by
-  classical
-  conv_lhs => rw [P.as_sum]
-  rw [map_sum]
-  refine IsWeightedHomogeneous.finset_sum fun ν hν ↦ ?_
-  rw [aeval_monomial]
-  have hprod : IsWeightedHomogeneous w' (ν.prod fun s k ↦ g s ^ k) m := by
-    rw [Finsupp.prod]
-    have := IsWeightedHomogeneous.finset_prod (w := w') (s := ν.support)
-      (f := fun s ↦ g s ^ ν s) (m := fun s ↦ ν s • w s)
-      (fun s _ ↦ (hg s).pow (ν s))
-    have hw : ∑ a ∈ ν.support, ν a • w a = Finsupp.weight w ν := by
-      rw [Finsupp.weight_apply, Finsupp.sum]
-    rwa [hw, hP (mem_support_iff.mp hν)] at this
-  simpa using hprod.C_mul _
-
 end Aeval
 
 /-! ### The block substitution -/
@@ -325,7 +303,7 @@ theorem IsMultiHomogeneous.blockSubst {d : κ → ℕ} {P : MvPolynomial (κ × 
     IsMultiHomogeneous d (MvPolynomial.blockSubst A P) := by
   classical
   rw [isMultiHomogeneous_iff] at hP ⊢
-  refine IsWeightedHomogeneous.aeval (fun p ↦ ?_) hP
+  refine hP.aeval (fun p ↦ ?_)
   obtain ⟨h, j⟩ := p
   refine IsWeightedHomogeneous.finset_sum fun i _ ↦ ?_
   have hX : IsWeightedHomogeneous (blockWeight κ ι)
@@ -466,7 +444,7 @@ theorem coeff_blockSubst_hasseDeriv_eq_zero {A M : Matrix ι ι K} (hAM : A * M 
         exact Finset.prod_pos fun j _ ↦ Nat.choose_pos (Nat.le_add_right _ _)
       have hcomp : hasseDeriv I'' (hasseDeriv (Finsupp.single ((h₀, k) : κ × ι) 1)
           (blockSubst A Q)) = (c : ℕ) • hasseDeriv I (blockSubst A Q) := by
-        rw [hasseDeriv_comp, hIeq]
+        rw [hasseDeriv_comp_apply, hIeq]
       have hzero : (blockSubst M (hasseDeriv I'' (hasseDeriv (Finsupp.single
           ((h₀, k) : κ × ι) 1) (blockSubst A Q)))).coeff J = 0 := by
         rw [hasseDeriv_single_one, pderiv_blockSubst]

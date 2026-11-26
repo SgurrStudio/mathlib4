@@ -8,6 +8,7 @@ module
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.RowSpace
 public import Mathlib.LinearAlgebra.Dual.Defs
 public import Mathlib.LinearAlgebra.StdBasis
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Basic
 
 -- Used only inside proofs: the complement of a subspace and the basis it produces, the dual
 -- basis, the dimension of an annihilator, and the two-sided inverse of a square matrix.
@@ -15,7 +16,6 @@ import Mathlib.LinearAlgebra.Basis.Prod
 import Mathlib.LinearAlgebra.Dual.Lemmas
 import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 import Mathlib.LinearAlgebra.Projection
-
 
 /-!
 # The duality theorem for the height of a subspace
@@ -97,38 +97,6 @@ open Finset Module Set.powersetCard exteriorPower
 namespace Height
 
 variable {K : Type*} [Field K] [AdmissibleAbsValues K] {ι : Type*}
-
-/-- **A change of sign in a coordinate does not change the height.** Every absolute value takes
-the same value at `x` and at `-x`, and the tuple is zero exactly when the original is, so both
-the displayed product and the junk value are unchanged. This is the invariance that the duality
-theorem of Layer 3.5 needs, the Plücker coordinates of an annihilator carrying a sign that depends
-on the index. -/
-theorem mulHeight_eq_of_forall_eq_or_eq_neg {x y : ι → K} (h : ∀ i, y i = x i ∨ y i = -x i) :
-    mulHeight y = mulHeight x := by
-  have hv (v : AbsoluteValue K ℝ) (i : ι) : v (y i) = v (x i) := by
-    rcases h i with hi | hi
-    · rw [hi]
-    · rw [hi, v.map_neg]
-  have hzero : y = 0 ↔ x = 0 := by
-    simp only [funext_iff, Pi.zero_apply]
-    refine ⟨fun h0 i ↦ ?_, fun h0 i ↦ ?_⟩ <;> rcases h i with hi | hi
-    · rw [← hi]; exact h0 i
-    · have := h0 i; rw [hi, neg_eq_zero] at this; exact this
-    · rw [hi, h0 i]
-    · rw [hi, h0 i, neg_zero]
-  rcases eq_or_ne x 0 with rfl | hx
-  · rw [hzero.2 rfl]
-  · have hy : y ≠ 0 := fun h0 ↦ hx (hzero.1 h0)
-    rw [mulHeight_eq hx, mulHeight_eq hy]
-    congr 1
-    · exact congrArg Multiset.prod (Multiset.map_congr rfl fun v _ ↦ iSup_congr (hv v))
-    · exact finprod_congr fun v ↦ iSup_congr (hv v.val)
-
-/-- The logarithmic form of `Height.mulHeight_eq_of_forall_eq_or_eq_neg`. -/
-theorem logHeight_eq_of_forall_eq_or_eq_neg {x y : ι → K} (h : ∀ i, y i = x i ∨ y i = -x i) :
-    logHeight y = logHeight x := by
-  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight,
-    mulHeight_eq_of_forall_eq_or_eq_neg h]
 
 end Height
 

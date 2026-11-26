@@ -12,7 +12,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.Polynom
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MultiHomogeneous
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MvHasseDerivHeight
 
-
 /-!
 # The multihomogeneous auxiliary polynomial
 
@@ -529,10 +528,12 @@ theorem mulHeight_le_pow_mul_mul_pow {σ : Type*} {P Q : MvPolynomial σ K} {y :
     P.mulHeight ≤ C ^ Height.totalWeight K * (Q.mulHeight * Height.mulHeight y ^ D) := by
   have hPeq : P.mulHeight
       = Height.mulHeight fun i : P.support ↦ P.coeff (i : σ →₀ ℕ) :=
-    Finsupp.mulHeight_eq_mulHeight_subtype P.coeff (le_of_eq rfl)
+    (MvPolynomial.mulHeight_eq_finsupp P).trans <|
+      Finsupp.mulHeight_eq_mulHeight_subtype P.coeff (le_of_eq rfl)
   have hQeq : Q.mulHeight
       = Height.mulHeight fun i : Q.support ↦ Q.coeff (i : σ →₀ ℕ) :=
-    Finsupp.mulHeight_eq_mulHeight_subtype Q.coeff (le_of_eq rfl)
+    (MvPolynomial.mulHeight_eq_finsupp Q).trans <|
+      Finsupp.mulHeight_eq_mulHeight_subtype Q.coeff (le_of_eq rfl)
   have hQ0 : (fun i : Q.support ↦ Q.coeff (i : σ →₀ ℕ)) ≠ 0 := by
     obtain ⟨m, hm⟩ := Finsupp.support_nonempty_iff.mpr
       (show Q.coeff ≠ 0 from fun hc ↦ hQ (MvPolynomial.ext _ _ fun m ↦ by
@@ -747,7 +748,8 @@ theorem mulHeight_eq_mulHeight_coeff_multiMons {P : MvPolynomial (κ × ι) K}
     (hP : IsMultiHomogeneous d P) :
     P.mulHeight
       = Height.mulHeight fun ν : (multiMons (ι := ι) d) ↦ P.coeff (ν : κ × ι →₀ ℕ) :=
-  Finsupp.mulHeight_eq_mulHeight_subtype P.coeff fun _ hν ↦
+  (MvPolynomial.mulHeight_eq_finsupp P).trans <|
+    Finsupp.mulHeight_eq_mulHeight_subtype P.coeff fun _ hν ↦
     mem_multiMons.mpr fun h ↦ hP (Finsupp.mem_support_iff.mp hν) h
 
 omit [AdmissibleAbsValues K] in

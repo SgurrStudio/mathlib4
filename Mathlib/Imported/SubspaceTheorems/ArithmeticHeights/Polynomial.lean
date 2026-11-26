@@ -9,7 +9,9 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Extension
 public import Mathlib.Algebra.MvPolynomial.Basic
 public import Mathlib.Algebra.Polynomial.Degree.Lemmas
 public import Mathlib.Algebra.Polynomial.Eval.Coeff
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Polynomial.Basic
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.MvPolynomial
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Finsupp
 
 /-!
 # The height of a polynomial
@@ -180,36 +182,8 @@ theorem mulHeight_eq_mulHeight_subtype {s : Finset α} (x : α →₀ K) (hx : x
     x.mulHeight = Height.mulHeight fun i : s ↦ x i.val :=
   x.mulHeight_eq_mulHeight_comp Subtype.val Subtype.val_injective fun _ ha ↦ ⟨⟨_, hx ha⟩, rfl⟩
 
-@[simp]
-theorem mulHeight_zero : (0 : α →₀ K).mulHeight = 1 := by
-  rw [← mulHeight_coe_eq, Finsupp.coe_zero, Height.mulHeight_zero]
-
-@[simp]
-theorem logHeight_zero : (0 : α →₀ K).logHeight = 0 := by
-  rw [logHeight_eq, mulHeight_zero, Real.log_one]
-
-theorem one_le_mulHeight (x : α →₀ K) : 1 ≤ x.mulHeight :=
-  Height.one_le_mulHeight _
-
-theorem mulHeight_pos (x : α →₀ K) : 0 < x.mulHeight :=
-  Height.mulHeight_pos _
-
 theorem mulHeight_ne_zero (x : α →₀ K) : x.mulHeight ≠ 0 :=
   Height.mulHeight_ne_zero _
-
-theorem logHeight_nonneg (x : α →₀ K) : 0 ≤ x.logHeight :=
-  (logHeight_eq x).symm ▸ Real.log_nonneg x.one_le_mulHeight
-
-/-- The height of a `Finsupp` is invariant under scaling by a nonzero constant. -/
-theorem mulHeight_smul (x : α →₀ K) {c : K} (hc : c ≠ 0) : (c • x).mulHeight = x.mulHeight := by
-  rw [mulHeight_eq_mulHeight_subtype (c • x) (Finsupp.support_smul_eq hc).subset,
-    mulHeight_eq_mulHeight_subtype x subset_rfl,
-    ← Height.mulHeight_smul_eq_mulHeight (fun i : x.support ↦ x i.val) hc]
-  congr 1
-
-/-- The logarithmic form of `Finsupp.mulHeight_smul`. -/
-theorem logHeight_smul (x : α →₀ K) {c : K} (hc : c ≠ 0) : (c • x).logHeight = x.logHeight := by
-  rw [logHeight_eq, logHeight_eq, mulHeight_smul x hc]
 
 @[simp]
 theorem mulHeight_neg (x : α →₀ K) : (-x).mulHeight = x.mulHeight := by
@@ -218,18 +192,6 @@ theorem mulHeight_neg (x : α →₀ K) : (-x).mulHeight = x.mulHeight := by
 @[simp]
 theorem logHeight_neg (x : α →₀ K) : (-x).logHeight = x.logHeight := by
   rw [logHeight_eq, logHeight_eq, mulHeight_neg]
-
-/-- A `Finsupp` supported at one point has height `1`: a one-entry tuple has height `1` by the
-product formula. -/
-@[simp]
-theorem mulHeight_single (a : α) (b : K) : (Finsupp.single a b).mulHeight = 1 := by
-  rw [mulHeight_eq_mulHeight_comp _ (fun _ : Fin 1 ↦ a) (fun i j _ ↦ Subsingleton.elim i j)
-    fun _ ha ↦ ⟨0, (Finset.mem_singleton.mp (Finsupp.support_single_subset ha)).symm⟩]
-  exact Height.mulHeight_eq_one_of_subsingleton _
-
-@[simp]
-theorem logHeight_single (a : α) (b : K) : (Finsupp.single a b).logHeight = 0 := by
-  rw [logHeight_eq, mulHeight_single, Real.log_one]
 
 end Finsupp
 
@@ -245,101 +207,20 @@ variable {K : Type*} [Field K] [AdmissibleAbsValues K]
 ### The height of a univariate polynomial
 -/
 
-/-- **The height of a polynomial** is the height of its coefficient `Finsupp`. `Polynomial.coeff`
-*is* that `Finsupp`, so this constructs nothing new. The zero polynomial takes the junk value `1`,
-as `Height.mulHeight` does. -/
-@[expose] noncomputable def mulHeight (p : K[X]) : ℝ := Finsupp.mulHeight p.coeff
-
-/-- The logarithmic height of a polynomial. As everywhere in this development, it is *defined* as
-the logarithm of the multiplicative height and never independently. -/
-@[expose] noncomputable def logHeight (p : K[X]) : ℝ := Real.log p.mulHeight
-
-theorem logHeight_eq_log_mulHeight (p : K[X]) : p.logHeight = Real.log p.mulHeight := rfl
-
 /-- The height of `p` is the height of its coefficient vector on `Fin (p.natDegree + 1)`. -/
 theorem mulHeight_eq_mulHeight_coeff (p : K[X]) :
     p.mulHeight = Height.mulHeight fun i : Fin (p.natDegree + 1) ↦ p.coeff i.val :=
-  Finsupp.mulHeight_eq_mulHeight_comp _ Fin.val Fin.val_injective fun n hn ↦
-    ⟨⟨n, Nat.lt_succ_of_le (le_natDegree_of_mem_supp n hn)⟩, rfl⟩
+  (mulHeight_eq_finsupp p).trans <|
+    Finsupp.mulHeight_eq_mulHeight_comp _ Fin.val Fin.val_injective fun n hn ↦
+      ⟨⟨n, Nat.lt_succ_of_le (le_natDegree_of_mem_supp n hn)⟩, rfl⟩
 
 /-- The logarithmic form of `Polynomial.mulHeight_eq_mulHeight_coeff`. -/
 theorem logHeight_eq_logHeight_coeff (p : K[X]) :
-    p.logHeight = Height.logHeight fun i : Fin (p.natDegree + 1) ↦ p.coeff i.val :=
-  congrArg Real.log (mulHeight_eq_mulHeight_coeff p)
+    p.logHeight = Height.logHeight fun i : Fin (p.natDegree + 1) ↦ p.coeff i.val := by
+  rw [logHeight_eq_log_mulHeight, Height.logHeight_eq_log_mulHeight, mulHeight_eq_mulHeight_coeff]
 
-theorem one_le_mulHeight (p : K[X]) : 1 ≤ p.mulHeight := Finsupp.one_le_mulHeight _
-
-theorem mulHeight_pos (p : K[X]) : 0 < p.mulHeight := Finsupp.mulHeight_pos _
-
-theorem mulHeight_ne_zero (p : K[X]) : p.mulHeight ≠ 0 := Finsupp.mulHeight_ne_zero _
-
-theorem logHeight_nonneg (p : K[X]) : 0 ≤ p.logHeight := Real.log_nonneg p.one_le_mulHeight
-
-@[simp]
-theorem mulHeight_zero : (0 : K[X]).mulHeight = 1 := Finsupp.mulHeight_zero
-
-@[simp]
-theorem logHeight_zero : (0 : K[X]).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_zero, Real.log_one]
-
-/-- A monomial has height `1`: its coefficient tuple has one entry, and a one-entry tuple has
-height `1` by the product formula. -/
-@[simp]
-theorem mulHeight_monomial (n : ℕ) (a : K) : (monomial n a).mulHeight = 1 := by
-  have hcov : ∀ m ∈ (monomial n a : K[X]).coeff.support, m ∈ Set.range fun _ : Fin 1 ↦ n :=
-    fun m hm ↦ ⟨0, (Finset.mem_singleton.mp (support_monomial_subset n a hm)).symm⟩
-  rw [Polynomial.mulHeight,
-    Finsupp.mulHeight_eq_mulHeight_comp _ _ (fun i j _ ↦ Subsingleton.elim i j) hcov]
-  exact Height.mulHeight_eq_one_of_subsingleton _
-
-@[simp]
-theorem logHeight_monomial (n : ℕ) (a : K) : (monomial n a).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_monomial, Real.log_one]
-
-/-- ⚠ A constant polynomial has height `1`, whatever the constant. It is **not**
-`Height.mulHeight₁ a`, which is the height of the two-entry tuple `![a, 1]`. -/
-@[simp]
-theorem mulHeight_C (a : K) : (C a).mulHeight = 1 := by
-  rw [← monomial_zero_left, mulHeight_monomial]
-
-@[simp]
-theorem logHeight_C (a : K) : (C a).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_C, Real.log_one]
-
-@[simp]
-theorem mulHeight_one : (1 : K[X]).mulHeight = 1 := by rw [← C_1, mulHeight_C]
-
-@[simp]
-theorem mulHeight_X_pow (n : ℕ) : ((X : K[X]) ^ n).mulHeight = 1 := by
-  rw [X_pow_eq_monomial, mulHeight_monomial]
-
-@[simp]
-theorem mulHeight_X : (X : K[X]).mulHeight = 1 := by
-  rw [← monomial_one_one_eq_X, mulHeight_monomial]
-
-/-- The height of a polynomial is invariant under scaling by a nonzero constant. -/
-theorem mulHeight_smul (p : K[X]) {c : K} (hc : c ≠ 0) : (c • p).mulHeight = p.mulHeight := by
-  rw [Polynomial.mulHeight, Polynomial.mulHeight,
-    show (c • p).coeff = c • p.coeff from Finsupp.ext fun n ↦ by simp,
-    Finsupp.mulHeight_smul _ hc]
-
-/-- The logarithmic form of `Polynomial.mulHeight_smul`. -/
-theorem logHeight_smul (p : K[X]) {c : K} (hc : c ≠ 0) : (c • p).logHeight = p.logHeight := by
-  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_smul p hc]
-
-theorem mulHeight_C_mul (p : K[X]) {c : K} (hc : c ≠ 0) : (C c * p).mulHeight = p.mulHeight := by
-  rw [← smul_eq_C_mul, mulHeight_smul p hc]
-
-theorem logHeight_C_mul (p : K[X]) {c : K} (hc : c ≠ 0) : (C c * p).logHeight = p.logHeight := by
-  rw [← smul_eq_C_mul, logHeight_smul p hc]
-
-@[simp]
-theorem mulHeight_neg (p : K[X]) : (-p).mulHeight = p.mulHeight := by
-  rw [← neg_one_smul K p, mulHeight_smul p (neg_ne_zero.mpr one_ne_zero)]
-
-@[simp]
-theorem logHeight_neg (p : K[X]) : (-p).logHeight = p.logHeight := by
-  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_neg]
+theorem mulHeight_ne_zero (p : K[X]) : p.mulHeight ≠ 0 := by
+  rw [mulHeight_eq_finsupp]; exact Finsupp.mulHeight_ne_zero _
 
 /-- The height sees the coefficients, not where they sit: multiplying by a power of `X` shifts the
 support and leaves the height alone. -/
@@ -358,32 +239,13 @@ theorem mulHeight_mul_X_pow (p : K[X]) (n : ℕ) : (p * X ^ n).mulHeight = p.mul
       = fun i : p.support ↦ p.coeff i.val := by
     funext i
     exact coeff_mul_X_pow p n i.val
-  rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_comp _ _ hinj hcov, hfun,
-    Polynomial.mulHeight,
+  rw [Polynomial.mulHeight_eq_finsupp, Finsupp.mulHeight_eq_mulHeight_comp _ _ hinj hcov, hfun,
+    Polynomial.mulHeight_eq_finsupp,
     Finsupp.mulHeight_eq_mulHeight_subtype p.coeff (Finset.Subset.refl p.support)]
 
 @[simp]
 theorem logHeight_mul_X_pow (p : K[X]) (n : ℕ) : (p * X ^ n).logHeight = p.logHeight := by
   rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_mul_X_pow]
-
-/-- **The compatibility with Mathlib's affine height.** The monic linear polynomial with root `a`
-has the height of `a`: its coefficient tuple is `![-a, 1]`, which has the height of `![a, 1]`. -/
-theorem mulHeight_X_sub_C (a : K) : ((X : K[X]) - C a).mulHeight = Height.mulHeight₁ a := by
-  have hcov : ∀ m ∈ ((X : K[X]) - C a).coeff.support, m ∈ Set.range (Fin.val : Fin 2 → ℕ) := by
-    intro m hm
-    have hm2 : m ∈ ((X : K[X]) - C a).support := hm
-    have h1 := le_natDegree_of_mem_supp m hm2
-    rw [natDegree_X_sub_C] at h1
-    exact ⟨⟨m, by omega⟩, rfl⟩
-  have hfun : (fun i : Fin 2 ↦ ((X : K[X]) - C a).coeff i.val) = ![-a, 1] := by
-    funext i
-    fin_cases i <;> simp
-  rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov, hfun,
-    ← Height.mulHeight₁_eq_mulHeight, Height.mulHeight₁_neg]
-
-/-- The logarithmic form of `Polynomial.mulHeight_X_sub_C`. -/
-theorem logHeight_X_sub_C (a : K) : ((X : K[X]) - C a).logHeight = Height.logHeight₁ a :=
-  congrArg Real.log (mulHeight_X_sub_C a)
 
 omit [AdmissibleAbsValues K] in
 /-- **The behaviour under `Polynomial.map`.** Along an embedding of fields the support is
@@ -398,13 +260,14 @@ theorem mulHeight_map {L : Type*} [Field L] [AdmissibleAbsValues L] (f : K →+*
       = fun i : p.support ↦ f (p.coeff i.val) := by
     funext i
     exact coeff_map f i.val
-  rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_subtype (p.map f).coeff hsupp, hfun]
+  rw [Polynomial.mulHeight_eq_finsupp,
+    Finsupp.mulHeight_eq_mulHeight_subtype (p.map f).coeff hsupp, hfun]
 
 omit [AdmissibleAbsValues K] in
 /-- The logarithmic form of `Polynomial.mulHeight_map`. -/
 theorem logHeight_map {L : Type*} [Field L] [AdmissibleAbsValues L] (f : K →+* L) (p : K[X]) :
-    (p.map f).logHeight = Height.logHeight fun i : p.support ↦ f (p.coeff i.val) :=
-  congrArg Real.log (mulHeight_map f p)
+    (p.map f).logHeight = Height.logHeight fun i : p.support ↦ f (p.coeff i.val) := by
+  rw [logHeight_eq_log_mulHeight, Height.logHeight_eq_log_mulHeight, mulHeight_map]
 
 end General
 
@@ -416,7 +279,7 @@ variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L] [Alge
 polynomial form of `NumberField.mulHeight_pow_finrank`. -/
 theorem mulHeight_pow_finrank (p : K[X]) :
     p.mulHeight ^ Module.finrank K L = (p.map (algebraMap K L)).mulHeight := by
-  rw [mulHeight_map, Polynomial.mulHeight, Finsupp.mulHeight,
+  rw [mulHeight_map, Polynomial.mulHeight_eq_finsupp, Finsupp.mulHeight,
     NumberField.mulHeight_pow_finrank (L := L) fun i : p.coeff.support ↦ p.coeff i.val]
   rfl
 
@@ -442,81 +305,8 @@ variable {K : Type*} [Field K] [AdmissibleAbsValues K] {σ : Type*}
 ### The height of a multivariate polynomial
 -/
 
-/-- **The height of a multivariate polynomial** is the height of its coefficient `Finsupp`, as in
-the univariate case. -/
-@[expose] noncomputable def mulHeight (p : MvPolynomial σ K) : ℝ := Finsupp.mulHeight p.coeff
-
-/-- The logarithmic height of a multivariate polynomial. -/
-@[expose] noncomputable def logHeight (p : MvPolynomial σ K) : ℝ := Real.log p.mulHeight
-
-theorem logHeight_eq_log_mulHeight (p : MvPolynomial σ K) :
-    p.logHeight = Real.log p.mulHeight := rfl
-
-theorem one_le_mulHeight (p : MvPolynomial σ K) : 1 ≤ p.mulHeight := Finsupp.one_le_mulHeight _
-
-theorem mulHeight_pos (p : MvPolynomial σ K) : 0 < p.mulHeight := Finsupp.mulHeight_pos _
-
-theorem mulHeight_ne_zero (p : MvPolynomial σ K) : p.mulHeight ≠ 0 := Finsupp.mulHeight_ne_zero _
-
-theorem logHeight_nonneg (p : MvPolynomial σ K) : 0 ≤ p.logHeight :=
-  Real.log_nonneg p.one_le_mulHeight
-
-@[simp]
-theorem mulHeight_zero : (0 : MvPolynomial σ K).mulHeight = 1 := Finsupp.mulHeight_zero
-
-@[simp]
-theorem logHeight_zero : (0 : MvPolynomial σ K).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_zero, Real.log_one]
-
-/-- A monomial has height `1`, whatever its exponent vector and coefficient. -/
-@[simp]
-theorem mulHeight_monomial (m : σ →₀ ℕ) (a : K) : (monomial m a).mulHeight = 1 := by
-  have hcov : ∀ s ∈ (monomial m a : MvPolynomial σ K).coeff.support,
-      s ∈ Set.range fun _ : Fin 1 ↦ m :=
-    fun s hs ↦ ⟨0, (Finset.mem_singleton.mp (support_monomial_subset hs)).symm⟩
-  rw [MvPolynomial.mulHeight,
-    Finsupp.mulHeight_eq_mulHeight_comp _ _ (fun i j _ ↦ Subsingleton.elim i j) hcov]
-  exact Height.mulHeight_eq_one_of_subsingleton _
-
-@[simp]
-theorem logHeight_monomial (m : σ →₀ ℕ) (a : K) : (monomial m a).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_monomial, Real.log_one]
-
-/-- ⚠ As in the univariate case, a constant has height `1`, not `Height.mulHeight₁` of it. -/
-@[simp]
-theorem mulHeight_C (a : K) : (C a : MvPolynomial σ K).mulHeight = 1 := by
-  rw [← monomial_zero', mulHeight_monomial]
-
-@[simp]
-theorem logHeight_C (a : K) : (C a : MvPolynomial σ K).logHeight = 0 := by
-  rw [logHeight_eq_log_mulHeight, mulHeight_C, Real.log_one]
-
-@[simp]
-theorem mulHeight_one : (1 : MvPolynomial σ K).mulHeight = 1 := by rw [← C_1, mulHeight_C]
-
-/-- The height of a multivariate polynomial is invariant under scaling by a nonzero constant. -/
-theorem mulHeight_smul (p : MvPolynomial σ K) {c : K} (hc : c ≠ 0) :
-    (c • p).mulHeight = p.mulHeight := by
-  rw [MvPolynomial.mulHeight, MvPolynomial.mulHeight,
-    show (c • p).coeff = c • p.coeff from Finsupp.ext fun n ↦ by simp,
-    Finsupp.mulHeight_smul _ hc]
-
-/-- The logarithmic form of `MvPolynomial.mulHeight_smul`. -/
-theorem logHeight_smul (p : MvPolynomial σ K) {c : K} (hc : c ≠ 0) :
-    (c • p).logHeight = p.logHeight := by
-  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_smul p hc]
-
-theorem mulHeight_C_mul (p : MvPolynomial σ K) {c : K} (hc : c ≠ 0) :
-    (C c * p).mulHeight = p.mulHeight := by
-  rw [C_mul', mulHeight_smul p hc]
-
-@[simp]
-theorem mulHeight_neg (p : MvPolynomial σ K) : (-p).mulHeight = p.mulHeight := by
-  rw [← neg_one_smul K p, mulHeight_smul p (neg_ne_zero.mpr one_ne_zero)]
-
-@[simp]
-theorem logHeight_neg (p : MvPolynomial σ K) : (-p).logHeight = p.logHeight := by
-  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_neg]
+theorem mulHeight_ne_zero (p : MvPolynomial σ K) : p.mulHeight ≠ 0 := by
+  rw [mulHeight_eq_finsupp]; exact Finsupp.mulHeight_ne_zero _
 
 omit [AdmissibleAbsValues K] in
 /-- The multivariate form of `Polynomial.mulHeight_map`. -/
@@ -529,7 +319,8 @@ theorem mulHeight_map {L : Type*} [Field L] [AdmissibleAbsValues L] (f : K →+*
       = fun i : p.support ↦ f (p.coeff i.val) := by
     funext i
     exact coeff_map f p i.val
-  rw [MvPolynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_subtype (map f p).coeff hsupp, hfun]
+  rw [MvPolynomial.mulHeight_eq_finsupp,
+    Finsupp.mulHeight_eq_mulHeight_subtype (map f p).coeff hsupp, hfun]
 
 end General
 
@@ -541,7 +332,7 @@ variable {σ : Type*}
 /-- The multivariate form of `Polynomial.mulHeight_pow_finrank`. -/
 theorem mulHeight_pow_finrank (p : MvPolynomial σ K) :
     p.mulHeight ^ Module.finrank K L = (map (algebraMap K L) p).mulHeight := by
-  rw [mulHeight_map, MvPolynomial.mulHeight, Finsupp.mulHeight,
+  rw [mulHeight_map, MvPolynomial.mulHeight_eq_finsupp, Finsupp.mulHeight,
     NumberField.mulHeight_pow_finrank (L := L) fun i : p.coeff.support ↦ p.coeff i.val]
   rfl
 
@@ -615,7 +406,8 @@ example : ((X : ℚ[X]) + 1).mulHeight = 1 ∧ 2 ≤ (((X : ℚ[X]) + 1) ^ 2).mu
       _ ≤ Height.mulHeight ![(1 : ℚ), 2, 1] := Height.mulHeight_comp_le _ _
   refine ⟨by rw [show ((X : ℚ[X]) + 1) = X - C (-1) by simp, mulHeight_X_sub_C,
     Height.mulHeight₁_neg, Height.mulHeight₁_one], ?_⟩
-  rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov, hcoeff]
+  rw [Polynomial.mulHeight_eq_finsupp,
+    Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov, hcoeff]
   exact le_of_eq_of_le h2.symm hle
 
 /-- **Conformance.** The height sees neither the degree nor the position of the coefficients: a

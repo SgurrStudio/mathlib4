@@ -8,7 +8,7 @@ module
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.IndexRename
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.MvHasseDerivHeight
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PolynomialDeterminantHeight
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.MvPolynomial
 
 /-!
 # The determinant of a matrix of Hasse derivatives
@@ -91,45 +91,6 @@ end Degrees
 section HeightDet
 
 variable {σ K : Type*} [Fintype σ] [Field K] [AdmissibleAbsValues K]
-
-/-- **The height of a determinant of Hasse derivatives of one polynomial.** -/
-theorem logHeight_det_hasseDeriv_le {n : ℕ} {d : σ → ℕ} {P : MvPolynomial σ K} (hP : P ≠ 0)
-    (hdeg : ∀ j, P.degreeOf j ≤ d j) (ρ : Fin n → Fin n → (σ →₀ ℕ)) :
-    (Matrix.of fun i j ↦ hasseDeriv (ρ i j) P).det.logHeight
-      ≤ (totalWeight K : ℝ) * (Real.log n.factorial + 2 * (∑ j, (d j : ℝ)) * n * Real.log 2)
-        + n * P.logHeight := by
-  set D : ℕ := ∑ j, d j with hD
-  have hdD : P.totalDegree ≤ D := le_trans (totalDegree_le_sum_degreeOf P)
-    (Finset.sum_le_sum fun j _ ↦ hdeg j)
-  have hentrydeg : ∀ i j (l : σ), ((Matrix.of fun i j ↦ hasseDeriv (ρ i j) P) i j).degreeOf l
-      ≤ d l := fun i j l ↦ le_trans (le_trans (degreeOf_hasseDeriv_le _ _ _)
-        (Nat.sub_le _ _)) (hdeg l)
-  have hsupp : ∀ i j, (#((Matrix.of fun i j ↦ hasseDeriv (ρ i j) P) i j).support : ℝ)
-      ≤ (2 : ℝ) ^ D := by
-    intro i j
-    exact_mod_cast card_support_le_two_pow (d := d) (hentrydeg i j)
-  have hB : (1 : ℝ) ≤ (2 : ℝ) ^ D := one_le_pow₀ one_le_two
-  have hpowle : (2 : ℝ) ^ P.totalDegree ≤ (2 : ℝ) ^ D :=
-    pow_le_pow_right₀ one_le_two hdD
-  have hbound := mulHeight_det_le (Matrix.of fun i j ↦ hasseDeriv (ρ i j) P) hP hB hB hsupp
-    (fun v _ i j ↦ le_trans (iSup_coeff_hasseDeriv_le v (ρ i j) P)
-      (mul_le_mul_of_nonneg_right hpowle (iSup_coeff_nonneg P v)))
-    (fun v hv i j ↦ iSup_coeff_hasseDeriv_le_of_isNonarchimedean
-      (AdmissibleAbsValues.isNonarchimedean v hv) (ρ i j) P)
-  have hC : ((n.factorial : ℝ) * ((2 : ℝ) ^ D * (2 : ℝ) ^ D) ^ n)
-      = (n.factorial : ℝ) * (2 : ℝ) ^ (2 * D * n) := by
-    rw [← pow_add, ← pow_mul]
-    ring_nf
-  rw [hC] at hbound
-  have hlog := Real.log_le_log (MvPolynomial.mulHeight_pos _) hbound
-  rw [← MvPolynomial.logHeight_eq_log_mulHeight,
-    Real.log_mul (by positivity) (pow_ne_zero _ (MvPolynomial.mulHeight_ne_zero P)),
-    Real.log_pow, Real.log_pow, Real.log_mul (by positivity) (by positivity), Real.log_pow,
-    ← MvPolynomial.logHeight_eq_log_mulHeight] at hlog
-  refine le_trans hlog (le_of_eq ?_)
-  have hDcast : (D : ℝ) = ∑ j, (d j : ℝ) := by rw [hD]; push_cast; ring
-  push_cast
-  rw [← hDcast]
 
 end HeightDet
 

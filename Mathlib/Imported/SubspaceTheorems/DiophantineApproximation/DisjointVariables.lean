@@ -8,7 +8,6 @@ module
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Polynomial
 public import Mathlib.Algebra.MvPolynomial.Rename
 
-
 /-!
 # Polynomials in disjoint sets of variables
 
@@ -337,8 +336,7 @@ sets of variables is the product of the heights, exactly. -/
 theorem mulHeight_rename_inl_mul_rename_inr {f : MvPolynomial σ K} {g : MvPolynomial τ K}
     (hf : f ≠ 0) (hg : g ≠ 0) :
     (rename Sum.inl f * rename Sum.inr g).mulHeight = f.mulHeight * g.mulHeight := by
-  change Finsupp.mulHeight (rename Sum.inl f * rename Sum.inr g).coeff
-    = Finsupp.mulHeight f.coeff * Finsupp.mulHeight g.coeff
+  simp only [MvPolynomial.mulHeight_eq_finsupp]
   exact Finsupp.mulHeight_eq_mulHeight_mul_mulHeight
     (e := fun p : (σ →₀ ℕ) × (τ →₀ ℕ) ↦ Finsupp.sumElim p.1 p.2) Finsupp.sumElim_injective
     (fun p ↦ coeff_sumElim_rename_mul_rename f g p.1 p.2)
@@ -367,14 +365,14 @@ theorem mulHeight_rename_of_injective {e : σ → τ} (he : Function.Injective e
   have hfun : (fun m : P.coeff.support ↦ (rename e P).coeff (Finsupp.mapDomain e m.val))
       = fun m : P.coeff.support ↦ P.coeff m.val :=
     funext fun m ↦ coeff_rename_mapDomain e he P m.val
-  change Finsupp.mulHeight (rename e P).coeff = Finsupp.mulHeight P.coeff
+  simp only [MvPolynomial.mulHeight_eq_finsupp]
   rw [Finsupp.mulHeight_eq_mulHeight_comp _ _ hinj hcov, hfun,
     Finsupp.mulHeight_eq_mulHeight_subtype P.coeff (Finset.Subset.refl _)]
 
 /-- The logarithmic form of `MvPolynomial.mulHeight_rename_of_injective`. -/
 theorem logHeight_rename_of_injective {e : σ → τ} (he : Function.Injective e)
-    (P : MvPolynomial σ K) : (rename e P).logHeight = P.logHeight :=
-  congrArg Real.log (mulHeight_rename_of_injective he P)
+    (P : MvPolynomial σ K) : (rename e P).logHeight = P.logHeight := by
+  rw [logHeight_eq_log_mulHeight, logHeight_eq_log_mulHeight, mulHeight_rename_of_injective he P]
 
 /-- **The form Layer 2.7 consumes.** Two polynomials embedded into one set of variables along
 injections with disjoint ranges have the product of their heights. -/
@@ -436,7 +434,7 @@ private theorem mulHeight_X_add_C_unit (a : ℚ) :
       (![0, Finsupp.single () 1] i)) = ![a, 1] := by
     funext i
     fin_cases i <;> simp [coeff_X, coeff_C, h01, Ne.symm h01]
-  change Finsupp.mulHeight (X () + C a : MvPolynomial Unit ℚ).coeff = Height.mulHeight₁ a
+  rw [MvPolynomial.mulHeight_eq_finsupp]
   rw [Finsupp.mulHeight_eq_mulHeight_comp _ _ hinj hcov, hfun,
     ← Height.mulHeight₁_eq_mulHeight]
 

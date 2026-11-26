@@ -7,9 +7,9 @@ module
 
 public import Mathlib.NumberTheory.Height.Projectivization
 public import Mathlib.Order.Northcott
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Basic
 
 import Mathlib.NumberTheory.Height.NumberField
-
 
 /-!
 # The Northcott property on projective space
@@ -86,23 +86,6 @@ private lemma pair_eq_comp {α ι : Type*} (x : ι → α) (i j : ι) : ![x i, x
   fin_cases k <;> rfl
 
 variable {K : Type*} [Field K] [AdmissibleAbsValues K] {ι : Type*} [Finite ι]
-
-/-- The multiplicative height of a ratio of two coordinates of a tuple is at most the
-multiplicative height of the tuple.
-
-This is the inequality Northcott's property on projective space rests on: the ratios `x i / x j`
-are the affine coordinates of the projective point `x` represents, and there are finitely many
-elements of bounded height. -/
-lemma mulHeight₁_div_le_mulHeight (x : ι → K) (i j : ι) :
-    mulHeight₁ (x i / x j) ≤ mulHeight x := by
-  rw [mulHeight₁_div_eq_mulHeight, pair_eq_comp]
-  exact mulHeight_comp_le _ x
-
-/-- The logarithmic form of `Height.mulHeight₁_div_le_mulHeight`. -/
-lemma logHeight₁_div_le_logHeight (x : ι → K) (i j : ι) :
-    logHeight₁ (x i / x j) ≤ logHeight x := by
-  rw [logHeight₁_div_eq_logHeight, pair_eq_comp]
-  exact logHeight_comp_le _ x
 
 end Height
 

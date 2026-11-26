@@ -8,7 +8,7 @@ module
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.BoxMonomial
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.CountingVolume
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PolynomialIndex
-
+public import Mathlib.Imported.TauCeti.Algebra.MvPolynomial.Degrees
 
 /-!
 # The vanishing conditions behind the index
@@ -99,15 +99,8 @@ theorem eval_hasseDeriv_eq_sum {d : σ → ℕ} {Q : MvPolynomial σ R} (hQ : �
     · simp [hw, notMem_support_iff.mp hν]
   rw [hL, ← hR]
   refine Finset.sum_congr rfl fun I _ ↦ ?_
-  rw [hw, hasseDerivRow]
+  rw [hw, hasseDerivRow_eq_prod_mul]
   simp only [boxMonomial_apply]
-
-omit [Fintype σ] [DecidableEq σ] in
-/-- **Partial degrees do not grow under a ring homomorphism.** -/
-theorem degreeOf_map_le {S : Type*} [CommRing S] (f : R →+* S) (P : MvPolynomial σ R) (j : σ) :
-    (P.map f).degreeOf j ≤ P.degreeOf j := by
-  rw [degreeOf_le_iff]
-  exact fun ν hν ↦ degreeOf_le_iff.mp le_rfl ν (support_map_subset f P hν)
 
 end Conditions
 
@@ -166,7 +159,7 @@ example {σ : Type*} [Fintype σ] [DecidableEq σ] {R : Type*} [CommRing R] {d :
   have h := eval_hasseDeriv_eq_sum hQ α 0
   rw [hasseDeriv_zero_apply] at h
   rw [h]
-  exact Finset.sum_congr rfl fun I _ ↦ by simp [hasseDerivRow]
+  exact Finset.sum_congr rfl fun I _ ↦ by simp [hasseDerivRow_eq_prod_mul]
 
 /-- **Acceptance test: an order that leaves the box carries no condition.** -/
 example {σ : Type*} {R : Type*} [CommRing R] {d : σ → ℕ} {Q : MvPolynomial σ R}

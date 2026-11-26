@@ -8,7 +8,6 @@ module
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.FundamentalInequality
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.SAdicHeight
 
-
 /-!
 # From local upper bounds at every place to a global inequality
 
@@ -85,7 +84,7 @@ theorem FinitePlace.hasFiniteMulSupport_max_one' (x : K) :
   rcases eq_or_ne x 0 with rfl | hx
   · simp only [map_zero, max_eq_right zero_le_one]
     exact Function.hasFiniteMulSupport_one
-  · exact FinitePlace.hasFiniteMulSupport_max_one hx
+  · exact FinitePlace.hasFiniteMulSupport_max_one _
 
 /-- **The product formula against local upper bounds.** -/
 theorem one_le_of_forall_apply_le
@@ -218,7 +217,6 @@ theorem one_le_of_forall_apply_le
           exact Finset.prod_congr rfl fun i _ ↦ by rw [mulHeight₁_eq, mul_pow]
         rw [← hxsplit, ← hβsplit]
         ring
-
 
 /-- **The places of `S`, as one finite index type.** Over a number field the index set of
 Mahler's reduction is the disjoint union of the two typed finsets, never a set of absolute

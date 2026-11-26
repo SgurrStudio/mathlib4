@@ -6,12 +6,12 @@ Authors: Ralf Stephan
 module
 
 public import Mathlib.NumberTheory.Height.NumberField
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
 
 -- Used only inside proofs.
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesOverFinite
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesOverInfinite
 import Mathlib.Algebra.Order.BigOperators.GroupWithZero.Finset
-
 
 /-!
 # The fundamental inequality
@@ -126,20 +126,6 @@ end Finprod
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- **Truncating from below keeps the finite multiplicative support.** -/
-theorem FinitePlace.hasFiniteMulSupport_max_one {x : K} (hx : x ≠ 0) :
-    Function.HasFiniteMulSupport fun v : FinitePlace K ↦ max (v x) 1 :=
-  Set.Finite.subset (FinitePlace.hasFiniteMulSupport hx) fun v hv ↦ by
-    simp only [Function.mem_mulSupport] at hv ⊢
-    exact fun h ↦ hv (by rw [h, max_self])
-
-/-- **Truncating from above keeps the finite multiplicative support.** -/
-theorem FinitePlace.hasFiniteMulSupport_min_one {x : K} (hx : x ≠ 0) :
-    Function.HasFiniteMulSupport fun v : FinitePlace K ↦ min 1 (v x) :=
-  Set.Finite.subset (FinitePlace.hasFiniteMulSupport hx) fun v hv ↦ by
-    simp only [Function.mem_mulSupport] at hv ⊢
-    exact fun h ↦ hv (by rw [h, min_self])
-
 /-!
 ### The fundamental inequality
 -/
@@ -164,7 +150,7 @@ theorem prod_apply_le_mulHeight₁ {x : K} (hx : x ≠ 0) :
           Finset.prod_le_prod₀ (fun v _ ↦ apply_nonneg _ _) fun v _ ↦ le_max_left _ _
       _ ≤ ∏ᶠ v : FinitePlace K, max (v x) 1 :=
           prod_le_finprod_of_one_le _ (fun _ ↦ le_max_right _ _)
-            (FinitePlace.hasFiniteMulSupport_max_one hx)
+            (FinitePlace.hasFiniteMulSupport_max_one x)
   exact mul_le_mul hinf hfin (Finset.prod_nonneg fun v _ ↦ apply_nonneg _ _)
     (Finset.prod_nonneg fun v _ ↦ pow_nonneg (le_trans (apply_nonneg _ _) (le_max_left _ _)) _)
 
@@ -208,7 +194,7 @@ theorem prod_min_one_apply_eq_inv_mulHeight₁ {x : K} (hx : x ≠ 0) :
   have hBD : ((∏ᶠ v : FinitePlace K, min 1 (v x)) * ∏ᶠ v : FinitePlace K, max (v x) 1)
       = ∏ᶠ v : FinitePlace K, v x := by
     rw [← finprod_mul_distrib (FinitePlace.hasFiniteMulSupport_min_one hx)
-      (FinitePlace.hasFiniteMulSupport_max_one hx)]
+      (FinitePlace.hasFiniteMulSupport_max_one x)]
     exact finprod_congr fun v ↦ by rw [max_comm, min_mul_max, one_mul]
   calc ((∏ v : InfinitePlace K, min 1 (v x) ^ v.mult) * ∏ᶠ v : FinitePlace K, min 1 (v x))
         * mulHeight₁ x

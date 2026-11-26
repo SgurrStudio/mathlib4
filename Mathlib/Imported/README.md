@@ -76,3 +76,28 @@ run, and the following proofs are adjusted for the newer Mathlib:
   `Mathlib.LinearAlgebra.Dimension.Torsion.Basic`, and the split
   `Mathlib.RingTheory.DedekindDomain.AdicValuation.*`), three lambdas whose binder type is no longer
   inferred become tactic blocks, and deprecated lemma names are replaced by their successors.
+
+### Shared declarations with `TauCeti/`
+
+Subspace-Theorems follows Tau Ceti's conventions and overlaps with it: 154 declarations have the
+same name in both closures, so the two could not be imported together. The overlapping
+declarations are deleted from `SubspaceTheorems/` and its files import the corresponding
+`TauCeti/` modules instead (heights of tuples, affine heights, polynomial and `Finsupp` heights,
+the box monomials and Hasse derivatives of `MvPolynomial`, generalized Wronskians, `S`-integers,
+finite places, `AbsoluteValue.nonarchRpow`, `LiouvilleWith.inv`). Call sites are adapted to Tau
+Ceti's argument order and to its unexposed definitions (`mulHeight_eq_finsupp`,
+`mulHeightAff_def`, `hasseDerivRow_def`, `genWronskian_def` instead of unfolding).
+
+Where Tau Ceti's statement is a different result rather than the same one, the Subspace-Theorems
+version is kept under a new name:
+
+| Source name | Kept as | Tau Ceti's declaration of the source name |
+| --- | --- | --- |
+| `MvPolynomial.hasseDeriv_comp` (applied) | `MvPolynomial.hasseDeriv_comp_apply` | the law for the linear maps |
+| `MvPolynomial.coeff_taylor` | `MvPolynomial.coeff_aeval_C_X_add_X` | the expansion at a point |
+| `Polynomial.mulHeight_mul_le`, `logHeight_mul_le` | `…_mul_le_two_pow` | constant `min (deg p) (deg q) + 1` |
+| `Height.exists_logHeight_le_mul_logHeight₁_div` | `Height.exists_logHeight_le_card_erase_mul_logHeight₁_div` | both indices vary |
+| `Set.unitValuation` | `Set.unitAddValuation` | multiplicative, over any Dedekind domain |
+| `Set.unit_fg` | `Set.unit_fg_of_finite` | reduces to `S = ∅` |
+
+`MvPolynomial.hasseDerivRow_eq_prod_mul` records the source's definition of `hasseDerivRow`.

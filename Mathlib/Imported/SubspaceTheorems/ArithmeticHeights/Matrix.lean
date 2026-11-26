@@ -10,7 +10,6 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.LinearForm
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import all Mathlib.NumberTheory.Height.Basic
 
-
 /-!
 # The height of a matrix
 
@@ -230,13 +229,13 @@ theorem mulHeightAff_ne_zero (A : Matrix m n K) : mulHeightAff A ≠ 0 :=
   Height.mulHeightAff_ne_zero _
 
 theorem logHeightAff_nonneg (A : Matrix m n K) : 0 ≤ logHeightAff A :=
-  Height.logHeightAff_nonneg _
+  Real.log_nonneg (Height.one_le_mulHeightAff _)
 
 theorem mulHeight_le_mulHeightAff (A : Matrix m n K) : mulHeight A ≤ mulHeightAff A :=
   Height.mulHeight_le_mulHeightAff _
 
 theorem logHeight_le_logHeightAff (A : Matrix m n K) : logHeight A ≤ logHeightAff A :=
-  Height.logHeight_le_logHeightAff _
+  Real.log_le_log (Height.mulHeight_pos _) (Height.mulHeight_le_mulHeightAff _)
 
 /-- The affine height of a column of `A` is at most the affine height of `A`: a column is a
 sub-tuple of the entries, and the appended coordinate `1` is common to both. -/
@@ -349,8 +348,9 @@ theorem mulHeight₁_det_le (A : Matrix n n K) :
   set x : n → Option n → K := fun j o ↦ o.elim 1 fun i ↦ A i j with hxdef
   have hxne : ∀ j, x j ≠ 0 := fun j ↦ Height.optionElim_one_ne_zero _
   set w : (n → Option n) → K := fun I ↦ ∏ j, x j (I j) with hwdef
-  have hwh : Height.mulHeight w = ∏ j, Height.mulHeightAff fun i ↦ A i j :=
-    Height.mulHeight_fun_prod_eq hxne
+  have hwh : Height.mulHeight w = ∏ j, Height.mulHeightAff fun i ↦ A i j := by
+    simp only [Height.mulHeightAff_def]
+    exact Height.mulHeight_fun_prod_eq hxne
   set ee : Equiv.Perm n → Fin 2 → K := fun σ ↦ ![((Equiv.Perm.sign σ : ℤ) : K), 1] with heedef
   have hee : ∀ σ i, ee σ i = 1 ∨ ee σ i = -1 := by
     intro σ i

@@ -8,11 +8,12 @@ module
 public import Mathlib.Basic.ENNReal.Basic
 public import Mathlib.Basic.ENNReal.Real
 public import Mathlib.NumberTheory.Transcendental.Liouville.LiouvilleWith
+public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.HeightApproximation
+public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Exponent
 
 -- Used only inside proofs and in the acceptance criteria.
 import Mathlib.NumberTheory.DiophantineApproximation.Basic
 import Mathlib.NumberTheory.Transcendental.Liouville.LiouvilleNumber
-
 
 /-!
 # The irrationality exponent
@@ -161,63 +162,6 @@ theorem irrationalityExponent_eq_one_of_not_irrational (h : ¬ Irrational ξ) :
 ### The lower bound `2`, from Dirichlet's theorem
 -/
 
-/-- **Dirichlet's theorem**, in the shape `LiouvilleWith` asks for. -/
-theorem _root_.Irrational.liouvilleWith_two {ξ : ℝ} (hξ : Irrational ξ) : LiouvilleWith 2 ξ := by
-  refine ⟨4, frequently_atTop.2 fun N ↦ ?_⟩
-  obtain ⟨q, hq, hden⟩ := Real.exists_rat_abs_sub_le_and_den_le ξ (n := N ^ 2 + 1) (by positivity)
-  set d : ℕ := q.den with hd
-  set t : ℕ := N / d + 1 with ht
-  have hd0 : 0 < d := q.pos
-  have ht0 : 0 < t := Nat.succ_pos _
-  have hNdt : N < d * t := by
-    have h1 := Nat.div_add_mod N d
-    have h2 := Nat.mod_lt N hd0
-    rw [ht, Nat.mul_add, mul_one]
-    omega
-  have hdt : d * t ≤ N + d := by
-    rw [ht, Nat.mul_add, mul_one]
-    exact Nat.add_le_add_right (by rw [mul_comm]; exact Nat.div_mul_le_self N d) d
-  have hcast : ((q.num * t : ℤ) : ℝ) / ((d * t : ℕ) : ℝ) = (q : ℝ) := by
-    have ht' : ((t : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr ht0.ne'
-    have hd' : ((d : ℕ) : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hd0.ne'
-    push_cast
-    rw [Rat.cast_def]
-    field_simp
-    ring
-  refine ⟨d * t, hNdt.le, q.num * t, ?_, ?_⟩
-  · rw [hcast]
-    exact hξ.ne_rat q
-  · rw [hcast, show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]
-    have hD0 : (0 : ℝ) < d := Nat.cast_pos.mpr hd0
-    have hT0 : (0 : ℝ) < t := Nat.cast_pos.mpr ht0
-    have key : (d : ℝ) * t * t < 4 * ((N : ℝ) ^ 2 + 2) := by
-      have hD1 : (1 : ℝ) ≤ d := by exact_mod_cast hd0
-      have hDn : (d : ℝ) ≤ (N : ℝ) ^ 2 + 1 := by exact_mod_cast hden
-      have hDT : (d : ℝ) * t ≤ (N : ℝ) + d := by exact_mod_cast hdt
-      have step : (d : ℝ) * ((d : ℝ) * t * t) < (d : ℝ) * (4 * ((N : ℝ) ^ 2 + 2)) := by
-        have hsq : ((d : ℝ) * t) ^ 2 ≤ ((N : ℝ) + d) ^ 2 :=
-          pow_le_pow_left₀ (by positivity) hDT 2
-        rcases Nat.eq_zero_or_pos N with hN | hN
-        · subst hN
-          have : (d : ℝ) = 1 := by
-            have : d ≤ 1 := by simpa using hden
-            have : d = 1 := le_antisymm this hd0
-            exact_mod_cast this
-          simp only [this] at *
-          push_cast at *
-          nlinarith [hsq]
-        · have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
-          nlinarith [hsq, mul_nonneg (sub_nonneg.2 hDn) (le_of_lt hD0),
-            mul_nonneg (sub_nonneg.2 hD1) (sq_nonneg (N : ℝ))]
-      exact lt_of_mul_lt_mul_left step hD0.le
-    rw [lt_div_iff₀ (by positivity)]
-    have h1 : |ξ - (q : ℝ)| * ((d * t : ℕ) : ℝ) ^ 2
-        ≤ (1 / ((((N ^ 2 + 1 : ℕ) : ℝ) + 1) * (d : ℝ))) * ((d * t : ℕ) : ℝ) ^ 2 := by gcongr
-    refine lt_of_le_of_lt h1 ?_
-    rw [div_mul_eq_mul_div, one_mul, div_lt_iff₀ (by positivity)]
-    push_cast
-    nlinarith [mul_lt_mul_of_pos_left key hD0, hD0, hT0]
-
 theorem two_le_irrationalityExponent (hξ : Irrational ξ) : 2 ≤ irrationalityExponent ξ := by
   have h : LiouvilleWith ((2 : ℝ≥0) : ℝ) ξ := by
     simpa using hξ.liouvilleWith_two
@@ -320,19 +264,6 @@ private theorem inv_of_pos (hp : 1 < p) (hξ : 0 < ξ) (h : LiouvilleWith p ξ) 
       _ = C * A / ξ := by field_simp
       _ < C * A / ξ + 1 := by linarith
 
-protected theorem inv (hξ : Irrational ξ) (h : LiouvilleWith p ξ) : LiouvilleWith p ξ⁻¹ := by
-  rcases le_or_gt p 1 with hp | hp
-  · exact (liouvilleWith_one _).mono hp
-  · rcases lt_trichotomy ξ 0 with hneg | hzero | hpos
-    · have h2 : LiouvilleWith p (-ξ)⁻¹ := inv_of_pos hp (by linarith) h.neg
-      rw [inv_neg] at h2
-      exact neg_iff.1 h2
-    · exact absurd (hzero ▸ hξ) not_irrational_zero
-    · exact inv_of_pos hp hpos h
-
-theorem inv_iff (hξ : Irrational ξ) : LiouvilleWith p ξ⁻¹ ↔ LiouvilleWith p ξ :=
-  ⟨fun h ↦ by simpa using h.inv hξ.inv, fun h ↦ h.inv hξ⟩
-
 end LiouvilleWith
 
 namespace Real
@@ -364,7 +295,7 @@ theorem irrationalityExponent_neg (ξ : ℝ) :
 theorem irrationalityExponent_inv (ξ : ℝ) :
     irrationalityExponent ξ⁻¹ = irrationalityExponent ξ := by
   rcases em (Irrational ξ) with hξ | hξ
-  · exact irrationalityExponent_congr fun _ ↦ LiouvilleWith.inv_iff hξ
+  · exact irrationalityExponent_congr fun _ ↦ LiouvilleWith.inv_iff
   · obtain ⟨q, rfl⟩ := exists_rat_of_not_irrational hξ
     rw [← Rat.cast_inv, irrationalityExponent_ratCast, irrationalityExponent_ratCast]
 
@@ -424,26 +355,6 @@ theorem frequently_lt_rpow_neg_of_lt_irrationalityExponent {μ : ℝ}
   obtain ⟨hlw, hlt⟩ := hq
   rw [← ENNReal.ofReal_coe_nnreal, ENNReal.ofReal_lt_ofReal_iff'] at hlt
   exact hlw.frequently_lt_rpow_neg hlt.1
-
-/-- The irrationality exponent, read off the approximations with **no constant** in front of
-`q ^ (-ν)`: the constant of `LiouvilleWith` can always be absorbed by decreasing the exponent. -/
-theorem le_irrationalityExponent_iff {μ : ℝ≥0} (hμ : 0 < μ) :
-    (μ : ℝ≥0∞) ≤ irrationalityExponent ξ ↔
-      ∀ ν : ℝ, ν < μ → ∃ᶠ n : ℕ in atTop, ∃ m : ℤ,
-        ξ ≠ m / n ∧ |ξ - m / n| < (n : ℝ) ^ (-ν) := by
-  refine ⟨fun h ν hν ↦ frequently_lt_rpow_neg_of_lt_irrationalityExponent ?_, fun h ↦ ?_⟩
-  · refine lt_of_lt_of_le ?_ h
-    rw [← ENNReal.ofReal_coe_nnreal, ENNReal.ofReal_lt_ofReal_iff']
-    exact ⟨hν, by exact_mod_cast hμ⟩
-  · refine le_of_forall_lt_imp_le_of_dense fun a ha ↦ ?_
-    lift a to ℝ≥0 using ne_top_of_lt ha
-    have ha' : (a : ℝ) < (μ : ℝ) := by exact_mod_cast ha
-    have hfr := h a ha'
-    have := le_irrationalityExponent_of_frequently (C := 1) (μ := (a : ℝ))
-      (hfr.mono fun n hn ↦ by
-        obtain ⟨m, hne, hmn⟩ := hn
-        exact ⟨m, hne, by rwa [Real.rpow_neg (Nat.cast_nonneg n), ← one_div] at hmn⟩)
-    rwa [ENNReal.ofReal_coe_nnreal] at this
 
 /-- **The naive height in place of the denominator.** Replacing `n` by the naive height
 `max |m| n` of the fraction `m / n` changes the admissible constants and nothing else, so it

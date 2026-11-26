@@ -10,7 +10,6 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Arakelov
 public import Mathlib.NumberTheory.Height.MvPolynomial
 import all Mathlib.NumberTheory.Height.Basic
 
-
 /-!
 # Linear forms, sums of coordinates, and the Segre relation
 
@@ -244,6 +243,7 @@ theorem mulHeight₁_sum_mul_le [Fintype ι] [Nonempty ι] (a x : ι → K) :
   rw [mulHeight₁_eq_mulHeight]
   refine hbound.trans ?_
   gcongr
+  rw [mulHeightAff_def, mulHeightAff_def]
   exact le_of_eq (mulHeight_fun_mul_eq (optionElim_one_ne_zero a) (optionElim_one_ne_zero x))
 
 /-- The logarithmic form of `Height.mulHeight₁_sum_mul_le`. -/
@@ -433,7 +433,7 @@ example :
     rcases o with _ | i
     · rfl
     · fin_cases i <;> rfl
-  refine ⟨?_, by rw [mulHeightAff, haff, mulHeight_one],
+  refine ⟨?_, by rw [mulHeightAff_def, haff, mulHeight_one],
     by rw [hw, Nat.card_eq_fintype_card, Fintype.card_fin]; norm_num⟩
   rw [show (∑ i, (![1, 1] : Fin 2 → ℚ) i * (![1, 1] : Fin 2 → ℚ) i) = ((2 : ℕ) : ℚ) by
     norm_num [Fin.sum_univ_two]]

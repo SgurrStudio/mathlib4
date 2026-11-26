@@ -10,7 +10,7 @@ public import Mathlib.LinearAlgebra.Dimension.Torsion.Basic
 public import Mathlib.LinearAlgebra.FreeModule.PID
 public import Mathlib.NumberTheory.NumberField.ClassNumber
 public import Mathlib.RingTheory.DedekindDomain.SelmerGroup
-
+public import Mathlib.Imported.TauCeti.RingTheory.DedekindDomain.SInteger.Unit
 
 /-!
 # The `S`-unit theorem
@@ -46,10 +46,11 @@ powers.
 * `NumberField.exists_mem_asIdeal_iff_eq`: a nonzero algebraic integer lying in a given prime and
   in no other — the one use the proof makes of the finiteness of the class group, and the input
   Layer 0.3 of the `DiophantineApproximation` roadmap consumes as well.
-* `Set.unitValuation`: the map `S.unit K → ⊕_{v ∈ S} ℤ` of the sequence above, with
+* `Set.unitAddValuation`: the map `S.unit K → ⊕_{v ∈ S} ℤ` of the sequence above, with
   `Set.range_unitOfUnitsₗ` identifying its kernel with the units of `𝓞 K`.
 * `Set.finrank_range_unitValuationₗ`: its image has rank `|S|`, from the class group.
-* `Set.unit_moduleFinite` and `Set.unit_fg`: the `S`-units are finitely generated. This is one of
+* `Set.unit_moduleFinite` and `Set.unit_fg_of_finite`: the `S`-units are finitely generated. This
+  is one of
   the two open TODOs of Mathlib's `Mathlib/RingTheory/DedekindDomain/SInteger.lean`.
 * `Set.unit_finrank_numberField`: **the `S`-unit theorem**, `finrank ℤ (Additive (S.unit K))
   = Units.rank K + Nat.card S`, the other of those two TODOs.
@@ -137,28 +138,30 @@ additive map.
 
 /-- **The valuation map on the `S`-units**, `x ↦ (ord_v x)_{v ∈ S}`. Mathlib's
 `Mathlib/RingTheory/DedekindDomain/SInteger.lean` records as a TODO that the `S`-units are the
-kernel of a map to a product; this is that map, and `Set.range_unitOfUnitsₗ` is that statement. -/
-@[expose] noncomputable def _root_.Set.unitValuation : Additive ↥(S.unit K) →+ (↥S → ℤ) :=
+kernel of a map to a product; this is that map, and `Set.range_unitOfUnitsₗ` is that statement.
+(Named `Set.unitValuation` in the source; Tau Ceti's `Set.unitValuation` is the multiplicative
+form over a general Dedekind domain.) -/
+@[expose] noncomputable def _root_.Set.unitAddValuation : Additive ↥(S.unit K) →+ (↥S → ℤ) :=
   AddMonoidHom.mk'
     (fun x v => Multiplicative.toAdd ((v : HeightOneSpectrum (𝓞 K)).valuationOfNeZero
       ((Additive.toMul x : ↥(S.unit K)) : Kˣ)))
     (fun x y => by funext v; simp [map_mul])
 
-theorem _root_.Set.unitValuation_apply (x : ↥(S.unit K)) (v : ↥S) :
-    S.unitValuation (Additive.ofMul x) v =
+theorem _root_.Set.unitAddValuation_apply (x : ↥(S.unit K)) (v : ↥S) :
+    S.unitAddValuation (Additive.ofMul x) v =
       Multiplicative.toAdd ((v : HeightOneSpectrum (𝓞 K)).valuationOfNeZero (x : Kˣ)) := rfl
 
 /-- A coordinate of the valuation map vanishes exactly where the adic valuation is trivial. -/
 theorem _root_.Set.unitValuation_apply_eq_zero_iff (x : ↥(S.unit K)) (v : ↥S) :
-    S.unitValuation (Additive.ofMul x) v = 0 ↔
+    S.unitAddValuation (Additive.ofMul x) v = 0 ↔
       (v : HeightOneSpectrum (𝓞 K)).valuation K ((x : Kˣ) : K) = 1 := by
-  have h : S.unitValuation (Additive.ofMul x) v = 0 ↔
+  have h : S.unitAddValuation (Additive.ofMul x) v = 0 ↔
       (v : HeightOneSpectrum (𝓞 K)).valuationOfNeZero (x : Kˣ) = 1 := Iff.rfl
   rw [h, ← WithZero.coe_inj, HeightOneSpectrum.valuationOfNeZero_eq, WithZero.coe_one]
 
 /-- The valuation map, as a `ℤ`-linear map, which is the form every rank statement needs. -/
 @[expose] noncomputable def _root_.Set.unitValuationₗ : Additive ↥(S.unit K) →ₗ[ℤ] (↥S → ℤ) :=
-  (S.unitValuation).toIntLinearMap
+  (S.unitAddValuation).toIntLinearMap
 
 /-!
 ### The kernel: the units of `𝓞 K`
@@ -206,7 +209,7 @@ theorem _root_.Set.range_unitOfUnitsₗ :
       by_cases hv : v ∈ S
       · exact (S.unitValuation_apply_eq_zero_iff _ ⟨v, hv⟩).mp (congrFun hx ⟨v, hv⟩)
       · exact (Additive.toMul x).2 v hv
-    obtain ⟨u, hu⟩ := Set.mem_unit_empty_iff.mp fun v _ => hall v
+    obtain ⟨u, hu⟩ := (Set.mem_unit_empty_iff (R := 𝓞 K) K).mp fun v _ => hall v
     exact ⟨Additive.ofMul u, Additive.toMul.injective (Subtype.ext (Units.ext hu))⟩
 
 /-- The kernel of the valuation map, as a `ℤ`-module, is the unit group of `𝓞 K`. -/
@@ -259,8 +262,8 @@ theorem exists_mem_asIdeal_iff_eq (v₀ : HeightOneSpectrum (𝓞 K)) :
 valuation is nonzero at `v₀` and zero at every other place of `S`. This is the whole use the proof
 makes of the finiteness of the class group. -/
 theorem _root_.Set.exists_unitValuation_apply_ne_zero (v₀ : ↥S) :
-    ∃ y : Additive ↥(S.unit K), S.unitValuation y v₀ ≠ 0 ∧
-      ∀ v : ↥S, v ≠ v₀ → S.unitValuation y v = 0 := by
+    ∃ y : Additive ↥(S.unit K), S.unitAddValuation y v₀ ≠ 0 ∧
+      ∀ v : ↥S, v ≠ v₀ → S.unitAddValuation y v = 0 := by
   obtain ⟨a, hane, ha⟩ := exists_mem_asIdeal_iff_eq (K := K) (v₀ : HeightOneSpectrum (𝓞 K))
   have hmem : a ∈ (v₀ : HeightOneSpectrum (𝓞 K)).asIdeal := (ha _).mpr rfl
   have hnot : ∀ w : HeightOneSpectrum (𝓞 K), w ≠ (v₀ : HeightOneSpectrum (𝓞 K)) →
@@ -301,7 +304,7 @@ theorem _root_.Set.finrank_range_unitValuationₗ (hS : S.Finite) :
   classical
   have := hS.fintype
   choose y hy0 hy using S.exists_unitValuation_apply_ne_zero
-  set c : ↥S → ℤ := fun v => S.unitValuation (y v) v with hcdef
+  set c : ↥S → ℤ := fun v => S.unitAddValuation (y v) v with hcdef
   have hC : (∏ v, c v) ≠ 0 := Finset.prod_ne_zero_iff.mpr fun v _ => hy0 v
   have hmem : ∀ z : ↥S → ℤ, (∏ v, c v) • z ∈ LinearMap.range (S.unitValuationₗ) := by
     intro z
@@ -313,7 +316,7 @@ theorem _root_.Set.finrank_range_unitValuationₗ (hS : S.Finite) :
       · rw [show S.unitValuationₗ (y w) w = c w from rfl, mul_assoc, mul_comm (z w) (c w),
           ← mul_assoc, Finset.prod_erase_mul _ _ (Finset.mem_univ w)]
       · intro v _ hvw
-        rw [show S.unitValuationₗ (y v) w = S.unitValuation (y v) w from rfl,
+        rw [show S.unitValuationₗ (y v) w = S.unitAddValuation (y v) w from rfl,
           hy v w (Ne.symm hvw), mul_zero]
       · intro h; exact absurd (Finset.mem_univ w) h
     rw [key]
@@ -348,8 +351,9 @@ theorem _root_.Set.unit_moduleFinite (hS : S.Finite) :
   exact Module.Finite.of_submodule_quotient (LinearMap.ker (S.unitValuationₗ))
 
 /-- **The `S`-unit group is finitely generated.** This is one of the two open TODOs of Mathlib's
-`Mathlib/RingTheory/DedekindDomain/SInteger.lean`. -/
-theorem _root_.Set.unit_fg (hS : S.Finite) : Group.FG ↥(S.unit K) := by
+`Mathlib/RingTheory/DedekindDomain/SInteger.lean`. (Named `Set.unit_fg` in the source; Tau Ceti's
+`Set.unit_fg` reduces the general case to `S = ∅`.) -/
+theorem _root_.Set.unit_fg_of_finite (hS : S.Finite) : Group.FG ↥(S.unit K) := by
   rw [GroupFG.iff_add_fg, ← Module.Finite.iff_addGroup_fg]
   exact S.unit_moduleFinite hS
 
@@ -463,7 +467,7 @@ onto, which is `IsDedekindDomain.integer_empty` and `Set.unitEquivUnitsInteger` 
 elements. -/
 example (x : ↥((∅ : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))).unit K)) :
     ∃ u : (𝓞 K)ˣ, (∅ : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))).unitOfUnits u = x := by
-  obtain ⟨u, hu⟩ := Set.mem_unit_empty_iff.mp x.2
+  obtain ⟨u, hu⟩ := (Set.mem_unit_empty_iff (R := 𝓞 K) K).mp x.2
   exact ⟨u, Subtype.ext (Units.ext hu)⟩
 
 /-- **Acceptance test: each new place raises the rank by exactly one.** This is the content of the
@@ -481,7 +485,7 @@ example (S : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))) (hS : S.Finite)
 `Mathlib/RingTheory/DedekindDomain/SInteger.lean` records this as an open TODO beside the `S`-unit
 theorem itself. -/
 example (S : Set (IsDedekindDomain.HeightOneSpectrum (𝓞 K))) (hS : S.Finite) :
-    Group.FG ↥(S.unit K) := S.unit_fg hS
+    Group.FG ↥(S.unit K) := S.unit_fg_of_finite hS
 
 end Examples
 

@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Extension
 public import Mathlib.NumberTheory.Height.Projectivization
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.NumberField
 
 /-!
 # The absolute height of a tuple of algebraic numbers
@@ -460,52 +460,9 @@ theorem absMulHeight_eq_absMulHeight₁ (x : K) : absMulHeight ![x, 1] = absMulH
 theorem absLogHeight_eq_absLogHeight₁ (x : K) : absLogHeight ![x, 1] = absLogHeight₁ x :=
   congrArg Real.log (absMulHeight_eq_absMulHeight₁ x)
 
-/-- Mathlib's absolute height of an element is at least `1`, the junk value included. -/
-lemma one_le_absMulHeight₁ (x : K) : 1 ≤ absMulHeight₁ x :=
-  absMulHeight_eq_absMulHeight₁ x ▸ one_le_absMulHeight ![x, 1]
-
 /-- The logarithmic form of `NumberField.one_le_absMulHeight₁`. -/
 lemma absLogHeight₁_nonneg (x : K) : 0 ≤ absLogHeight₁ x :=
   Real.log_nonneg (one_le_absMulHeight₁ x)
-
-/-- **Mathlib's absolute height of a power**: the one-variable form of
-`NumberField.absMulHeight_pow`. It is what makes the easy half of Kronecker's theorem immediate —
-a root of unity has a power of height `1`, hence height `1`. -/
-theorem absMulHeight₁_pow {x : K} (hx : IsIntegral ℚ x) (n : ℕ) :
-    absMulHeight₁ (x ^ n) = absMulHeight₁ x ^ n := by
-  rw [← absMulHeight_eq_absMulHeight₁, ← absMulHeight_eq_absMulHeight₁,
-    show (![x ^ n, 1] : Fin 2 → K) = ![x, 1] ^ n from by funext i; fin_cases i <;> simp,
-    absMulHeight_pow (fun i ↦ by fin_cases i; exacts [hx, isIntegral_one])]
-
-/-- The logarithmic form of `NumberField.absMulHeight₁_pow`. -/
-theorem absLogHeight₁_pow {x : K} (hx : IsIntegral ℚ x) (n : ℕ) :
-    absLogHeight₁ (x ^ n) = n * absLogHeight₁ x := by
-  rw [absLogHeight₁, absMulHeight₁_pow hx, Real.log_pow, absLogHeight₁]
-
-/-- **Zero has absolute height `1`**, the value Mathlib's `Height.mulHeight₁_zero` gives for the
-relative height. Both this and `NumberField.absMulHeight₁_one` come from `absMulHeight₁_pow`:
-`0` and `1` are the idempotents of `K`, and a real number at least `1` that is its own square
-is `1`. -/
-lemma absMulHeight₁_zero : absMulHeight₁ (0 : K) = 1 := by
-  have ha : (0 : ℝ) < absMulHeight₁ (0 : K) := zero_lt_one.trans_le (one_le_absMulHeight₁ _)
-  have h := absMulHeight₁_pow (isIntegral_zero (R := ℚ) (B := K)) 2
-  rw [zero_pow two_ne_zero, pow_two] at h
-  exact (mul_left_cancel₀ ha.ne' ((mul_one _).trans h)).symm
-
-/-- The logarithmic form of `NumberField.absMulHeight₁_zero`. -/
-lemma absLogHeight₁_zero : absLogHeight₁ (0 : K) = 0 := by
-  rw [absLogHeight₁, absMulHeight₁_zero, Real.log_one]
-
-/-- **One has absolute height `1`**; see `NumberField.absMulHeight₁_zero`. -/
-lemma absMulHeight₁_one : absMulHeight₁ (1 : K) = 1 := by
-  have ha : (0 : ℝ) < absMulHeight₁ (1 : K) := zero_lt_one.trans_le (one_le_absMulHeight₁ _)
-  have h := absMulHeight₁_pow (isIntegral_one (R := ℚ) (B := K)) 2
-  rw [one_pow, pow_two] at h
-  exact (mul_left_cancel₀ ha.ne' ((mul_one _).trans h)).symm
-
-/-- The logarithmic form of `NumberField.absMulHeight₁_one`. -/
-lemma absLogHeight₁_one : absLogHeight₁ (1 : K) = 0 := by
-  rw [absLogHeight₁, absMulHeight₁_one, Real.log_one]
 
 /-- **In an affine chart, every coordinate has absolute height at most that of the tuple.** A
 tuple with a coordinate equal to `1` is the affine normalization of the projective point it

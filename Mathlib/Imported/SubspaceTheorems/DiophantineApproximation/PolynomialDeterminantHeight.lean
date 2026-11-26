@@ -8,7 +8,7 @@ module
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Gelfond
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.BoxMonomial
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.HeightTransport
-
+public import Mathlib.Imported.TauCeti.RingTheory.MvPolynomial.Abv.Coeff
 
 /-!
 # The height of a determinant of polynomials
@@ -82,13 +82,6 @@ theorem card_support_le_prod {d : σ → ℕ} {P : MvPolynomial σ R} (h : ∀ j
   refine le_trans (Finset.card_le_card hsub) (le_trans (Finset.card_image_le) ?_)
   rw [Finset.card_univ, Fintype.card_pi]
   simp
-
-/-- The crude form of `MvPolynomial.card_support_le_prod`. -/
-theorem card_support_le_two_pow {d : σ → ℕ} {P : MvPolynomial σ R} (h : ∀ j, P.degreeOf j ≤ d j) :
-    #P.support ≤ 2 ^ ∑ j, d j := by
-  refine le_trans (card_support_le_prod h) ?_
-  rw [← Finset.prod_pow_eq_pow_sum]
-  exact Finset.prod_le_prod fun j _ ↦ Nat.lt_two_pow_self
 
 end Support
 

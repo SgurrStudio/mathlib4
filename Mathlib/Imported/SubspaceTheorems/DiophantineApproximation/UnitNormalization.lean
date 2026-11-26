@@ -9,6 +9,7 @@ public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Affine
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.SRegulator
 public import Mathlib.Analysis.SpecialFunctions.Log.PosLog
 public import Mathlib.LinearAlgebra.Dual.Defs
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.Global.Places.Height
 
 -- Used only inside proofs.
 import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.LinearForm
@@ -16,7 +17,6 @@ import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.SUnit
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.FundamentalInequality
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.RationalPlaces
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.SAdicHeight
-
 
 /-!
 # Unit normalization: the reductions of the Subspace Theorem
@@ -176,7 +176,6 @@ theorem exists_forall_abs_log_sub_le (S : Finset (HeightOneSpectrum (𝓞 K))) :
     rw [abs_sub_comm, logEmbedding_apply_inr] at this
     linarith [this, le_mul_of_one_le_left hR₀0 (by norm_cast; omega : (1:ℝ) ≤ M + 1)]
 
-
 end NumberField.SUnit
 
 namespace NumberField
@@ -213,7 +212,6 @@ theorem exists_forall_abs_log_apply_sub_le (Sfin : Finset (FinitePlace K)) :
     rwa [FinitePlace.mk_maximalIdeal] at h
   · have h := hfin ⟨v.maximalIdeal, (hmemS v).2 hv⟩
     simpa [FinitePlace.mk_maximalIdeal] using h
-
 
 variable {ι : Type*}
 
@@ -264,7 +262,7 @@ theorem logHeightAff_le_sum_posLog [Finite ι] {Sfin : Finset (FinitePlace K)} {
     intro v
     rw [Real.posLog_eq_log_max_one (Real.iSup_nonneg fun i ↦ v.nonneg _)]
     exact Real.log_le_log (by linarith [hone v]) (hle v)
-  rw [logHeightAff_eq_log_mulHeightAff, mulHeightAff,
+  rw [logHeightAff_eq_log_mulHeightAff, mulHeightAff_def,
     mulHeight_eq_prod_of_forall_iSup_eq_one (optionElim_one_ne_zero x) hfin,
     Real.log_mul (Finset.prod_ne_zero_iff.2 fun w _ ↦ pow_ne_zero _ (by linarith [honeI w]))
       (Finset.prod_ne_zero_iff.2 fun v _ ↦ by linarith [honeF v]),
@@ -409,39 +407,6 @@ theorem exists_forall_logHeightAff_smul_le (Sfin : Finset (FinitePlace K)) :
 /-!
 ### Corollary 7.5.5
 -/
-
-/-- **The fundamental inequality at one infinite place**, in the form of Bombieri–Gubler's
-(7.19): the weighted logarithm of the value of a nonzero number at one place is at most its
-height in absolute value. -/
-theorem InfinitePlace.abs_mult_mul_log_le_logHeight₁ (w : InfinitePlace K) {α : K} (hα : α ≠ 0) :
-    |(w.mult : ℝ) * Real.log (w α)| ≤ logHeight₁ α := by
-  have key : ∀ β : K, β ≠ 0 → (w.mult : ℝ) * Real.log (w β) ≤ logHeight₁ β := by
-    intro β hβ
-    have h := prod_apply_le_mulHeight₁ {w} ∅ hβ
-    simp only [Finset.prod_singleton, Finset.prod_empty, mul_one] at h
-    rw [logHeight₁_eq_log_mulHeight₁, ← Real.log_pow]
-    exact Real.log_le_log (pow_pos (w.pos_iff.2 hβ) _) h
-  rw [abs_le]
-  refine ⟨?_, key α hα⟩
-  have h := key α⁻¹ (inv_ne_zero hα)
-  rw [map_inv₀, Real.log_inv, logHeight₁_inv] at h
-  linarith
-
-/-- **The fundamental inequality at one finite place**, in the form of Bombieri–Gubler's
-(7.19). -/
-theorem FinitePlace.abs_log_le_logHeight₁ (v : FinitePlace K) {α : K} (hα : α ≠ 0) :
-    |Real.log (v α)| ≤ logHeight₁ α := by
-  have key : ∀ β : K, β ≠ 0 → Real.log (v β) ≤ logHeight₁ β := by
-    intro β hβ
-    have h := prod_apply_le_mulHeight₁ ∅ {v} hβ
-    simp only [Finset.prod_singleton, Finset.prod_empty, one_mul] at h
-    rw [logHeight₁_eq_log_mulHeight₁]
-    exact Real.log_le_log (FinitePlace.pos_iff.2 hβ) h
-  rw [abs_le]
-  refine ⟨?_, key α hα⟩
-  have h := key α⁻¹ (inv_ne_zero hα)
-  rw [map_inv₀, Real.log_inv, logHeight₁_inv] at h
-  linarith
 
 omit [NumberField K] in
 /-- A form on `Kⁱ` is the sum of its coefficients times the coordinates, the coefficients being

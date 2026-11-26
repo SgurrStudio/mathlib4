@@ -11,7 +11,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.LocalEx
 -- Used only inside proofs.
 import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PlacesOver
 
-
 /-!
 # The places of a Galois extension as conjugates of one of them
 
@@ -98,7 +97,7 @@ theorem FinitePlace.exists_algEquiv_apply_eq [IsGalois K E] (v : FinitePlace K)
     rw [← V.mk_maximalIdeal]
     exact isNonarchimedean_mk _
   have hinv : (0 : ℝ) < ((V.localDegree K : ℝ))⁻¹ := by positivity
-  set Vt := AbsoluteValue.nonarchRpow hna hinv with hVt
+  set Vt := AbsoluteValue.nonarchRpow _ hna hinv with hVt
   have hpow : ∀ z : E, Vt z ^ V.localDegree K = V z := by
     intro z
     rw [hVt, AbsoluteValue.nonarchRpow_apply, ← Real.rpow_natCast (V.1 z ^ _) _,

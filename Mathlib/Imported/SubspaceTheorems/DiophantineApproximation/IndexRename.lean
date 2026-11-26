@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.BoxMonomial
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PolynomialIndex
-
+public import Mathlib.Imported.TauCeti.Algebra.MvPolynomial.HasseDeriv.Basic
 
 /-!
 # The index under renaming, and the index of a sum, a product and a determinant
@@ -86,26 +86,6 @@ theorem coeff_rename_eq_zero_of_not_subset {P : MvPolynomial σ R} {n : τ →�
   rw [← hu] at ht
   obtain ⟨a, _, rfl⟩ := Finset.mem_image.mp (mapDomain_support (Finset.mem_coe.mp ht))
   exact ⟨a, rfl⟩
-
-/-- **A Hasse derivative commutes with an injective renaming**, once the order is renamed too. -/
-theorem hasseDeriv_rename (he : Injective e) (μ : σ →₀ ℕ) (P : MvPolynomial σ R) :
-    hasseDeriv (μ.mapDomain e) (rename e P) = rename e (hasseDeriv μ P) := by
-  classical
-  refine MvPolynomial.ext _ _ fun n ↦ ?_
-  by_cases hn : (n.support : Set τ) ⊆ Set.range e
-  · obtain ⟨n', rfl⟩ : ∃ n' : σ →₀ ℕ, n'.mapDomain e = n :=
-      ⟨comapDomain e n (he.injOn), mapDomain_comapDomain e he n hn⟩
-    rw [hasseDeriv_coeff, coeff_rename_mapDomain _ he, hasseDeriv_coeff,
-      ← mapDomain_add, coeff_rename_mapDomain _ he]
-    congr 1
-    rw [Finsupp.prod_mapDomain_index_inj he]
-    exact congrArg _ (Finsupp.prod_congr fun j _ ↦
-      congrArg (fun t ↦ (t + μ j).choose (μ j)) (Finsupp.mapDomain_apply_of_injective he n' j))
-  · obtain ⟨j, hj, hjr⟩ := exists_ne_zero_notMem_range hn
-    have hns : ¬ (((n + μ.mapDomain e).support : Set τ) ⊆ Set.range e) := fun hs ↦
-      hjr (hs (by simp only [Finset.mem_coe, Finsupp.mem_support_iff, Finsupp.add_apply]; omega))
-    rw [hasseDeriv_coeff, coeff_rename_eq_zero_of_not_subset hns, mul_zero,
-      coeff_rename_eq_zero_of_not_subset hn]
 
 /-- **A variable outside the range of the renaming does not occur in a renamed polynomial.** -/
 theorem degreeOf_rename_eq_zero {j : τ} (hj : j ∉ Set.range e) (P : MvPolynomial σ R) :

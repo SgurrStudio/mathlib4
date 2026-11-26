@@ -7,11 +7,11 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.SRegulator
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.SIntegerLocalization
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
 
 -- Used only inside proofs.
 import Mathlib.Algebra.Order.Ring.IsNonarchimedean
 import Mathlib.RingTheory.Localization.Integer
-
 
 /-!
 # Where the height of an `S`-integral point lives, and primitive points
@@ -107,24 +107,6 @@ variable {K : Type*} [Field K] [NumberField K] {ι : Type*} [Finite ι]
 /-!
 ### The local sup norms of a nonzero tuple
 -/
-
-/-- **The local sup norm of a nonzero tuple is `1` at all but finitely many finite places.**
-Mathlib proves the same statement for a field with `AdmissibleAbsValues`, but keeps it `private`,
-and its `HasFiniteMulSupport.iSup` asks for every coordinate to be nonzero. -/
-theorem FinitePlace.hasFiniteMulSupport_iSup {x : ι → K} (hx : x ≠ 0) :
-    Function.HasFiniteMulSupport fun v : FinitePlace K ↦ ⨆ i, v (x i) := by
-  obtain ⟨i₀, hi₀⟩ : ∃ i, x i ≠ 0 := Function.ne_iff.mp hx
-  have : Nonempty ι := ⟨i₀⟩
-  refine Set.Finite.subset (Set.Finite.biUnion (s := {i | x i ≠ 0}) (Set.toFinite _)
-    (fun i hi ↦ FinitePlace.hasFiniteMulSupport (K := K) hi)) ?_
-  intro v hv
-  by_contra hcon
-  simp only [Set.mem_iUnion, Function.mem_mulSupport, not_exists, not_not] at hcon
-  refine hv (le_antisymm (Real.iSup_le (fun i ↦ ?_) zero_le_one) ?_)
-  · rcases eq_or_ne (x i) 0 with h | h
-    · simp [h]
-    · exact le_of_eq (hcon i h)
-  · exact Finite.le_ciSup_of_le i₀ (le_of_eq (hcon i₀ hi₀).symm)
 
 variable (S : Finset (HeightOneSpectrum (𝓞 K)))
 

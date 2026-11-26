@@ -7,7 +7,7 @@ module
 
 public import Mathlib.NumberTheory.NumberField.ProductFormula
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
-
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
 
 /-!
 # The finite part of a height is the inverse norm of an ideal
@@ -69,14 +69,6 @@ private theorem apply_eq_inv_pow (v : FinitePlace K) {x : 𝓞 K} (hx : x ≠ 0)
     v (x : K) = (((absNorm v.maximalIdeal.asIdeal : ℝ))
       ^ (multiplicity v.maximalIdeal.asIdeal (span {x})))⁻¹ :=
   eq_inv_of_mul_eq_one_left (FinitePlace.apply_mul_absNorm_pow_eq_one v hx)
-
-/-- **An algebraic integer has finite absolute values at most `1`.** -/
-theorem apply_le_one (v : FinitePlace K) (z : 𝓞 K) : v ((z : K)) ≤ 1 := by
-  rcases eq_or_ne z 0 with h | h
-  · simp [h]
-  · rw [apply_eq_inv_pow v h,
-      inv_le_one₀ (pow_pos (lt_trans zero_lt_one (one_lt_absNorm_real v)) _)]
-    exact one_le_pow₀ (one_lt_absNorm_real v).le
 
 omit [Finite σ] in
 private theorem mem_pow_of_le (v : FinitePlace K) {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)

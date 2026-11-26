@@ -10,7 +10,6 @@ public import Mathlib.Data.Finsupp.MonomialOrder
 public import Mathlib.NumberTheory.Height.MvPolynomial
 public import Mathlib.RingTheory.Polynomial.GaussNorm
 
-
 /-!
 # Gauss's lemma for heights
 
@@ -310,6 +309,7 @@ theorem mulHeight_mul_le_of_forall_iSup_le {p q : K[X]} {C : ℝ} (hC : 1 ≤ C)
   rcases eq_or_ne q 0 with rfl | hq
   · rw [mul_zero, Polynomial.mulHeight_zero, mul_one]
     exact one_le_mul_of_one_le_of_one_le hCw p.one_le_mulHeight
+  simp only [Polynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp]
   exact Finsupp.mulHeight_le_of_forall_iSup_le (coeff_ne_zero hp) (coeff_ne_zero hq)
     (coeff_ne_zero (mul_ne_zero hp hq)) harch
     fun v hv ↦ iSup_coeff_mul (AdmissibleAbsValues.isNonarchimedean v hv) p q
@@ -333,8 +333,9 @@ theorem mulHeight_mul_mulHeight_le_of_forall_le_iSup {p q : K[X]} {C : ℝ} (hp 
     (hq : q ≠ 0)
     (harch : ∀ v ∈ archAbsVal (K := K),
       ((⨆ n : ℕ, v (p.coeff n)) * ⨆ n : ℕ, v (q.coeff n)) ≤ C * ⨆ n : ℕ, v ((p * q).coeff n)) :
-    p.mulHeight * q.mulHeight ≤ C ^ totalWeight K * (p * q).mulHeight :=
-  Finsupp.mulHeight_mul_mulHeight_le_of_forall_le_iSup (coeff_ne_zero hp) (coeff_ne_zero hq)
+    p.mulHeight * q.mulHeight ≤ C ^ totalWeight K * (p * q).mulHeight := by
+  simp only [Polynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp]
+  exact Finsupp.mulHeight_mul_mulHeight_le_of_forall_le_iSup (coeff_ne_zero hp) (coeff_ne_zero hq)
     (coeff_ne_zero (mul_ne_zero hp hq)) harch
     fun v hv ↦ iSup_coeff_mul (AdmissibleAbsValues.isNonarchimedean v hv) p q
 
@@ -493,6 +494,7 @@ theorem mulHeight_mul_le_of_forall_iSup_le {p q : MvPolynomial σ K} {C : ℝ} (
   rcases eq_or_ne q 0 with rfl | hq
   · rw [mul_zero, MvPolynomial.mulHeight_zero, mul_one]
     exact one_le_mul_of_one_le_of_one_le hCw p.one_le_mulHeight
+  simp only [Polynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp]
   exact Finsupp.mulHeight_le_of_forall_iSup_le (coeff_ne_zero hp) (coeff_ne_zero hq)
     (coeff_ne_zero (mul_ne_zero hp hq)) harch
     fun v hv ↦ iSup_coeff_mul (AdmissibleAbsValues.isNonarchimedean v hv) p q
@@ -515,8 +517,9 @@ theorem mulHeight_mul_mulHeight_le_of_forall_le_iSup {p q : MvPolynomial σ K} {
     (harch : ∀ v ∈ archAbsVal (K := K),
       ((⨆ m : σ →₀ ℕ, v (p.coeff m)) * ⨆ m : σ →₀ ℕ, v (q.coeff m))
         ≤ C * ⨆ m : σ →₀ ℕ, v ((p * q).coeff m)) :
-    p.mulHeight * q.mulHeight ≤ C ^ totalWeight K * (p * q).mulHeight :=
-  Finsupp.mulHeight_mul_mulHeight_le_of_forall_le_iSup (coeff_ne_zero hp) (coeff_ne_zero hq)
+    p.mulHeight * q.mulHeight ≤ C ^ totalWeight K * (p * q).mulHeight := by
+  simp only [Polynomial.mulHeight_eq_finsupp, MvPolynomial.mulHeight_eq_finsupp]
+  exact Finsupp.mulHeight_mul_mulHeight_le_of_forall_le_iSup (coeff_ne_zero hp) (coeff_ne_zero hq)
     (coeff_ne_zero (mul_ne_zero hp hq)) harch
     fun v hv ↦ iSup_coeff_mul (AdmissibleAbsValues.isNonarchimedean v hv) p q
 
@@ -624,7 +627,8 @@ example : (((X : ℚ[X]) - C 2) * ((X : ℚ[X]) - C 3)).mulHeight
   have hsup : (⨆ i : Fin 3, |(![6, -5, 1] : Fin 3 → ℤ) i|) = 6 := by
     refine le_antisymm (ciSup_le fun i ↦ ?_) (Finite.le_ciSup_of_le 0 (by decide))
     fin_cases i <;> decide
-  rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov,
+  rw [Polynomial.mulHeight_eq_finsupp,
+    Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov,
     hcoeff, Rat.mulHeight_eq_max_abs_of_gcd_eq_one (by decide), hsup, mulHeight_X_sub_C,
     mulHeight_X_sub_C, show ((2 : ℚ)) = ((2 : ℕ) : ℚ) by norm_num,
     show ((3 : ℚ)) = ((3 : ℕ) : ℚ) by norm_num, Rat.mulHeight₁_natCast, Rat.mulHeight₁_natCast]

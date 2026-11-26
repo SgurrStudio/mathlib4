@@ -11,8 +11,8 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 -- Used only inside proofs.
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.EvertseLemma
+public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.InfinitePlace.Basic
 import Mathlib.LinearAlgebra.Dimension.OrzechProperty
-
 
 /-!
 # The wedge domain of an approximation domain
@@ -115,19 +115,6 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {ι : Type*} [Fintype ι] [LinearOrder ι]
 
-omit [NumberField K] in
-/-- **An infinite place is archimedean**: `w (1 + 1) = 2`. -/
-theorem InfinitePlace.not_isNonarchimedean (w : InfinitePlace K) : ¬ IsNonarchimedean w.1 := by
-  intro h
-  have h2 := h 1 1
-  have : w.1 (1 + 1) = 2 := by
-    have := w.map_natCast 2
-    rw [Nat.cast_ofNat, Nat.cast_ofNat] at this
-    rw [one_add_one_eq_two]
-    exact this
-  rw [this, map_one, max_self] at h2
-  norm_num at h2
-
 omit [NumberField K] [LinearOrder ι] in
 /-- **A unitriangular change of a basis is a basis.** -/
 theorem linearIndependent_add_sum_smul {x : Fin (Fintype.card ι) → ι → K}
@@ -152,7 +139,6 @@ theorem linearIndependent_add_sum_smul {x : Fin (Fintype.card ι) → ι → K}
   rw [← hsp, Submodule.span_le]
   rintro _ ⟨j, rfl⟩
   exact hmem _ j (Nat.lt_succ_self _)
-
 
 open scoped Classical in
 /-- **The exponents of the wedge domain** (Bombieri–Gubler 7.5.30–7.5.31). -/
@@ -299,7 +285,6 @@ theorem apply_wedgeForms_plucker_le (v : AbsoluteValue K ℝ) (l : ι → Dual K
   rw [← mul_assoc]
   exact mul_le_mul_of_nonneg_right hfac (by positivity)
 
-
 variable (K) in
 /-- **The constant of the wedge domain**, `N! · max 1 C_E ^ N` for Evertse's constant `C_E` in
 `N` variables. -/
@@ -411,7 +396,6 @@ theorem exists_plucker_mem_approxDomain_wedgeForms : ∃ C : ℝ, 0 < C ∧
         _ = 1 := one_mul 1
     exact apply_plucker_le_one (hna v) (fun b i ↦ hyint _ i) s
 
-
 open scoped Classical in
 /-- Exactly one `p`-subset of forms comes from the top block of vectors. -/
 theorem prod_ite_topBlock (σ : Fin (Fintype.card ι) ≃ ι) {k p : ℕ}
@@ -489,7 +473,6 @@ theorem rpow_approxWeight_wedgeExponent (Sfin : Finset (FinitePlace K))
     rw [← InfinitePlace.sum_mult_eq, Nat.cast_sum]
     ring
   rw [hw, Real.rpow_add hQ0, Real.rpow_mul_natCast hQ0.le, Real.rpow_logb hQ0 hQ.ne' hX0]
-
 
 omit [LinearOrder ι] in
 open scoped Classical in
@@ -710,7 +693,6 @@ theorem exists_successiveMinimum_wedge : ∃ C : ℝ, 0 < C ∧
       mul_le_mul_of_nonneg_right (pow_le_pow_left₀ (mul_nonneg hP0 hr0.le)
         (mul_le_mul_of_nonneg_right hPle hr0.le) d) hCa.le
 
-
 omit [NumberField K] [Fintype ι] [LinearOrder ι] in
 /-- The quotients of consecutive minima telescope. -/
 private theorem prod_Ico_div {μ : ℕ → ℝ} {R N : ℕ} (hR : 0 < R) (hμ : ∀ j < N, 0 < μ j) :
@@ -752,7 +734,6 @@ theorem exists_div_pow_le_inv {μ : ℕ → ℝ} {R N : ℕ} (hR : 0 < R) (hRN :
     _ ≤ (μ (N - 1))⁻¹ := by
         rw [div_eq_mul_inv]
         exact mul_le_of_le_one_left (inv_pos.2 (hμ _ (by omega))).le hR1
-
 
 omit [NumberField K] [LinearOrder ι] in
 /-- A product of numbers in `(0, 1]` is at most each of them. -/

@@ -13,7 +13,6 @@ public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.RothEst
 public import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 public import Mathlib.Analysis.Complex.ExponentialBounds
 
-
 /-!
 # Roth's lemma
 
@@ -160,7 +159,8 @@ theorem logHeight_det_le_roth {m p : ℕ} {d : Fin (m + 2) → ℕ} {P : MvPolyn
       ≤ 4 * (p : ℝ) * M := by
     nlinarith [hfact, hA, hB, mul_nonneg hp0 hM0]
   have htw : (0 : ℝ) ≤ (totalWeight K : ℝ) := Nat.cast_nonneg _
-  refine le_trans (logHeight_det_hasseDeriv_le hP hdeg ρ) ?_
+  refine le_trans (logHeight_det_hasseDeriv_le hdeg ρ) ?_
+  rw [Fintype.card_fin, ← Finset.sum_mul]
   nlinarith [hkey, htw]
 
 /-- A weighted sum of an order against weights bounded below. -/
@@ -443,7 +443,6 @@ theorem rothProp_succ {m : ℕ} (ih : RothProp K m) : RothProp K (m + 1) := by
     rw [← mul_assoc, mul_inv_cancel₀ hpr.ne', one_mul] at h
     exact h
   exact Real.roth_numeric (Nat.cast_nonneg m) hθ0 hsmall hsθ2 rfl (rothConst_le m) htlb hmin
-
 
 theorem rothConst_le_two_mul (m : ℕ) : rothConst m ≤ 2 * ((m : ℝ) + 1) :=
   le_of_eq (by rw [rothConst])

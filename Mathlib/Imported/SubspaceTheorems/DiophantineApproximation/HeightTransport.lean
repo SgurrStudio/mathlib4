@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.ArithmeticHeights.Polynomial
 
-
 /-!
 # Transport from local factors to heights, one object at a time
 
@@ -156,8 +155,9 @@ theorem mulHeight_le_pow_of_forall_iSup_le {P Q : MvPolynomial σ K} {C : ℝ} {
       (⨆ ν, v (Q.coeff ν)) ≤ C * (⨆ ν, v (P.coeff ν)) ^ p)
     (hnon : ∀ v ∈ nonarchAbsVal (K := K),
       (⨆ ν, v (Q.coeff ν)) ≤ (⨆ ν, v (P.coeff ν)) ^ p) :
-    Q.mulHeight ≤ C ^ totalWeight K * P.mulHeight ^ p :=
-  Finsupp.mulHeight_le_pow_of_forall_iSup_le
+    Q.mulHeight ≤ C ^ totalWeight K * P.mulHeight ^ p := by
+  simp only [MvPolynomial.mulHeight_eq_finsupp]
+  exact Finsupp.mulHeight_le_pow_of_forall_iSup_le
     (fun h ↦ hP (by ext ν; exact congrFun (congrArg DFunLike.coe h) ν)) hC harch hnon
 
 end MvPolynomial

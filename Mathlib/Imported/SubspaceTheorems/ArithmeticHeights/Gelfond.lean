@@ -10,7 +10,8 @@ public import Mathlib.Analysis.Polynomial.MahlerMeasure
 public import Mathlib.Data.Finsupp.Interval
 public import Mathlib.Data.Nat.Choose.Central
 public import Mathlib.Order.Interval.Finset.Nat
-
+public import Mathlib.Imported.TauCeti.NumberTheory.Height.Polynomial.Basic
+public import Mathlib.Imported.TauCeti.Data.Nat.Choose.Central
 
 /-!
 # Gelfond's inequality
@@ -34,7 +35,8 @@ fields, where every member of `archAbsVal` is `NumberField.place φ` for a compl
 
 ## Main results
 
-* `Polynomial.mulHeight_mul_le` and `Polynomial.logHeight_mul_le`: **Gelfond's inequality, upper
+* `Polynomial.mulHeight_mul_le_two_pow` and `Polynomial.logHeight_mul_le_two_pow`: **Gelfond's
+  inequality, upper
   half**, `mulHeight (p * q) ≤ 2 ^ ((natDegree p + natDegree q) * totalWeight K) * mulHeight p *
   mulHeight q`, over any field with `AdmissibleAbsValues`.
 * `Polynomial.mulHeight_mul_le_min_natDegree`: the same bound with the sharp elementary constant
@@ -154,19 +156,6 @@ theorem choose_middle_sq_mul_le (n : ℕ) : n.choose (n / 2) ^ 2 * (n + 1) ≤ 4
           have h16 : (16 : ℕ) ^ (m + 1) = 4 ^ (2 * (m + 1)) := by rw [pow_mul]; norm_num
           rw [h16, show 2 * (m + 1) = 2 * m + 1 + 1 by ring, pow_succ]
           ring
-
-/-- The real form of `Nat.choose_middle_sq_mul_le`: `n.choose (n / 2) * √(n + 1) ≤ 2 ^ n`. This is
-what turns the constant `2 ^ (deg p + deg q) * √(deg p + deg q + 1)` that Mathlib's Mahler measure
-lemmas produce into the classical `2 ^ (deg p + deg q)`. -/
-theorem choose_middle_mul_sqrt_le_two_pow (n : ℕ) :
-    (n.choose (n / 2) : ℝ) * Real.sqrt (n + 1) ≤ 2 ^ n := by
-  have hnn : (0 : ℝ) ≤ (n.choose (n / 2) : ℝ) * Real.sqrt (n + 1) := by positivity
-  have hsq : ((n.choose (n / 2) : ℝ) * Real.sqrt (n + 1)) ^ 2 ≤ ((2 : ℝ) ^ n) ^ 2 := by
-    rw [mul_pow, Real.sq_sqrt (by positivity), ← pow_mul, mul_comm n 2, pow_mul,
-      show ((2 : ℝ) ^ 2) = 4 by norm_num]
-    exact_mod_cast choose_middle_sq_mul_le n
-  have h := Real.sqrt_le_sqrt hsq
-  rwa [Real.sqrt_sq hnn, Real.sqrt_sq (by positivity)] at h
 
 end Nat
 
@@ -382,16 +371,17 @@ theorem logHeight_mul_le_min_natDegree (p q : K[X]) :
 /-- **Gelfond's inequality, upper half** (Bombieri–Gubler, Lemma 1.6.11; Hindry–Silverman,
 Proposition B.7.3). In Mathlib's relative height the constant of the absolute statement,
 `2 ^ (deg p + deg q)`, is raised to the power `totalWeight K`. No nonvanishing hypothesis is
-needed: at `p = 0` the junk value sits on the side being bounded. -/
-theorem mulHeight_mul_le (p q : K[X]) :
+needed: at `p = 0` the junk value sits on the side being bounded. (Named `mulHeight_mul_le` in the
+source; Tau Ceti's `Polynomial.mulHeight_mul_le` has the constant `min (deg p) (deg q) + 1`.) -/
+theorem mulHeight_mul_le_two_pow (p q : K[X]) :
     (p * q).mulHeight
       ≤ 2 ^ ((p.natDegree + q.natDegree) * totalWeight K) * (p.mulHeight * q.mulHeight) := by
   rw [pow_mul]
   exact mulHeight_mul_le_of_forall_iSup_le (one_le_pow₀ one_le_two)
     fun v _ ↦ iSup_coeff_mul_le_two_pow v p q
 
-/-- The logarithmic form of `Polynomial.mulHeight_mul_le`. -/
-theorem logHeight_mul_le (p q : K[X]) :
+/-- The logarithmic form of `Polynomial.mulHeight_mul_le_two_pow`. -/
+theorem logHeight_mul_le_two_pow (p q : K[X]) :
     (p * q).logHeight
       ≤ (p.natDegree + q.natDegree) * totalWeight K * Real.log 2
         + (p.logHeight + q.logHeight) := by
@@ -606,7 +596,8 @@ example : ((X : ℚ[X]) + 1).mulHeight = 1
     fin_cases i <;> decide
   refine ⟨by rw [show ((X : ℚ[X]) + 1) = X - C (-1) by simp, mulHeight_X_sub_C,
     Height.mulHeight₁_neg, Height.mulHeight₁_one], ?_, ?_⟩
-  · rw [Polynomial.mulHeight, Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov,
+  · rw [Polynomial.mulHeight_eq_finsupp,
+    Finsupp.mulHeight_eq_mulHeight_comp _ _ Fin.val_injective hcov,
       hcoeff, Rat.mulHeight_eq_max_abs_of_gcd_eq_one (by decide), hsup]
     norm_num
   · have hd1 : ((X : ℚ[X]) + 1).natDegree = 1 := by rw [← C_1, natDegree_X_add_C]
@@ -622,7 +613,7 @@ example {p q : ℚ[X]} (hp : p ≠ 0) (hq : q ≠ 0) :
           ≤ 2 ^ (p.natDegree + q.natDegree) * (p * q).mulHeight := by
   have hw : totalWeight ℚ = 1 := by
     rw [NumberField.totalWeight_eq_finrank, Module.finrank_self]
-  exact ⟨by simpa [hw] using Polynomial.mulHeight_mul_le p q,
+  exact ⟨by simpa [hw] using Polynomial.mulHeight_mul_le_two_pow p q,
     by simpa [hw] using Polynomial.mulHeight_mul_mulHeight_le hp hq⟩
 
 end Examples
