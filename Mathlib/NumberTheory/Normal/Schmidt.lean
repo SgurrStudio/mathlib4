@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.NumberTheory.Normal.Cassels
+public import Mathlib.NumberTheory.Normal.SchmidtGeneral
 public import Mathlib.NumberTheory.Normal.SchmidtPrimePower
 public import Mathlib.NumberTheory.Transcendental.Liouville.Basic
 
@@ -29,6 +30,10 @@ dependent (`Real.isNormalIn_iff_of_pow_eq_pow`). **Schmidt** (1960) proved the c
   power (`Real.SchmidtPrimePower`).
 * `Real.forall_isNormalIn_imp_iff_of_isPrimePow`: for a prime power `c`, normality in base `b`
   implies normality in base `c` exactly when `b` and `c` are multiplicatively dependent.
+* `Real.exists_isNormalIn_not_isNormalIn`: **Schmidt's theorem** for arbitrary bases
+  (`Real.SchmidtGeneral`).
+* `Real.forall_isNormalIn_imp_iff`: normality in base `b` implies normality in base `c` exactly
+  when `b` and `c` are multiplicatively dependent.
 -/
 
 @[expose] public section
@@ -79,5 +84,26 @@ theorem forall_isNormalIn_imp_iff_of_isPrimePow {b c : ℕ} (hb : 2 ≤ b) (hc :
     exact hnx (H x hx)
   · rintro ⟨m, n, hm, hn, hmn⟩ x hx
     exact (isNormalIn_iff_of_pow_eq_pow hb hc.two_le hm hn hmn).1 hx
+
+/-- **Schmidt's theorem.** If `b, c ≥ 2` and `bᵐ ≠ cⁿ` for all `m, n ≥ 1`, some real number is
+normal in base `b` but not in base `c`. -/
+theorem exists_isNormalIn_not_isNormalIn {b c : ℕ} (hb : 2 ≤ b) (hc : 2 ≤ c)
+    (h : ∀ m n : ℕ, 0 < m → 0 < n → b ^ m ≠ c ^ n) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn c x := by
+  obtain ⟨x, hx, hnot⟩ := SchmidtGeneral.exists_isNormalIn_forall_not_isNormalIn_pow hb hc h
+  exact ⟨x, hx, by simpa using hnot 1 le_rfl⟩
+
+/-- Normality in base `b` implies normality in base `c` if and only if `b` and `c` are
+multiplicatively dependent. -/
+theorem forall_isNormalIn_imp_iff {b c : ℕ} (hb : 2 ≤ b) (hc : 2 ≤ c) :
+    (∀ x : ℝ, IsNormalIn b x → IsNormalIn c x) ↔ ∃ m n : ℕ, 0 < m ∧ 0 < n ∧ b ^ m = c ^ n := by
+  constructor
+  · intro H
+    by_contra hdep
+    push Not at hdep
+    obtain ⟨x, hx, hnx⟩ := exists_isNormalIn_not_isNormalIn hb hc fun m n hm hn ↦ hdep m n hm hn
+    exact hnx (H x hx)
+  · rintro ⟨m, n, hm, hn, hmn⟩ x hx
+    exact (isNormalIn_iff_of_pow_eq_pow hb hc hm hn hmn).1 hx
 
 end Real

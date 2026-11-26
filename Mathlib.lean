@@ -6711,6 +6711,7 @@ public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Schmidt
+public import Mathlib.NumberTheory.Normal.SchmidtGeneral
 public import Mathlib.NumberTheory.Normal.SchmidtPrimePower
 public import Mathlib.NumberTheory.Normal.Ridout
 public import Mathlib.NumberTheory.Normal.SqrtTwo
