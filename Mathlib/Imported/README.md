@@ -48,6 +48,20 @@ mathematics, namespaces and authorship are unchanged. Each subfolder records its
   with its probability instance), the deprecated root-namespace Fourier names become their
   `AddCircle.` versions, `List.getD_eq_getElem` is restated locally, one `convert` step is
   replaced by an explicit emptiness proof, and missing imports are added.
+* Also imported, from the same commit: the closure (146 files, 131 new) of
+  `NormalNumbers.CantorLiouvilleAll` (**a computable Liouville number in the middle-third Cantor
+  set that is normal to every base not a power of 3**,
+  `NormalNumbers.CantorLiouvilleAll.exists_computable_liouville_mem_cantorSet_normalProfile`,
+  towards Bugeaud's Problem 10.37; the companion `NormalNumbers.CantorLiouville` handles base 2).
+  The headline theorem depends only on `propext`, `Classical.choice` and `Quot.sound`. Three
+  files in the closure contain `sorry`d side lemmas that the headline theorem does not use:
+  `ExplicitSquareNonNormal`, `G4EntropyE0Down` and `LevinSparse`. Porting changes: the same coin
+  replacement as above (`CantorSelfSimilar`, `LevinSparse`), `padicValNat` is replaced by
+  `multiplicity` (Mathlib's `padicValNat` API is deprecated in favour of it, e.g.
+  `Nat.multiplicity_pow_sub_pow` for lifting the exponent), `Finset.prod_le_prod` and
+  `prod_le_one` become their `₀` versions, `measurable_pi_lambda` becomes `measurable_pi_iff.2`,
+  `*_finset_sum` becomes `*_finsetSum`, a few `norm_num` and `convert` steps are re-closed, one
+  `Computable.comp` gets explicit arguments, and missing imports are added.
 
 ## Porting changes to `TauCeti/`
 
