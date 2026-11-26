@@ -6698,8 +6698,10 @@ public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
+public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.NumberTheory.Normal.Champernowne
 public import Mathlib.NumberTheory.Normal.Complexity
+public import Mathlib.NumberTheory.Normal.Computable
 public import Mathlib.NumberTheory.Normal.CopelandErdos
 public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.DifferenceTest
