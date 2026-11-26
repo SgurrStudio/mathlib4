@@ -201,7 +201,61 @@ whose Möbius image is a quarter-Cantor point plus an integer. -/
 theorem exists_isAbsolutelyNormal_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
     (hdet : a₁ * d - a₂ * c ≠ 0) : ∃ x : ℝ, Real.IsAbsolutelyNormal x ∧
       ∃ ω : ℕ → Bool, ∃ r : ℤ, (a₁ * x + a₂) / (c * x + d) = cantorReal ω + r := by
-  sorry
+  set s := a₁ / c
+  set r : ℤ := ⌈|s|⌉ + 2
+  set t : ℝ := r - s with htdef
+  have ht : 2 ≤ t := by
+    have h1 : |s| ≤ (⌈|s|⌉ : ℝ) := Int.le_ceil _
+    have h2 : s ≤ |s| := le_abs_self s
+    simp only [htdef, r]; push_cast; linarith
+  set E : ℝ := (a₁ * d - a₂ * c) / c ^ 2 with hEdef
+  have hE : E ≠ 0 := div_ne_zero hdet (pow_ne_zero 2 hc)
+  have hEa : 0 < |E| := abs_pos.2 hE
+  set G : ℝ → ℝ := fun y => -d / c - E * (y + t)⁻¹ with hGdef
+  have hv : ∀ y ∈ W, 2 ≤ y + t ∧ y + t ≤ t + 1 := fun y hy =>
+    ⟨by linarith [hy.1], by linarith [hy.2]⟩
+  have hvpos : ∀ y ∈ W, 0 < y + t := fun y hy => by linarith [(hv y hy).1]
+  have hd : PolyDecay G := by
+    refine polyDecay_of_abs (G' := fun y => E * ((y + t) ^ 2)⁻¹)
+      (G'' := fun y => -(2 * E) / (y + t) ^ 3) (a := 2 * |E| / (t + 1) ^ 3) (A := 2 * |E| / 8)
+      (by positivity)
+      (measurable_const.sub (measurable_const.mul (measurable_id.add_const t).inv))
+      (fun y hy => ?_) (fun y hy => ?_) (fun y hy => ?_) (fun y hy => ?_) ?_
+    · have h0 := (hvpos y hy).ne'
+      exact ((((hasDerivAt_id' y).add_const t).inv h0).const_mul E).const_sub (-d / c)
+        |>.congr_deriv (by field_simp)
+    · have h0 := (hvpos y hy).ne'
+      exact (((((hasDerivAt_id' y).add_const t).fun_pow 2).inv (pow_ne_zero 2 h0)).const_mul E)
+        |>.congr_deriv (by field_simp; ring)
+    · have h0 := hvpos y hy
+      rw [neg_div, abs_neg, abs_div (2 * E), abs_mul, abs_two,
+        abs_of_pos (by positivity : (0 : ℝ) < (y + t) ^ 3)]
+      exact div_le_div_of_nonneg_left (by positivity) (by positivity)
+        (pow_le_pow_left₀ h0.le (hv y hy).2 3)
+    · have h0 := hvpos y hy
+      rw [neg_div, abs_neg, abs_div (2 * E), abs_mul, abs_two,
+        abs_of_pos (by positivity : (0 : ℝ) < (y + t) ^ 3)]
+      gcongr
+      calc (8 : ℝ) = 2 ^ 3 := by norm_num
+        _ ≤ (y + t) ^ 3 := pow_le_pow_left₀ (by norm_num) (hv y hy).1 3
+    · rcases lt_or_gt_of_ne hE with h | h
+      · exact Or.inl fun y hy => by have := hvpos y hy; apply div_pos (by linarith); positivity
+      · exact Or.inr fun y hy => by
+          have := hvpos y hy; apply div_neg_of_neg_of_pos (by linarith); positivity
+  have hGm : Measurable G :=
+    measurable_const.sub (measurable_const.mul (measurable_id.add_const t).inv)
+  obtain ⟨ω, hω⟩ := (ae_isAbsolutelyNormal_of_polyDecay hGm hd).exists
+  refine ⟨G (cantorReal ω), hω, ω, r, ?_⟩
+  have hy := cantorReal_mem_window ω
+  have hyr : cantorReal ω + (r : ℝ) = (cantorReal ω + t) + a₁ / c := by rw [htdef]; ring
+  have h0 : cantorReal ω + t ≠ 0 := (hvpos _ hy).ne'
+  rw [hyr, hGdef]
+  simp only
+  generalize cantorReal ω + t = v at h0 ⊢
+  have hden : c * (-d / c - E * v⁻¹) + d = -(c * E) / v := by field_simp; ring
+  rw [div_eq_iff (by rw [hden]; exact div_ne_zero (neg_ne_zero.2 (mul_ne_zero hc hE)) h0), hEdef]
+  field_simp
+  ring
 
 end NormalNumbers.QuarterCantorDecay
 
@@ -272,18 +326,25 @@ base `2 ^ k`. -/
 theorem exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
     (hdet : a₁ * d - a₂ * c ≠ 0) : ∃ x : ℝ, IsAbsolutelyNormal x ∧
       ∀ k : ℕ, 0 < k → ¬ IsNormalIn (2 ^ k) ((a₁ * x + a₂) / (c * x + d)) := by
-  sorry
+  obtain ⟨x, hx, ω, r, he⟩ := exists_isAbsolutelyNormal_mobius a₁ a₂ c d hc hdet
+  refine ⟨x, hx, fun k hk h => ?_⟩
+  rw [he, isNormalIn_add_intCast_iff] at h
+  exact not_isNormalIn_two_pow_cantorReal ω hk h
 
 /-- No Möbius map with `c ≠ 0` preserves absolute normality. -/
 theorem exists_isAbsolutelyNormal_not_isAbsolutelyNormal_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
     (hdet : a₁ * d - a₂ * c ≠ 0) :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal ((a₁ * x + a₂) / (c * x + d)) := by
-  sorry
+  obtain ⟨x, hx, h⟩ :=
+    exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius a₁ a₂ c d hc hdet
+  exact ⟨x, hx, fun h' => h 1 one_pos (by simpa using h' 2 le_rfl)⟩
 
 /-- No Möbius map with `c ≠ 0` preserves normality in base `2 ^ k`. -/
 theorem exists_isNormalIn_two_pow_not_isNormalIn_mobius {k : ℕ} (hk : 0 < k) (a₁ a₂ c d : ℝ)
     (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
     ∃ x : ℝ, IsNormalIn (2 ^ k) x ∧ ¬ IsNormalIn (2 ^ k) ((a₁ * x + a₂) / (c * x + d)) := by
-  sorry
+  obtain ⟨x, hx, h⟩ :=
+    exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius a₁ a₂ c d hc hdet
+  exact ⟨x, hx _ (two_le_two_pow hk), h k hk⟩
 
 end Real
