@@ -21,8 +21,8 @@ preserve normality in a fixed base `b ≥ 2` or absolute normality:
   (Dayan–Ganguly–Weiss; Hochman–Shmerkin; arXiv:2609.24665).
 * `C²` affine rigidity: every `C²` map preserving base-`b` normality or absolute normality is
   affine-linear (arXiv:2609.24665).
-* Non-preservation of normality under squaring, inversion, the exponential map, and
-  non-degenerate Möbius transformations with `c ≠ 0`.
+* Non-preservation of normality in a general base under squaring, inversion, the exponential
+  map, and non-degenerate Möbius transformations with `c ≠ 0`.
 * Sharpness of `C²` rigidity: existence of a non-affine `C^{1,1}` diffeomorphism of `ℝ`
   preserving absolute normality (arXiv:2609.24665).
 -/
@@ -62,31 +62,24 @@ proof_wanted exists_affine_of_contDiff_two_preserves_isAbsolutelyNormal {f : ℝ
     (hpres : ∀ x : ℝ, IsAbsolutelyNormal x → IsAbsolutelyNormal (f x)) :
     ∃ a c : ℝ, ∀ x : ℝ, f x = a * x + c
 
-/-! ### Non-preservation under standard nonlinear operations -/
+/-! ### Non-preservation under standard nonlinear operations
+
+The absolute-normality versions, and the base-`b` versions for `b = 2 ^ k`, are proved in
+`Mathlib.NumberTheory.Normal.NonPreservation`
+(`Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq` and its `inv`, `exp` siblings).
+The general base `b` needs a base-`b` analogue of the quarter-Cantor set. -/
 
 /-- Squaring does not preserve base-`b` normality (`b ≥ 2`). -/
 proof_wanted exists_isNormalIn_not_isNormalIn_sq {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (x ^ 2)
 
-/-- Squaring does not preserve absolute normality. -/
-proof_wanted exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal (x ^ 2)
-
 /-- Inversion `x ↦ x⁻¹` does not preserve base-`b` normality (`b ≥ 2`). -/
 proof_wanted exists_isNormalIn_not_isNormalIn_inv {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b x⁻¹
 
-/-- Inversion `x ↦ x⁻¹` does not preserve absolute normality. -/
-proof_wanted exists_isAbsolutelyNormal_not_isAbsolutelyNormal_inv :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal x⁻¹
-
 /-- The exponential map `x ↦ Real.exp x` does not preserve base-`b` normality (`b ≥ 2`). -/
 proof_wanted exists_isNormalIn_not_isNormalIn_exp {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (Real.exp x)
-
-/-- The exponential map `x ↦ Real.exp x` does not preserve absolute normality. -/
-proof_wanted exists_isAbsolutelyNormal_not_isAbsolutelyNormal_exp :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal (Real.exp x)
 
 /-- No non-degenerate Möbius transformation `x ↦ (a₁ * x + a₂) / (c * x + d)` with `c ≠ 0`
 preserves base-`b` normality (`b ≥ 2`). -/

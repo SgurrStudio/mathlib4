@@ -6732,9 +6732,11 @@ public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.MorseHedlund
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
+public import Mathlib.NumberTheory.Normal.NonPreservation
 public import Mathlib.NumberTheory.Normal.Pi
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Preservation
+public import Mathlib.NumberTheory.Normal.QuarterCantorDecay
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Ridout
 public import Mathlib.NumberTheory.Normal.Schmidt
