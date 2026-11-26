@@ -6694,6 +6694,7 @@ public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.NumberTheory.MulChar.Lemmas
 public import Mathlib.NumberTheory.Multiplicity
 public import Mathlib.NumberTheory.Niven
+public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
@@ -6706,9 +6707,12 @@ public import Mathlib.NumberTheory.Normal.FejerCount
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
+public import Mathlib.NumberTheory.Normal.Ridout
+public import Mathlib.NumberTheory.Normal.SqrtTwo
 public import Mathlib.NumberTheory.Normal.Stoneham
 public import Mathlib.NumberTheory.Normal.Wall
 public import Mathlib.NumberTheory.Normal.Weyl
+public import Mathlib.NumberTheory.Normal.WeylInequality
 public import Mathlib.NumberTheory.NumberField.AdeleRing
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.NumberTheory.NumberField.CMField
