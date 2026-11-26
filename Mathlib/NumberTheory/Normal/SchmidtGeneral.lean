@@ -34,6 +34,11 @@ Fourier coefficient is at most `Ψ_K(pᵉ Y Bᵐ)`.
 * The pairs where `v_p(bᵈ − 1)` is large are few (`card_bad_le`).
 
 Together these give the second moment bound `secondMoment_le` and `ae_isNormal`.
+
+## References
+
+* [W. M. Schmidt, *On normal numbers*][Schmidt1960]
+* [H. Davenport, P. Erdős, W. J. LeVeque, *On Weyl's criterion for uniform distribution*][DavenportErdosLeVeque1963]
 -/
 
 @[expose] public section

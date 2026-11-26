@@ -136,3 +136,28 @@ version is kept under a new name:
 | `Set.unit_fg` | `Set.unit_fg_of_finite` | reduces to `S = ∅` |
 
 `MvPolynomial.hasseDerivRow_eq_prod_mul` records the source's definition of `hasseDerivRow`.
+
+## `FormalConjectures/`
+
+* Source: [google-deepmind/formal-conjectures](https://github.com/google-deepmind/formal-conjectures),
+  Apache 2.0, commit
+  [`9097e2f90e66d2f6244209cb1c07f7120d17ec53`](https://github.com/google-deepmind/formal-conjectures/tree/9097e2f90e66d2f6244209cb1c07f7120d17ec53)
+  (`FormalConjecturesForMathlib/`).
+* Imported: four definition files, with their proofs, so that the project's statements can be
+  compared with ours:
+  * `NumberTheory/NormalNumber.lean` (`NormalNumber.digitSeq`, `IsSimplyNormalInBase`,
+    `IsNormalInBase`, `IsAbsolutelyNormal`, `IsRichInBase`), the definitions used by its
+    statement of **Borel's conjecture** (`FormalConjectures/Wikipedia/AlgebraicNormality.lean`),
+  * `Analysis/Equidistribution/ModOne.lean` (`IsEquidistributedModuloOne`, with closed intervals),
+  * `Dynamics/SymbolicDynamics/BlockComplexity.lean` (`SymbolicDynamics.blockComplexity`,
+    `blockEntropy`),
+  * `NumberTheory/ExpansionEntropy.lean` (normal numbers have full block complexity and entropy).
+* Porting changes: only module paths (`FormalConjecturesForMathlib.X` becomes
+  `Mathlib.Imported.FormalConjectures.X`).
+* Authors: the Formal Conjectures authors.
+* Bridges: `Mathlib/NumberTheory/Normal/FormalConjectures.lean` proves that each definition agrees
+  with ours (`Real.isNormalInBase_iff_isNormalIn`, `Real.isEquidistributedModuloOne_iff`, …), which
+  proves the project's `sorry`d statement of Wall's theorem
+  (`Real.isNormalInBase_iff_isEquidistributedModuloOne`).
+  `Mathlib/NumberTheory/Normal/FormalConjecturesComplexity.lean` identifies `blockComplexity`
+  with Subspace-Theorems' `Function.complexity` and restates Adamczewski–Bugeaud in its terms.

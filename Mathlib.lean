@@ -5137,6 +5137,10 @@ public import Mathlib.GroupTheory.Subsemigroup.Lemmas
 public import Mathlib.GroupTheory.Sylow
 public import Mathlib.GroupTheory.Torsion
 public import Mathlib.GroupTheory.Transfer
+public import Mathlib.Imported.FormalConjectures.Analysis.Equidistribution.ModOne
+public import Mathlib.Imported.FormalConjectures.Dynamics.SymbolicDynamics.BlockComplexity
+public import Mathlib.Imported.FormalConjectures.NumberTheory.ExpansionEntropy
+public import Mathlib.Imported.FormalConjectures.NumberTheory.NormalNumber
 public import Mathlib.Imported.NormalNumbers.BaryBlockCount
 public import Mathlib.Imported.NormalNumbers.BlockRigidity
 public import Mathlib.Imported.NormalNumbers.Bridge
@@ -6708,6 +6712,8 @@ public import Mathlib.NumberTheory.Normal.CopelandErdos
 public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.DifferenceTest
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.FormalConjectures
+public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
