@@ -1,0 +1,737 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.RingTheory.MvPowerSeries.Equiv
+public import Mathlib.RingTheory.PowerSeries.Substitution
+-- Proof-only: coefficients of three-variable polynomials, and quotients by an ideal.
+import Mathlib.RingTheory.Ideal.Quotient.Operations
+import Mathlib.Imported.TauCeti.Algebra.MvPolynomial.Fin.Three
+
+/-!
+# Evaluating a substitution over coefficients that need not be discrete
+
+Mathlib evaluates a substitution only over discrete coefficients: `MvPowerSeries.eval₂_subst` and
+`MvPowerSeries.comp_subst_apply` both carry `[DiscreteUniformity R] [DiscreteUniformity S]` on the
+two coefficient rings. That is unsatisfiable exactly where the statement is wanted. Substituting a
+parameter into a formal expansion over an adic ring and evaluating back into that same ring needs
+the coefficients and the evaluation target to be the *same* type, and one type cannot carry both
+the adic and the discrete uniformity as instances.
+
+`MvPowerSeries.aeval_subst` is that conclusion with an arbitrary uniform structure on the
+coefficients. Nothing topological beyond a uniformity is asked of the ring the substituted family
+lives over, and the evaluation target carries exactly the hypotheses of `MvPowerSeries.comp_aeval`.
+That generality is available because Mathlib's evaluation API asks for no discreteness anywhere:
+discreteness enters its substitution API only through `MvPowerSeries.substAlgHom_eq_aeval`, from
+how `subst` is tied to `aeval`, and not from the composition fact itself. So all three rings may
+be instantiated at one adic ring with no `letI` at the use site.
+
+Discreteness is recovered inside the proof, where it belongs. `MvPowerSeries.subst` is by
+definition an evaluation for the discrete uniformities; the pi topology those induce is finer than
+the ambient one (`MvPowerSeries.WithPiTopology.instTopologicalSpace_mono`); and a map continuous
+for the ambient source topology is continuous for a finer one (`continuous_le_dom`). In the
+discrete world both sides are therefore continuous algebra homomorphisms out of
+`MvPowerSeries σ R`; `MvPowerSeries.aeval_unique` identifies each with an evaluation; and the two
+evaluations agree because both send `X s` to `ε (a s)`. Every ambient fact is taken before the
+uniformities are shadowed, so the evaluation the statement is about is never re-elaborated.
+
+## Main results
+
+* `MvPowerSeries.aeval_subst` : a continuous algebra homomorphism applied to a substitution is the
+  evaluation at the substituted family.
+* `PowerSeries.aeval_subst` : the same for a substitution into a univariate series.
+* `PowerSeries.eval₂_toMvPowerSeries` and `PowerSeries.eval₂_id_toMvPowerSeries` : evaluating a
+  univariate series viewed in several variables is evaluating it at the matching entry of the
+  family — the case of `aeval_subst` at a single variable, which is how a one-variable series
+  meets a two-variable evaluation.
+* `MvPowerSeries.pairSubstitution` : the substitution family `Unit ⊕ Unit → MvPowerSeries σ O`
+  sending the left variable to `q₁` and the right one to `q₂`; substituting a pair of series into
+  a two-variable one is `subst (pairSubstitution q₁ q₂) f`.
+* `MvPowerSeries.hasSubst_pair` and `MvPowerSeries.hasSubst_pair_of_hasSubst` : a pair of series
+  with vanishing (or nilpotent) constant coefficient is a legitimate substitution family for the
+  two variables indexed by `Unit ⊕ Unit`.
+* `MvPowerSeries.coordSpecialize`, `MvPowerSeries.hasSubst_coordSpecialize` and the two
+  `subst_coordSpecialize_X_*` lemmas : the substitution sending one coordinate variable to `X` and
+  every other to `0`, for an index type of any size.
+* `MvPowerSeries.ne_of_subst_eq_X_of_subst_eq_zero` : a substitution sending one series to `X` and
+  another to `0` separates them.
+* `MvPowerSeries.subst_powerSeriesSubst` : substituting into the composite of a one-variable
+  series with a multivariate one is substituting into the inner series.
+* `MvPowerSeries.constantCoeff_subst_of_constantCoeff_zero` : substituting a family of series
+  without constant term preserves the constant coefficient.
+* `MvPowerSeries.hasSubst_finTwo` : two substitutable series form a substitution family `![x, y]`
+  for the two variables indexed by `Fin 2`.
+* `MvPowerSeries.eval₂_subst_finTwo` : evaluating `G(x, y)` is evaluating `G` at the values of
+  `x` and `y`.
+* `MvPowerSeries.powerSeriesSubst_subst_finTwo_eq_add` : a series `g` with
+  `g(G(X, Y)) = g(X) + g(Y)` satisfies `g(G(x, y)) = g(x) + g(y)` for substitutable `x, y`.
+* `MvPowerSeries.finTwo_X_eq_X` : the pair `![X 0, X 1]` is the family of variables `X`.
+* `MvPowerSeries.coeff_subst_X_zero`, `MvPowerSeries.coeff_subst_zero_X` : the coefficients of
+  `f(X, 0)` and `f(0, Y)` are the coefficients of the pure powers of `X` and of `Y` in `f(X, Y)`.
+* `MvPowerSeries.coeff_subst_X_smul_X` : the `n`-th coefficient of `f(X, t X)` is
+  `∑ b ∈ range (n + 1), coeff (n - b, b) f * t ^ b`.
+* `MvPowerSeries.coeff_subst_X_one_X_zero` : the coefficients of `f(Y, X)`.
+* `MvPowerSeries.coeff_subst_X_add_X_X`, `MvPowerSeries.coeff_subst_X_X_add_X`,
+  `MvPowerSeries.coeff_subst_X_zero_X_one`, `MvPowerSeries.coeff_subst_X_one_X_two` : the
+  coefficients of `g(X + Y, Z)`, `g(X, Y + Z)`, `g(X, Y)` and `g(Y, Z)` for a two-variable series
+  `g`, the four terms of the additive 2-cocycle identity.
+* `MvPowerSeries.coeff_subst_coe_pair` : the coefficients of a two-variable series with two
+  polynomials substituted into it.
+* `MvPowerSeries.coeff_subst_X_add_X_X_of_ne`, `MvPowerSeries.coeff_subst_X_X_of_ne` : the
+  coefficients of `g(Xₐ + X_b, X_c)` and `g(Xₐ, X_c)` for distinct variables `a`, `b`, `c`.
+* `MvPowerSeries.subst_coe_eq_coe_aeval` : substituting polynomials into a polynomial is
+  evaluating it.
+* `MvPowerSeries.subst_coe_pair_eq_coe_aeval` : the same for a two-variable polynomial and a
+  pair of polynomials.
+* `MvPowerSeries.coeff_subst_mem_span` : the coefficients of `f(a)` lie in the ideal generated
+  by the coefficients of `f`.
+* `MvPowerSeries.coeff_subst_sub_subst` : the coefficients of `H(a) - H(b)` are those of `H`
+  paired with the coefficients of the differences `aᵈ - bᵈ` of monomials.
+* `MvPowerSeries.subst_eq_subst_of_coeff_mem` : if the coefficients of `f` annihilate an ideal `J`,
+  then `f(a) = f(b)` for families `a` and `b` that agree modulo `J`.
+* `MvPowerSeries.subst_X_add_X_add_eq` : if the coefficients of `G` pairwise multiply to zero, then
+  `(X + Y + G)(u', v') = u' + v' + G(u, v)` for pairs `(u', v')` and `(u, v)` that agree modulo
+  them.
+
+## Separating multivariable parameters
+
+The second group of results above is about *distinguishing* series rather than evaluating them.
+Two series of `MvPowerSeries σ' O` can be told apart by exhibiting a substitution that sends one
+to `X` and the other to `0`, since `X ≠ 0` in a nontrivial coefficient ring; `coordSpecialize i`
+is the substitution that does this for the coordinate variables, specializing `X i` to `X` and
+every other coordinate to `0`. Together they turn a distinctness obligation into a computation
+with `subst`, which is how a multivariable identity proved by comparing parametrized points gets
+its "the parameters are pairwise distinct" hypotheses. `hasSubst_pair` is the companion for the
+two-variable case, packaging the substitutability side condition that every substitution into a
+two-variable series has to discharge.
+
+The two `aeval_subst` results are wanted for the formal group of an elliptic curve over a complete
+local ring, where the group law is a power series over the very ring it is evaluated in: the
+involution relating the `w`-expansion to the formal inverse is an identity between two such
+evaluated substitutions. The two `toMvPowerSeries` results serve the same development from the
+other side: the chord construction is a two-variable series, and its identities are proved by
+evaluating one-variable series — `w`, the slope, the formal inverse — at entries of the pair.
+
+## Provenance
+
+Adapted from Michael Stoll's `EllipticCurves` (`github.com/MichaelStollBayreuth/EllipticCurves`,
+Apache-2.0) at commit `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`, file
+`EllipticCurves/Mathlib/Chabauty/MvPSeries.lean`, where this is
+`ChabautyColeman.MvPSeries.eval_subst`, stated for a single ring and for that development's own
+`eval`. Here the three rings are independent and the statement is about Mathlib's
+`MvPowerSeries.aeval`; it equally generalises Mathlib's `MvPowerSeries.eval₂_subst`, whose
+`DiscreteUniformity` hypotheses it removes.
+
+`PowerSeries.eval₂_toMvPowerSeries` and `PowerSeries.eval₂_id_toMvPowerSeries` are the same
+source file's `eval_pair_rename` and `eval_pair_subst_single`, respelled: the source moves a
+one-variable series into two variables along `MvPowerSeries.rename (fun _ ↦ i)`, whereas these
+transport along `PowerSeries.toMvPowerSeries i`.
+
+The proof is not the source's. That one establishes continuity of `subst` for the ambient product
+topologies (its own `MvPowerSeries.continuous_subst'`) and applies uniqueness there; refining the
+source topology to the discrete one instead lets Mathlib's own `MvPowerSeries.continuous_subst` do
+the work, so no new continuity lemma is needed.
+-/
+
+public section
+
+namespace MvPowerSeries
+
+open WithPiTopology
+
+variable {σ τ : Type*}
+variable {R : Type*} [CommRing R] [UniformSpace R] [IsUniformAddGroup R]
+    [IsTopologicalSemiring R]
+variable {S : Type*} [CommRing S] [UniformSpace S] [Algebra R S]
+variable {T : Type*} [CommRing T] [UniformSpace T] [IsUniformAddGroup T]
+    [IsTopologicalRing T] [IsLinearTopology T T] [T2Space T] [CompleteSpace T]
+    [Algebra R T] [ContinuousSMul R T]
+
+/-- Applying a continuous algebra homomorphism to a substitution is evaluating at the substituted
+family — with no discreteness asked of either coefficient ring.
+
+This is `MvPowerSeries.comp_subst_apply` without its `DiscreteUniformity` hypotheses; the
+evaluation target carries exactly the hypotheses of `MvPowerSeries.comp_aeval`. The evaluation of
+the substituted family is a hypothesis rather than `MvPowerSeries.HasSubst.hasEval`, because that
+one is stated for the discrete topology on `S`, which is not the topology this statement is
+about. -/
+theorem aeval_subst {a : σ → MvPowerSeries τ S} {ε : MvPowerSeries τ S →ₐ[R] T} (ha : HasSubst a)
+    (hε : Continuous ε) (hb : HasEval (fun s ↦ ε (a s))) (f : MvPowerSeries σ R) :
+    ε (subst a f) = aeval hb f := by
+  -- Everything about the ambient instances is taken first: the goal's `aeval hb` carries them,
+  -- and nothing below may re-elaborate it.
+  have h2 : Continuous (aeval hb) := continuous_aeval (R := R) hb
+  have hx : ∀ s, aeval hb (X s) = ε (a s) := fun s ↦ by
+    rw [coe_aeval (R := R) hb, eval₂_X]
+  -- The discrete pi topology is finer than the ambient one, compared while both are nameable.
+  have hRle : @instTopologicalSpace σ R (⊥ : UniformSpace R).toTopologicalSpace ≤
+      @instTopologicalSpace σ R inferInstance :=
+    instTopologicalSpace_mono σ (by rw [UniformSpace.toTopologicalSpace_bot]; exact bot_le)
+  have hSle : @instTopologicalSpace τ S (⊥ : UniformSpace S).toTopologicalSpace ≤
+      @instTopologicalSpace τ S inferInstance :=
+    instTopologicalSpace_mono τ (by rw [UniformSpace.toTopologicalSpace_bot]; exact bot_le)
+  -- The discrete uniformities enter only as the source topology; `T` is never touched.
+  let uR : UniformSpace R := ⊥
+  let uS : UniformSpace S := ⊥
+  have dR : DiscreteUniformity R := ⟨rfl⟩
+  have dS : DiscreteUniformity S := ⟨rfl⟩
+  have csm : ContinuousSMul R T := DiscreteTopology.instContinuousSMul R T
+  -- Both algebra homomorphisms are continuous for the finer source topology.
+  have h1 : Continuous (⇑(ε.comp (substAlgHom ha)) : MvPowerSeries σ R → T) := by
+    simpa only [AlgHom.coe_comp, coe_substAlgHom] using
+      (continuous_le_dom hSle hε).comp (continuous_subst ha)
+  have h2' := continuous_le_dom hRle h2
+  -- A continuous algebra homomorphism out of `MvPowerSeries σ R` is determined by its values on
+  -- the variables, and both of ours send `X s` to `ε (a s)`.
+  have mid : (aeval (HasEval.X.map h1) : MvPowerSeries σ R →ₐ[R] T) =
+      aeval (HasEval.X.map h2') := by
+    apply DFunLike.ext'
+    rw [coe_aeval, coe_aeval]
+    simp only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe, AlgHom.coe_comp, Function.comp_apply,
+      substAlgHom_X, hx]
+  simpa only [AlgHom.coe_comp, Function.comp_apply, substAlgHom_apply] using DFunLike.congr_fun
+    ((aeval_unique h1).symm.trans (mid.trans (aeval_unique h2'))) f
+
+section HasSubstPair
+
+variable {O : Type*} [CommRing O] {q₁ q₂ : MvPowerSeries σ O}
+
+/-- The substitution family determined by an ordered pair, for the two variables indexed by
+`Unit ⊕ Unit`: the left variable goes to `q₁` and the right to `q₂`.
+
+Substituting a pair of series into a two-variable one is `subst (pairSubstitution q₁ q₂) f`.
+It is a reducible abbreviation, so `Sum.elim_inl` and `Sum.elim_inr` evaluate it at the two
+variables; `hasSubst_pair` says it is substitutable as soon as both series vanish at the origin. -/
+-- This names the substitution *family* rather than the substitution, so that a substituted term
+-- still has `subst` at its head and Mathlib's generic `subst_add`, `subst_mul`, … remain
+-- reachable by `rw`, which selects candidate subterms by head symbol before it tries unfolding.
+abbrev pairSubstitution (q₁ q₂ : MvPowerSeries σ O) : Unit ⊕ Unit → MvPowerSeries σ O :=
+  Sum.elim (fun _ ↦ q₁) (fun _ ↦ q₂)
+
+/-- A pair of series with vanishing constant coefficient is a legitimate substitution family for
+the two variables indexed by `Unit ⊕ Unit`.
+
+This packages the `rintro`-and-`simpa` discharge of `hasSubst_of_constantCoeff_zero`'s hypothesis
+for the two-variable case, which is otherwise repeated at every substitution into a two-variable
+series. -/
+theorem hasSubst_pair (h₁ : constantCoeff q₁ = 0) (h₂ : constantCoeff q₂ = 0) :
+    HasSubst (pairSubstitution q₁ q₂) :=
+  hasSubst_of_constantCoeff_zero (by rintro (j | j) <;> simpa)
+
+/-- A pair of series that can each be substituted into a one-variable series forms a substitution
+family for the two variables indexed by `Unit ⊕ Unit`. -/
+theorem hasSubst_pair_of_hasSubst (hq₁ : PowerSeries.HasSubst q₁)
+    (hq₂ : PowerSeries.HasSubst q₂) :
+    HasSubst (pairSubstitution q₁ q₂) :=
+  hasSubst_of_constantCoeff_nilpotent fun i ↦ by
+    rcases i with ⟨⟨⟩⟩ | ⟨⟨⟩⟩ <;> simpa [pairSubstitution]
+
+end HasSubstPair
+
+section CoordSpecialize
+
+variable {O : Type*} [CommRing O] {σ' : Type*}
+
+/-- The substitution sending the coordinate variable `i` to `X` and every other coordinate to `0`.
+
+Specializing to it separates the coordinate `i` from all the others: with
+`ne_of_subst_eq_X_of_subst_eq_zero`, two series that this substitution sends to `X` and to `0`
+respectively are distinct. -/
+noncomputable def coordSpecialize (i : σ') : σ' → MvPowerSeries Unit O :=
+  -- classical decidability suffices: the definition is noncomputable regardless, so asking the
+  -- caller for `[DecidableEq σ']` would only narrow the API.
+  letI := Classical.decEq σ'
+  fun j ↦ if j = i then PowerSeries.X else 0
+
+/-- The coordinate specialization at `i` is a legitimate substitution family, for an index type of
+any size: every image is `X` or `0`, so every constant coefficient vanishes, and the coordinates
+carrying a given coefficient all lie in the singleton `{i}`. -/
+theorem hasSubst_coordSpecialize (i : σ') : HasSubst (coordSpecialize (O := O) i) where
+  const_coeff j := by
+    have h : constantCoeff (coordSpecialize (O := O) i j) = 0 := by
+      unfold coordSpecialize
+      split
+      · exact PowerSeries.constantCoeff_X
+      · exact map_zero _
+    rw [h]
+    exact IsNilpotent.zero
+  -- `Finite σ'` would give this immediately, but it is not needed: the family is `0` away from
+  -- `i`, so the coordinates carrying a nonzero coefficient sit inside the singleton `{i}`.
+  coeff_zero d := Set.Finite.subset (Set.finite_singleton i) fun j hj ↦ by
+    simp only [Set.mem_singleton_iff]
+    by_contra hne
+    exact hj (by simp [coordSpecialize, hne])
+
+/-- The specialization at `i` sends the `i`-th coordinate to `X`. -/
+@[simp]
+theorem subst_coordSpecialize_X_self (i : σ') :
+    subst (coordSpecialize (O := O) i) (X i : MvPowerSeries σ' O) = PowerSeries.X := by
+  simp [subst_X (hasSubst_coordSpecialize i), coordSpecialize]
+
+/-- The specialization at `i` kills every other coordinate. -/
+@[simp]
+theorem subst_coordSpecialize_X_of_ne {i j : σ'} (h : j ≠ i) :
+    subst (coordSpecialize (O := O) i) (X j : MvPowerSeries σ' O) = 0 := by
+  simp [subst_X (hasSubst_coordSpecialize i), coordSpecialize, h]
+
+end CoordSpecialize
+
+/-- A substitution that sends one series to `X` and another to `0` separates them: it is how a
+distinctness hypothesis is discharged by specializing one coordinate to `X` and the rest to
+`0`. -/
+theorem ne_of_subst_eq_X_of_subst_eq_zero {O : Type*} [CommRing O] [Nontrivial O] {σ' : Type*}
+    {g : σ' → MvPowerSeries Unit O} {a b : MvPowerSeries σ' O}
+    (ha : subst g a = PowerSeries.X) (hb : subst g b = 0) : a ≠ b := fun hab ↦
+  PowerSeries.X_ne_zero (by rw [← ha, hab]; exact hb)
+
+/-- Substituting `b` into the composite `f ∘ g` of a one-variable series `f` with a multivariate
+series `g` is substituting `g ∘ b` into `f`. -/
+theorem subst_powerSeriesSubst {O : Type*} [CommRing O] {σ' τ' : Type*}
+    {b : σ' → MvPowerSeries τ' O} (hb : HasSubst b) {g : MvPowerSeries σ' O}
+    (hg : PowerSeries.HasSubst g) (f : PowerSeries O) :
+    subst b (PowerSeries.subst g f) = PowerSeries.subst (subst b g) f := by
+  rw [PowerSeries.subst_def, PowerSeries.subst_def, subst_comp_subst_apply hg.const hb]
+
+/-- Substituting a family of series without constant term preserves the constant coefficient.
+
+This is the multivariate analogue of `PowerSeries.constantCoeff_subst_of_constantCoeff_zero`. -/
+theorem constantCoeff_subst_of_constantCoeff_zero {O O' : Type*} [CommRing O] [CommRing O']
+    [Algebra O O'] {σ' τ' : Type*} {a : σ' → MvPowerSeries τ' O'} (ha : HasSubst a)
+    (ha' : ∀ i, constantCoeff (a i) = 0) (f : MvPowerSeries σ' O) :
+    constantCoeff (subst a f) = algebraMap O O' (constantCoeff f) := by
+  rw [constantCoeff_subst ha, finsum_eq_single _ 0]
+  · simp [Algebra.algebraMap_eq_smul_one, coeff_zero_eq_constantCoeff_apply]
+  · intro d hd
+    obtain ⟨i, hi⟩ : ∃ i, d i ≠ 0 := by
+      by_contra! hc
+      exact hd <| Finsupp.ext hc
+    -- the monomial `aᵈ` has a factor `a i` without constant term
+    have : constantCoeff (d.prod fun s e ↦ a s ^ e) = 0 := by
+      rw [Finsupp.prod, map_prod]
+      exact Finset.prod_eq_zero (Finsupp.mem_support_iff.mpr hi) (by
+        rw [map_pow, ha', zero_pow hi])
+    rw [this, smul_zero]
+
+section FinTwo
+
+variable {O : Type*} [CommRing O]
+
+/-- Two series that can each be substituted into a one-variable series form a substitution family
+`![x, y]` for the two variables indexed by `Fin 2`, as for evaluating a formal group law at
+`(x, y)`. -/
+theorem hasSubst_finTwo {x y : MvPowerSeries σ O} (hx : PowerSeries.HasSubst x)
+    (hy : PowerSeries.HasSubst y) : HasSubst ![x, y] :=
+  hasSubst_of_constantCoeff_nilpotent fun s ↦ by fin_cases s <;> simpa
+
+/-- If a one-variable series `g` is additive along a two-variable series `G`, that is
+`g(G(X, Y)) = g(X) + g(Y)`, then `g(G(x, y)) = g(x) + g(y)` for any series `x, y` that can be
+substituted. -/
+theorem powerSeriesSubst_subst_finTwo_eq_add {G : MvPowerSeries (Fin 2) O}
+    (hG : PowerSeries.HasSubst G) {g : PowerSeries O}
+    (hg : PowerSeries.subst G g = PowerSeries.subst (X 0) g + PowerSeries.subst (X 1) g)
+    {x y : MvPowerSeries σ O} (hx : PowerSeries.HasSubst x) (hy : PowerSeries.HasSubst y) :
+    PowerSeries.subst (subst ![x, y] G) g = PowerSeries.subst x g + PowerSeries.subst y g := by
+  have hxy : HasSubst ![x, y] := hasSubst_finTwo hx hy
+  have := congrArg (subst ![x, y]) hg
+  rwa [subst_add hxy, subst_powerSeriesSubst hxy hG,
+    subst_powerSeriesSubst hxy (PowerSeries.HasSubst.X _),
+    subst_powerSeriesSubst hxy (PowerSeries.HasSubst.X _), subst_X hxy, subst_X hxy] at this
+
+/-- The pair of variables `![X 0, X 1]` is the family of variables `X` indexed by `Fin 2`, so
+substituting it is the identity (`subst_self`). -/
+theorem finTwo_X_eq_X {A : Type*} [Semiring A] : ![(X 0 : MvPowerSeries (Fin 2) A), X 1] = X := by
+  funext s
+  fin_cases s <;> rfl
+
+/-- Setting `Y = 0` in a two-variable series `f(X, Y)` keeps exactly the pure powers of `X`: the
+coefficient of `Xⁿ` in `f(X, 0)` is the coefficient of `Xⁿ` in `f`. -/
+theorem coeff_subst_X_zero (f : MvPowerSeries (Fin 2) O) (n : ℕ) :
+    PowerSeries.coeff n (subst ![PowerSeries.X, 0] f) = coeff (Finsupp.single 0 n) f := by
+  rw [PowerSeries.coeff, coeff_subst (a := ![PowerSeries.X, 0]) HasSubst.X_zero,
+    finsum_eq_single _ (Finsupp.single 0 n)]
+  · simp [PowerSeries.coeff_X_pow]
+  · intro d hd
+    by_cases hd₁ : d 1 = 0
+    · have : n ≠ d 0 := fun h ↦ hd (by ext i; fin_cases i <;> simp_all)
+      simp [Finsupp.prod_fintype, hd₁, PowerSeries.coeff_X_pow, this]
+    · simp [Finsupp.prod_fintype, hd₁]
+
+/-- Setting `X = 0` in a two-variable series `f(X, Y)` keeps exactly the pure powers of `Y`: the
+coefficient of `Yⁿ` in `f(0, Y)` is the coefficient of `Yⁿ` in `f`. -/
+theorem coeff_subst_zero_X (f : MvPowerSeries (Fin 2) O) (n : ℕ) :
+    PowerSeries.coeff n (subst ![0, PowerSeries.X] f) = coeff (Finsupp.single 1 n) f := by
+  rw [PowerSeries.coeff, coeff_subst (a := ![0, PowerSeries.X]) HasSubst.zero_X,
+    finsum_eq_single _ (Finsupp.single 1 n)]
+  · simp [PowerSeries.coeff_X_pow]
+  · intro d hd
+    by_cases hd₀ : d 0 = 0
+    · have : n ≠ d 1 := fun h ↦ hd (by ext i; fin_cases i <;> simp_all)
+      simp [Finsupp.prod_fintype, hd₀, PowerSeries.coeff_X_pow, this]
+    · simp [Finsupp.prod_fintype, hd₀]
+
+private theorem coeff_prod_X_smul_X (t : O) (n : ℕ) (e : Fin 2 →₀ ℕ) :
+    coeff (Finsupp.single () n)
+        (e.prod fun i k ↦ (![(PowerSeries.X : PowerSeries O), t • PowerSeries.X] i) ^ k) =
+      if n = e 0 + e 1 then t ^ e 1 else 0 := by
+  have hfp : (e.prod fun i k ↦ (![(PowerSeries.X : PowerSeries O), t • PowerSeries.X] i) ^ k) =
+      t ^ e 1 • (PowerSeries.X : PowerSeries O) ^ (e 0 + e 1) := by
+    rw [Finsupp.prod_of_support_subset e (Finset.subset_univ _) _ (fun _ _ ↦ pow_zero _),
+      Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_fin_one,
+      Algebra.smul_def, mul_pow, ← map_pow, mul_left_comm, ← pow_add, ← Algebra.smul_def]
+  rw [← PowerSeries.coeff_def Finsupp.single_eq_same, hfp, PowerSeries.coeff_smul,
+    PowerSeries.coeff_X_pow, smul_eq_mul, mul_ite, mul_one, mul_zero]
+
+/-- Substituting `(X, t X)` into a two-variable series `f(X₀, X₁)` collects each homogeneous
+diagonal of total degree `n` as a polynomial in `t`: the `n`-th coefficient of `f(X, t X)` is
+`∑ b ∈ Finset.range (n + 1), coeff (n - b, b) f * t ^ b`. -/
+theorem coeff_subst_X_smul_X (t : O) (f : MvPowerSeries (Fin 2) O) (n : ℕ) :
+    PowerSeries.coeff n (subst ![PowerSeries.X, t • PowerSeries.X] f) =
+      ∑ b ∈ Finset.range (n + 1),
+        coeff (Finsupp.single 0 (n - b) + Finsupp.single 1 b) f * t ^ b := by
+  set s : Fin 2 → PowerSeries O := ![PowerSeries.X, t • PowerSeries.X]
+  have hc : constantCoeff (PowerSeries.X : PowerSeries O) = 0 := PowerSeries.constantCoeff_X
+  have hs : HasSubst s := hasSubst_of_constantCoeff_zero fun i ↦ by
+    fin_cases i <;> simp [s, hc]
+  rw [PowerSeries.coeff_def Finsupp.single_eq_same, coeff_subst hs]
+  let emb : ℕ ↪ (Fin 2 →₀ ℕ) :=
+    ⟨fun b ↦ Finsupp.single 0 (n - b) + Finsupp.single 1 b, fun b₁ b₂ hb ↦ by
+      simpa using DFunLike.congr_fun hb 1⟩
+  have hsupp : (Function.support fun e : Fin 2 →₀ ℕ ↦
+      coeff e f • coeff (Finsupp.single () n) (e.prod fun i k ↦ s i ^ k)) ⊆
+      (Finset.range (n + 1)).map emb := by
+    intro e he
+    rw [Function.mem_support, coeff_prod_X_smul_X] at he
+    split_ifs at he with hsum
+    · simp only [Finset.coe_map, Set.mem_image, Finset.mem_coe, Finset.mem_range]
+      have he₀ : n - e 1 = e 0 := by omega
+      refine ⟨e 1, by omega, ?_⟩
+      ext i
+      fin_cases i <;> simp [emb, he₀]
+    · exact absurd (smul_zero _) he
+  rw [finsum_eq_sum_of_support_subset _ hsupp, Finset.sum_map]
+  refine Finset.sum_congr rfl fun b hb ↦ ?_
+  rw [Finset.mem_range] at hb
+  have h0 : emb b 0 = n - b := by simp [emb]
+  have h1 : emb b 1 = b := by simp [emb]
+  have hemb : emb b = Finsupp.single 0 (n - b) + Finsupp.single 1 b := by simp [emb]
+  rw [coeff_prod_X_smul_X, h0, h1, ite_eq_left (by omega), smul_eq_mul, hemb]
+
+/-- Swapping the variables of a two-variable series `f(X, Y)`: the coefficient of `XⁱYʲ` in
+`f(Y, X)` is the coefficient of `XʲYⁱ` in `f`. -/
+theorem coeff_subst_X_one_X_zero (f : MvPowerSeries (Fin 2) O) (d : Fin 2 →₀ ℕ) :
+    coeff d (f.subst ![X 1, X 0]) =
+      coeff (Finsupp.single 0 (d 1) + Finsupp.single 1 (d 0)) f := by
+  -- Substituting `![X 1, X 0]` is renaming the variables along the swap of `0` and `1`.
+  have hX : ![(X 1 : MvPowerSeries (Fin 2) O), X 0] = X ∘ (Equiv.swap 0 1).toEmbedding := by
+    funext s
+    fin_cases s <;> simp
+  have hd : (Finsupp.single (0 : Fin 2) (d 1) + Finsupp.single 1 (d 0)).embDomain
+      (Equiv.swap (0 : Fin 2) 1).toEmbedding = d := by
+    ext i
+    fin_cases i <;> simp
+  rw [hX, ← rename_eq_subst, ← coeff_embDomain_rename _ f, hd]
+
+end FinTwo
+
+section FinThree
+
+/-!
+### Two-variable series substituted into three variables
+
+The coefficient of `XⁱYʲZᵏ` in each of `g(X + Y, Z)`, `g(X, Y + Z)`, `g(X, Y)` and `g(Y, Z)`, for a
+two-variable series `g`. These are the power-series analogues of
+`MvPolynomial.coeff_aeval_X_add_X_X` and its companions, and turn the additive 2-cocycle identity
+`g(X, Y) + g(X + Y, Z) = g(X, Y + Z) + g(Y, Z)` into linear equations on the coefficients of `g`.
+-/
+
+open Finsupp
+
+variable {O : Type*} [CommRing O]
+
+/-- Substituting two polynomials into a two-variable series, coefficientwise. -/
+theorem coeff_subst_coe_pair (g : MvPowerSeries (Fin 2) O) (u v : MvPolynomial τ O)
+    (huv : HasSubst ![(u : MvPowerSeries τ O), v]) (e : τ →₀ ℕ) :
+    coeff e (g.subst ![(u : MvPowerSeries τ O), v]) =
+      ∑ᶠ d : Fin 2 →₀ ℕ, coeff d g * (u ^ d 0 * v ^ d 1).coeff e := by
+  rw [coeff_subst huv]
+  refine finsum_congr fun d ↦ ?_
+  simp [Finsupp.prod_fintype, ← MvPolynomial.coe_pow, ← MvPolynomial.coe_mul,
+    MvPolynomial.coeff_coe]
+
+/-- The coefficients of `g(Xₐ + X_b, X_c)`, for distinct variables `a`, `b`, `c`. -/
+theorem coeff_subst_X_add_X_X_of_ne {a b c : Fin 3} (hab : a ≠ b) (hac : a ≠ c)
+    (hbc : b ≠ c) (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![X a + X b, X c]) =
+      (d a + d b).choose (d a) * coeff (single 0 (d a + d b) + single 1 (d c)) g := by
+  simp only [← MvPolynomial.coe_X, ← MvPolynomial.coe_add]
+  rw [coeff_subst_coe_pair _ _ _ (hasSubst_of_constantCoeff_zero fun s ↦ by
+    fin_cases s <;> simp), finsum_eq_single _ (single 0 (d a + d b) + single 1 (d c))]
+  · rw [MvPolynomial.coeff_add_pow_mul_X_pow_fin_three hab hac hbc]
+    simp [mul_comm]
+  · intro e he
+    rw [MvPolynomial.coeff_add_pow_mul_X_pow_fin_three hab hac hbc, ite_eq_right, mul_zero]
+    rintro ⟨h₁, h₂⟩
+    exact he (by ext i; fin_cases i <;> simp [h₁, h₂])
+
+/-- The coefficients of `g(Xₐ, X_c)`, for distinct variables `a`, `b`, `c`. -/
+theorem coeff_subst_X_X_of_ne {a b c : Fin 3} (hab : a ≠ b) (hac : a ≠ c) (hbc : b ≠ c)
+    (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![(X a : MvPowerSeries (Fin 3) O), X c]) =
+      if d b = 0 then coeff (single 0 (d a) + single 1 (d c)) g else 0 := by
+  -- Substituting `![X a, X c]` is renaming the variables along the embedding `![a, c]`.
+  have he : Function.Injective ![a, c] := fun i j h ↦ by
+    fin_cases i <;> fin_cases j <;> simp_all [eq_comm]
+  let e : Fin 2 ↪ Fin 3 := ⟨![a, c], he⟩
+  have hX : ![(X a : MvPowerSeries (Fin 3) O), X c] = X ∘ e := by
+    funext s
+    fin_cases s <;> simp [e]
+  have hb : b ∉ Set.range e := by
+    rintro ⟨i, hi⟩
+    fin_cases i
+    exacts [hab hi, hbc hi.symm]
+  rw [hX, ← rename_eq_subst]
+  split_ifs with hd
+  · have hd' : (single (0 : Fin 2) (d a) + single 1 (d c)).embDomain e = d := by
+      ext i
+      obtain rfl | rfl | rfl : i = a ∨ i = b ∨ i = c := by omega
+      · exact (embDomain_apply_self e _ 0).trans (by simp)
+      · rw [embDomain_of_notMem_range e _ _ hb, hd]
+      · exact (embDomain_apply_self e _ 1).trans (by simp)
+    rw [← coeff_embDomain_rename e g, hd']
+  · exact coeff_rename_eq_zero e g fun ⟨x, hx⟩ ↦ hd (hx ▸ mapDomain_of_notMem_range x b hb)
+
+/-- The coefficient of `XⁱYʲZᵏ` in `g(X + Y, Z)` is `(i + j).choose i` times that of `Xⁱ⁺ʲYᵏ`
+in `g`. -/
+theorem coeff_subst_X_add_X_X (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![X 0 + X 1, X 2]) =
+      (d 0 + d 1).choose (d 0) * coeff (single 0 (d 0 + d 1) + single 1 (d 2)) g :=
+  coeff_subst_X_add_X_X_of_ne (by decide) (by decide) (by decide) g d
+
+/-- The coefficient of `XⁱYʲZᵏ` in `g(X, Y + Z)` is `(j + k).choose j` times that of `XⁱYʲ⁺ᵏ`
+in `g`. -/
+theorem coeff_subst_X_X_add_X (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![X 0, X 1 + X 2]) =
+      (d 1 + d 2).choose (d 1) * coeff (single 0 (d 0) + single 1 (d 1 + d 2)) g := by
+  -- `g(X, Y + Z)` is `g(Y, X)` evaluated at `(Y + Z, X)`.
+  have hb : HasSubst ![(X 1 + X 2 : MvPowerSeries (Fin 3) O), X 0] :=
+    hasSubst_of_constantCoeff_zero fun s ↦ by fin_cases s <;> simp
+  have h : g.subst ![(X 0 : MvPowerSeries (Fin 3) O), X 1 + X 2] =
+      (g.subst ![(X 1 : MvPowerSeries (Fin 2) O), X 0]).subst ![X 1 + X 2, X 0] := by
+    rw [subst_comp_subst_apply HasSubst.X_X hb]
+    congr 1
+    funext s
+    fin_cases s <;> simp [subst_X hb]
+  rw [h, coeff_subst_X_add_X_X_of_ne (by decide) (by decide) (by decide),
+    coeff_subst_X_one_X_zero]
+  simp
+
+/-- The coefficient of `XⁱYʲZᵏ` in `g(X, Y)` is that of `XⁱYʲ` in `g` if `k = 0`, and `0`
+otherwise. -/
+theorem coeff_subst_X_zero_X_one (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![(X 0 : MvPowerSeries (Fin 3) O), X 1]) =
+      if d 2 = 0 then coeff (single 0 (d 0) + single 1 (d 1)) g else 0 :=
+  coeff_subst_X_X_of_ne (b := 2) (by decide) (by decide) (by decide) g d
+
+/-- The coefficient of `XⁱYʲZᵏ` in `g(Y, Z)` is that of `XʲYᵏ` in `g` if `i = 0`, and `0`
+otherwise. -/
+theorem coeff_subst_X_one_X_two (g : MvPowerSeries (Fin 2) O) (d : Fin 3 →₀ ℕ) :
+    coeff d (g.subst ![(X 1 : MvPowerSeries (Fin 3) O), X 2]) =
+      if d 0 = 0 then coeff (single 0 (d 1) + single 1 (d 2)) g else 0 :=
+  coeff_subst_X_X_of_ne (b := 0) (by decide) (by decide) (by decide) g d
+
+end FinThree
+
+section CoeffMem
+
+variable {O : Type*} [CommRing O]
+
+/-- Substituting polynomials into a polynomial, both viewed as power series, is evaluating the
+polynomial. -/
+theorem subst_coe_eq_coe_aeval (p : MvPolynomial σ O) (q : σ → MvPolynomial τ O) :
+    (p : MvPowerSeries σ O).subst (fun s ↦ (q s : MvPowerSeries τ O)) =
+      ((MvPolynomial.aeval q p : MvPolynomial τ O) : MvPowerSeries τ O) := by
+  rw [subst_coe]
+  simpa using (DFunLike.congr_fun
+    (MvPolynomial.comp_aeval (R := O) q (MvPolynomial.coeToMvPowerSeries.algHom O)) p).symm
+
+/-- Substituting two polynomials into a two-variable polynomial, all viewed as power series, is
+evaluating the polynomial. -/
+theorem subst_coe_pair_eq_coe_aeval (p : MvPolynomial (Fin 2) O) (u v : MvPolynomial τ O) :
+    (p : MvPowerSeries (Fin 2) O).subst ![(u : MvPowerSeries τ O), v] =
+      ((MvPolynomial.aeval ![u, v] p : MvPolynomial τ O) : MvPowerSeries τ O) := by
+  rw [← subst_coe_eq_coe_aeval]
+  congr 1
+  funext s
+  fin_cases s <;> simp
+
+/-- The coefficients of a substitution into `f` lie in the ideal generated by the coefficients
+of `f`. -/
+theorem coeff_subst_mem_span {f : MvPowerSeries σ O} {a : σ → MvPowerSeries τ O}
+    (ha : HasSubst a) (e : τ →₀ ℕ) :
+    coeff e (f.subst a) ∈ Ideal.span (Set.range fun d ↦ coeff d f) := by
+  rw [← Ideal.Quotient.eq_zero_iff_mem, ← coeff_map, map_subst ha]
+  have : map (Ideal.Quotient.mk (Ideal.span (Set.range fun d ↦ coeff d f))) f = 0 :=
+    ext fun d ↦ by simp
+  rw [this, ← coe_substAlgHom (ha.map _), map_zero, map_zero]
+
+/-- The coefficients of `H(a) - H(b)` are the sums of the coefficients of `H` times those of the
+differences `aᵈ - bᵈ` of monomials. -/
+theorem coeff_subst_sub_subst {H : MvPowerSeries σ O} {a b : σ → MvPowerSeries τ O}
+    (ha : HasSubst a) (hb : HasSubst b) (e : τ →₀ ℕ) :
+    coeff e (H.subst a - H.subst b) = ∑ᶠ d, coeff d H •
+      coeff e ((d.prod fun i k ↦ a i ^ k) - d.prod fun i k ↦ b i ^ k) := by
+  simp_rw [map_sub, smul_sub]
+  rw [coeff_subst ha, coeff_subst hb,
+    finsum_sub_distrib (coeff_subst_finite ha H e) (coeff_subst_finite hb H e)]
+
+/-- Substitution is insensitive to an ideal annihilated by the coefficients of the series: if the
+coefficients of `f` kill the ideal `J` and the families `a` and `b` agree modulo `J`
+coefficientwise, then `f(a) = f(b)`. For instance, `f(a + b') = f(a)` when the coefficients of
+`f` and of `b'` all lie in an ideal of square zero. -/
+theorem subst_eq_subst_of_coeff_mem {a b : σ → MvPowerSeries τ O} (ha : HasSubst a)
+    (hb : HasSubst b) {J : Ideal O} (hab : ∀ s e, coeff e (a s - b s) ∈ J)
+    {f : MvPowerSeries σ O} (hf : ∀ d, ∀ x ∈ J, coeff d f * x = 0) :
+    subst a f = subst b f := by
+  ext e
+  rw [coeff_subst ha, coeff_subst hb]
+  refine finsum_congr fun d ↦ ?_
+  -- Modulo `J` the two families agree, hence so do the monomials `aᵈ` and `bᵈ`.
+  have hmap : ∀ s, map (Ideal.Quotient.mk J) (a s) = map (Ideal.Quotient.mk J) (b s) :=
+    fun s ↦ ext fun e ↦ by
+      simpa [coeff_map, Ideal.Quotient.eq] using hab s e
+  have hd : coeff e (d.prod fun s n ↦ a s ^ n) - coeff e (d.prod fun s n ↦ b s ^ n) ∈ J := by
+    rw [← Ideal.Quotient.eq, ← coeff_map, ← coeff_map,
+      map_finsuppProd (MvPowerSeries.map (Ideal.Quotient.mk J)),
+      map_finsuppProd (MvPowerSeries.map (Ideal.Quotient.mk J))]
+    simp only [map_pow, hmap]
+  rw [smul_eq_mul, smul_eq_mul, ← sub_eq_zero, ← mul_sub]
+  exact hf d _ hd
+
+/-- For `F = X + Y + G` with the coefficients of `G` pairwise multiplying to zero, substituting
+into `F` a pair `(u', v')` that agrees with `(u, v)` modulo the coefficients of `G` gives
+`u' + v' + G(u, v)`. -/
+theorem subst_X_add_X_add_eq {G : MvPowerSeries (Fin 2) O}
+    (hG : ∀ d e, coeff d G * coeff e G = 0) {u v u' v' : MvPowerSeries τ O}
+    (h : HasSubst ![u, v])
+    (hu : ∀ e, coeff e (u' - u) ∈ Ideal.span (Set.range fun d ↦ coeff d G))
+    (hv : ∀ e, coeff e (v' - v) ∈ Ideal.span (Set.range fun d ↦ coeff d G)) :
+    (X 0 + X 1 + G).subst ![u', v'] = u' + v' + G.subst ![u, v] := by
+  -- The ideal spanned by the coefficients of `G` squares to zero, so its elements are nilpotent.
+  have hsq : Ideal.span (Set.range fun d ↦ coeff d G) *
+      Ideal.span (Set.range fun d ↦ coeff d G) = ⊥ := by
+    rw [Ideal.span_mul_span, Ideal.span_eq_bot]
+    rintro _ ⟨_, ⟨d, rfl⟩, _, ⟨e, rfl⟩, rfl⟩
+    exact hG d e
+  have hnil {x : O} (hx : x ∈ Ideal.span (Set.range fun d ↦ coeff d G)) : IsNilpotent x :=
+    ⟨2, by
+      have := Ideal.mul_mem_mul hx hx
+      rwa [hsq, Ideal.mem_bot, ← pow_two] at this⟩
+  have hnil' {a b : MvPowerSeries τ O} (ha : IsNilpotent (constantCoeff a))
+      (hab : ∀ e, coeff e (b - a) ∈ Ideal.span (Set.range fun d ↦ coeff d G)) :
+      IsNilpotent (constantCoeff b) := by
+    have := (Commute.all _ _).isNilpotent_add ha (hnil (by simpa using hab 0))
+    rwa [add_sub_cancel] at this
+  have h' : HasSubst ![u', v'] := hasSubst_of_constantCoeff_nilpotent fun s ↦ by
+    fin_cases s
+    · exact hnil' (h.const_coeff 0) hu
+    · exact hnil' (h.const_coeff 1) hv
+  rw [subst_add h', subst_add h', subst_X h', subst_X h', subst_eq_subst_of_coeff_mem
+    (J := Ideal.span (Set.range fun d ↦ coeff d G)) h' h ?_ fun d ↦ Submodule.mem_annihilator.1
+      ((Submodule.mem_annihilator_span _ _).2 fun ⟨_, e, rfl⟩ ↦ hG d e)]
+  · simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_fin_one]
+  · intro s e
+    fin_cases s
+    · simpa using hu e
+    · simpa using hv e
+
+end CoeffMem
+
+section EvalFinTwo
+
+variable {O : Type*} [CommRing O] [UniformSpace O] [DiscreteUniformity O]
+variable {T : Type*} [CommRing T] [Algebra O T] [UniformSpace T] [IsUniformAddGroup T]
+    [IsTopologicalRing T] [IsLinearTopology T T] [T2Space T] [CompleteSpace T]
+
+/-- Evaluating a substitution `G(x, y)` at `b` is evaluating `G` at the values of `x` and `y` at
+`b`. This is `MvPowerSeries.eval₂_subst` for a substitution family `![x, y]`, as for evaluating a
+formal group law at a pair of points. -/
+theorem eval₂_subst_finTwo {x y : MvPowerSeries σ O} (hx : PowerSeries.HasSubst x)
+    (hy : PowerSeries.HasSubst y) {b : σ → T} (hb : HasEval b) (G : MvPowerSeries (Fin 2) O) :
+    eval₂ (algebraMap O T) b (subst ![x, y] G) =
+      eval₂ (algebraMap O T) ![eval₂ (algebraMap O T) b x, eval₂ (algebraMap O T) b y] G := by
+  rw [eval₂_subst (hasSubst_finTwo hx hy) hb]
+  congr 1
+  funext s
+  fin_cases s <;> rfl
+
+end EvalFinTwo
+
+end MvPowerSeries
+
+namespace PowerSeries
+
+open MvPowerSeries.WithPiTopology
+
+variable {τ : Type*}
+variable {R : Type*} [CommRing R] [UniformSpace R] [IsUniformAddGroup R]
+    [IsTopologicalSemiring R]
+variable {S : Type*} [CommRing S] [UniformSpace S] [Algebra R S]
+variable {T : Type*} [CommRing T] [UniformSpace T] [IsUniformAddGroup T]
+    [IsTopologicalRing T] [IsLinearTopology T T] [T2Space T] [CompleteSpace T]
+    [Algebra R T] [ContinuousSMul R T]
+
+/-- `MvPowerSeries.aeval_subst` for a substitution into a univariate power series: applying a
+continuous algebra homomorphism to `PowerSeries.subst a f` evaluates `f` at the value of `a`. -/
+theorem aeval_subst {a : MvPowerSeries τ S} {ε : MvPowerSeries τ S →ₐ[R] T} (ha : HasSubst a)
+    (hε : Continuous ε) (hb : HasEval (ε a)) (f : PowerSeries R) :
+    ε (subst a f) = aeval hb f :=
+  MvPowerSeries.aeval_subst ha.const hε (hasEval hb) f
+
+/-- Evaluating the image of a univariate series under `PowerSeries.toMvPowerSeries i` at a family
+`a` is evaluating the series itself at the entry `a i`: sending the single variable to the `i`-th
+one and then evaluating is evaluating at `a i`.
+
+`toMvPowerSeries` is a substitution, so this is `aeval_subst` at the family `MvPowerSeries.X i`;
+it is stated for `eval₂` rather than `aeval` because the evaluation of a family is what consumers
+hold, and the `aeval` form would carry the `HasEval` proof in a position where two propositionally
+equal parameters are not definitionally equal. -/
+@[simp]
+theorem eval₂_toMvPowerSeries {σ : Type*} {a : σ → T} (ha : MvPowerSeries.HasEval a) (i : σ)
+    (f : PowerSeries R) :
+    MvPowerSeries.eval₂ (algebraMap R T) a (toMvPowerSeries i f) =
+      eval₂ (algebraMap R T) (a i) f := by
+  have hX : MvPowerSeries.aeval ha (MvPowerSeries.X i) = a i :=
+    (congrFun (MvPowerSeries.coe_aeval (R := R) ha) (MvPowerSeries.X i)).trans
+      (MvPowerSeries.eval₂_X (algebraMap R T) a i)
+  have h := aeval_subst (HasSubst.X i) (MvPowerSeries.continuous_aeval ha) (hX ▸ ha.hpow i) f
+  rw [← toMvPowerSeries_eq_subst] at h
+  rw [← congrFun (MvPowerSeries.coe_aeval (R := R) ha) (toMvPowerSeries i f), h,
+    congrFun (coe_aeval (hX ▸ ha.hpow i)) f, hX]
+
+section SelfEval
+
+variable {R : Type*} [CommRing R] [UniformSpace R] [IsUniformAddGroup R] [IsTopologicalRing R]
+  [IsLinearTopology R R] [T2Space R] [CompleteSpace R]
+
+/-- `PowerSeries.eval₂_toMvPowerSeries` at the identity ring homomorphism.
+
+The specialization exists so that consumers phrased over `RingHom.id` need not perform the
+normalization themselves. `algebraMap R R` and `RingHom.id R` are definitionally equal but not
+syntactically so, and `algebraMap` is not reducible; that is easy to discharge once, as the
+`simpa` below does, but it means the general lemma does not fire as a `simp` *rewrite rule*
+against a goal phrased over `RingHom.id`. An evaluation layer whose coefficients and values are
+the same ring — what the formal group of a curve over an adic ring needs — is phrased that way
+throughout, so it is this form its `simp` sets can use. -/
+@[simp]
+theorem eval₂_id_toMvPowerSeries {σ : Type*} {a : σ → R} (ha : MvPowerSeries.HasEval a) (i : σ)
+    (f : PowerSeries R) :
+    MvPowerSeries.eval₂ (RingHom.id R) a (toMvPowerSeries i f) =
+      eval₂ (RingHom.id R) (a i) f := by
+  simpa using eval₂_toMvPowerSeries (R := R) (T := R) ha i f
+
+end SelfEval
+
+end PowerSeries

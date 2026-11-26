@@ -1,0 +1,477 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Analysis.Fourier.AddCircleMulti
+public import Mathlib.Analysis.Calculus.ContDiff.Defs
+public import Mathlib.Imported.TauCeti.Topology.Algebra.Module.Matrix
+public import Mathlib.Imported.TauCeti.Topology.Instances.AddCircle.UnitAddTorus
+
+import Mathlib.Analysis.Calculus.MeanValue
+import Mathlib.Analysis.SpecialFunctions.Complex.CircleAddChar
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
+import Mathlib.Imported.TauCeti.Analysis.Calculus.IteratedFDeriv.CompLinear
+import Mathlib.Imported.TauCeti.Analysis.SpecialFunctions.Exp.Deriv
+
+/-!
+# Pointwise identities and estimates for the Fourier monomials
+
+Mathlib's lemmas about `AddCircle.fourier n : C(AddCircle T, ℂ)` mostly record its behaviour in the index
+`n`. This file records the facts about the dependence on the point that translation-invariant
+Fourier arguments use: the monomial turns a sum of points into a product, differentiating it
+produces the frequency factor `2πin/T` of norm `2π|n|/T`, and consequently it is Lipschitz in a
+real parameter with that constant and agrees with its tangent line to second order. Integrating
+by parts over one period moves this frequency factor across a monomial reparametrized by the lift
+of a degree-one circle map. Since the monomial has modulus `1`, the geometric kernel
+`(1 - c * e_m)⁻¹` for `‖c‖ < 1` expands as a uniformly convergent geometric series, which
+integrates term by term against an `L¹` function.
+
+## Main statements
+
+* `TauCeti.norm_fourier_apply`: every Fourier monomial on `AddCircle T` has pointwise modulus `1`.
+* `TauCeti.fourier_pow`, `TauCeti.fourier_one_pow`: `AddCircle.fourier k ^ m = AddCircle.fourier (m * k)` and
+  `AddCircle.fourier 1 ^ m = AddCircle.fourier m` in `C(AddCircle T, ℂ)`.
+* `TauCeti.fourier_add_eq_mul`, `TauCeti.star_fourier`: `AddCircle.fourier (m + n) = AddCircle.fourier m * AddCircle.fourier n`
+  and `(AddCircle.fourier n)⋆ = AddCircle.fourier (-n)` in `C(AddCircle T, ℂ)`.
+* `TauCeti.fourier_apply_add`, `TauCeti.fourier_apply_sub`: `AddCircle.fourier n` turns sums and differences
+  of points into `AddCircle.fourier n x * AddCircle.fourier n y` and `AddCircle.fourier n x * AddCircle.fourier (-n) y`.
+* `AddCircle.coe_toCircle_eq_one_iff`: for `T ≠ 0`, `(AddCircle.toCircle y : ℂ) = 1 ↔ y = 0`.
+* `TauCeti.norm_two_pi_I_mul_intCast_div`: `‖2πin/T‖ = 2π/T |n|` for `T > 0`.
+* `TauCeti.norm_fourier_coe_sub_le`: `‖e_n φ - e_n ψ‖ ≤ ‖2πin/T‖ |φ - ψ|` for real `φ, ψ`.
+* `TauCeti.norm_fourier_coe_sub_sub_le`: the second-order bound
+  `‖e_n φ - e_n ψ - (φ - ψ) (2πin/T) e_n ψ‖ ≤ ‖2πin/T‖² |φ - ψ|²`.
+* `TauCeti.norm_fourier_sub_one_le`: `‖e_n h - 1‖ ≤ ‖2πin/T‖ ‖h‖` on the circle, where `‖h‖` is
+  the distance from `h` to `0`.
+* `TauCeti.one_le_norm_fourier_sub_one`: `1 ≤ ‖e_n x - 1‖` for `T / (6 |n|) ≤ x ≤ T / (3 |n|)`.
+* `TauCeti.integral_fourier_mul_deriv_fourier_comp`: for a `C¹` lift `F` with
+  `F (x + T) = F x + T`, `∫₀ᵀ e_{-n} (e_m ∘ F)' = (2πin/T) ∫₀ᵀ e_{-n} (e_m ∘ F)`.
+* `TauCeti.continuous_inv_one_sub_mul_fourier`,
+  `TauCeti.hasSum_integral_inv_one_sub_mul_fourier`: for `‖c‖ < 1` the geometric kernel
+  `(1 - c * e_m)⁻¹` is continuous, and integrating an `L¹` function `f` against it gives
+  `∑ n, c ^ n * f̂ (-(n * m))`.
+* `UnitAddTorus.mFourier_apply_add`, `UnitAddTorus.mFourier_apply_neg`,
+  `UnitAddTorus.mFourier_apply_sub`, `UnitAddTorus.mFourier_apply_nsmul`,
+  `UnitAddTorus.mFourier_eq_fourier_sum`, `UnitAddTorus.mFourier_zsmul`,
+  `TauCeti.UnitAddTorus.mFourier_coe_apply` and `UnitAddTorus.norm_mFourier_apply`: the same
+  pointwise facts for the multivariate monomials `mFourier n` on the torus `UnitAddTorus d`, whose
+  value at the image of `x : d → ℝ` is `exp (2πi ∑ i, n i * x i)`.
+* `TauCeti.torusIrrational_iff_mFourier`: `TorusIrrational α` iff every nontrivial `mFourier k`
+  takes a value other than `1` at `α`.
+* `TauCeti.UnitAddTorus.contDiff_mFourier_coe` and
+  `TauCeti.UnitAddTorus.norm_iteratedFDeriv_mFourier_coe_le`: this lift of `mFourier n` is smooth,
+  and its `k`-th derivative is bounded by `(2π ∑ i, |n i|) ^ k`.
+* `Matrix.mFourier_smulVecHom`, `Matrix.mFourier_comp_smulVecHom`: pulling `mFourier n` back
+  along the map of tori induced by an integer matrix `A` gives `mFourier (Aᵀ *ᵥ n)`.
+-/
+
+public section
+
+open Complex Real
+open scoped ContDiff
+
+namespace TauCeti
+
+variable {T : ℝ}
+
+/-- Every Fourier monomial on `AddCircle T` has pointwise modulus `1`.
+
+Not `@[simp]`, because `simp` already reduces the left-hand side via `AddCircle.fourier_apply` and
+`Circle.norm_coe`. -/
+theorem norm_fourier_apply (k : ℤ) (x : AddCircle T) : ‖AddCircle.fourier k x‖ = 1 := by
+  rw [AddCircle.fourier_apply]
+  exact Circle.norm_coe _
+
+/-- Raising a Fourier monomial to the `m`-th power multiplies its frequency by `m`. -/
+theorem fourier_pow (k : ℤ) (m : ℕ) :
+    AddCircle.fourier (T := T) k ^ m = AddCircle.fourier (T := T) (m * k) := by
+  induction m with
+  | zero =>
+    ext x
+    simp
+  | succ m ih =>
+    ext x
+    rw [pow_succ, ContinuousMap.mul_apply, ih, Nat.cast_add, Nat.cast_one, add_mul, one_mul,
+      AddCircle.fourier_add]
+
+/-- The `m`-th power of the fundamental Fourier monomial `AddCircle.fourier 1` is `AddCircle.fourier m`. -/
+theorem fourier_one_pow (m : ℕ) :
+    AddCircle.fourier (T := T) 1 ^ m = AddCircle.fourier (T := T) (m : ℤ) := by
+  simpa using fourier_pow (T := T) 1 m
+
+/-- The Fourier monomials are multiplicative in the index as elements of `C(AddCircle T, ℂ)`. -/
+theorem fourier_add_eq_mul (m n : ℤ) : AddCircle.fourier (T := T) (m + n) = AddCircle.fourier m * AddCircle.fourier n := by
+  ext x
+  rw [AddCircle.fourier_add, ContinuousMap.mul_apply]
+
+/-- The adjoint of the Fourier monomial `AddCircle.fourier n` in `C(AddCircle T, ℂ)` is `AddCircle.fourier (-n)`. -/
+@[simp]
+theorem star_fourier (n : ℤ) : star (AddCircle.fourier (T := T) n) = AddCircle.fourier (-n) := by
+  ext x
+  rw [ContinuousMap.star_apply, Complex.star_def, ← AddCircle.fourier_neg]
+
+/-- Pointwise, the `m`-th power of the fundamental Fourier monomial is the monomial
+of natural frequency `m`. -/
+theorem fourier_one_pow_apply (m : ℕ) (x : AddCircle T) :
+    AddCircle.fourier 1 x ^ m = AddCircle.fourier (m : ℤ) x := by
+  simpa only [ContinuousMap.pow_apply] using
+    congrArg (fun f : C(AddCircle T, ℂ) ↦ f x) (fourier_one_pow m)
+
+/-- A Fourier monomial turns a sum of points into a product:
+`AddCircle.fourier n (x + y) = AddCircle.fourier n x * AddCircle.fourier n y`. -/
+theorem fourier_apply_add (n : ℤ) (x y : AddCircle T) :
+    AddCircle.fourier n (x + y) = AddCircle.fourier n x * AddCircle.fourier n y := by
+  simp [AddCircle.toCircle_add]
+
+/-- A Fourier monomial turns a difference of points into `AddCircle.fourier n x * AddCircle.fourier (-n) y`. -/
+theorem fourier_apply_sub (n : ℤ) (x y : AddCircle T) :
+    AddCircle.fourier n (x - y) = AddCircle.fourier n x * AddCircle.fourier (-n) y := by
+  simp [sub_eq_add_neg, AddCircle.toCircle_add]
+
+/-- For `T ≠ 0`, `AddCircle.toCircle y` coerces to `1 : ℂ` only at `y = 0`. -/
+@[simp]
+theorem _root_.AddCircle.coe_toCircle_eq_one_iff (hT : T ≠ 0) (y : AddCircle T) :
+    (AddCircle.toCircle y : ℂ) = 1 ↔ y = 0 :=
+  ⟨fun h ↦ AddCircle.injective_toCircle hT (Subtype.ext (by simpa using h)),
+    by rintro rfl; simp⟩
+
+/-- The frequency factor `2πin/T` by which differentiation multiplies the Fourier monomial
+`AddCircle.fourier n` (`AddCircle.hasDerivAt_fourier`) has norm `2π/T |n|`. -/
+theorem norm_two_pi_I_mul_intCast_div (hT : 0 < T) (n : ℤ) :
+    ‖(2 * π * I * n / T : ℂ)‖ = 2 * π / T * |(n : ℝ)| := by
+  simp only [norm_div, norm_mul, norm_I, Complex.norm_ofNat, Complex.norm_real,
+    Complex.norm_intCast, Real.norm_eq_abs, abs_of_pos hT, abs_of_pos Real.pi_pos]
+  ring
+
+/-- The Fourier monomial `x ↦ e^{2πinx/T}` is Lipschitz in a real parameter with constant
+`‖2πin/T‖`. -/
+theorem norm_fourier_coe_sub_le (n : ℤ) (φ ψ : ℝ) :
+    ‖AddCircle.fourier n (φ : AddCircle T) - AddCircle.fourier n (ψ : AddCircle T)‖ ≤
+      ‖(2 * π * I * n / T : ℂ)‖ * |φ - ψ| := by
+  have h := convex_univ.norm_image_sub_le_of_norm_hasDerivWithin_le
+    (f := fun y : ℝ ↦ AddCircle.fourier n (y : AddCircle T)) (s := Set.univ)
+    (fun y _ ↦ (AddCircle.hasDerivAt_fourier T n y).hasDerivWithinAt)
+    (fun y _ ↦ by rw [norm_mul, AddCircle.fourier_apply, Circle.norm_coe, mul_one]) (Set.mem_univ ψ)
+    (Set.mem_univ φ)
+  rwa [Real.norm_eq_abs] at h
+
+/-- The Fourier monomial agrees with its tangent line to second order in a real parameter:
+`‖e_n φ - e_n ψ - (φ - ψ) (2πin/T) e_n ψ‖ ≤ ‖2πin/T‖² |φ - ψ|²`. -/
+theorem norm_fourier_coe_sub_sub_le (n : ℤ) (φ ψ : ℝ) :
+    ‖AddCircle.fourier n (φ : AddCircle T) - AddCircle.fourier n (ψ : AddCircle T) -
+        (φ - ψ) * (2 * π * I * n / T * AddCircle.fourier n (ψ : AddCircle T))‖ ≤
+      ‖(2 * π * I * n / T : ℂ)‖ ^ 2 * |φ - ψ| ^ 2 := by
+  set c : ℂ := 2 * π * I * n / T
+  -- The error `y ↦ e_n y - e_n ψ - (y - ψ) c e_n ψ` vanishes at `ψ`, and its derivative
+  -- `c (e_n y - e_n ψ)` has norm at most `‖c‖² |φ - ψ|` between `ψ` and `φ`.
+  have h := (convex_uIcc ψ φ).norm_image_sub_le_of_norm_hasDerivWithin_le
+    (f := fun y : ℝ ↦ AddCircle.fourier n (y : AddCircle T) - AddCircle.fourier n (ψ : AddCircle T) -
+      ((y : ℂ) - ψ) * (c * AddCircle.fourier n (ψ : AddCircle T)))
+    (f' := fun y ↦ c * AddCircle.fourier n (y : AddCircle T) - c * AddCircle.fourier n (ψ : AddCircle T))
+    (C := ‖c‖ ^ 2 * |φ - ψ|) (fun y _ ↦ ?_) (fun y hy ↦ ?_) Set.left_mem_uIcc
+    Set.right_mem_uIcc
+  · simpa [Real.norm_eq_abs, sq, mul_assoc] using h
+  · have := ((AddCircle.hasDerivAt_fourier T n y).sub_const (AddCircle.fourier n (ψ : AddCircle T))).sub
+      (((hasDerivAt_id y).ofReal_comp.sub_const (ψ : ℂ)).mul_const
+        (c * AddCircle.fourier n (ψ : AddCircle T)))
+    convert this.hasDerivWithinAt using 1
+    · funext y
+      simp only [Pi.sub_apply, id]
+    · rw [Complex.ofReal_one, one_mul]
+  · rw [← mul_sub, norm_mul, sq, mul_assoc]
+    refine mul_le_mul_of_nonneg_left ((norm_fourier_coe_sub_le n y ψ).trans ?_) (norm_nonneg _)
+    exact mul_le_mul_of_nonneg_left (Set.abs_sub_left_of_mem_uIcc hy) (norm_nonneg _)
+
+/-- The Fourier monomial is Lipschitz on the circle with constant `‖2πin/T‖`, measured from `0`:
+`‖e_n h - 1‖ ≤ ‖2πin/T‖ ‖h‖`, where `‖h‖` is the distance from `h` to `0`. -/
+theorem norm_fourier_sub_one_le (n : ℤ) (h : AddCircle T) :
+    ‖AddCircle.fourier n h - 1‖ ≤ ‖(2 * π * I * n / T : ℂ)‖ * ‖h‖ := by
+  induction h using QuotientAddGroup.induction_on with | H x => ?_
+  -- Read `h` on its representative `x - round (x / T) * T` closest to `0`.
+  have hy : ((x - round (T⁻¹ * x) * T : ℝ) : AddCircle T) = x := by
+    rw [AddCircle.coe_sub, sub_eq_self, AddCircle.coe_eq_zero_iff]
+    exact ⟨round (T⁻¹ * x), zsmul_eq_mul _ _⟩
+  have h := norm_fourier_coe_sub_le (T := T) n (x - round (T⁻¹ * x) * T) 0
+  rwa [QuotientAddGroup.mk_zero, AddCircle.fourier_eval_zero, sub_zero, ← AddCircle.norm_eq, hy] at h
+
+/-- `1 ≤ ‖e_n x - 1‖` for `T / (6 |n|) ≤ x ≤ T / (3 |n|)`, where the half angle `π n x / T` lies
+between `π / 6` and `π / 3` in absolute value. -/
+theorem one_le_norm_fourier_sub_one (hT : 0 < T) {n : ℤ} (hn : n ≠ 0) {x : ℝ}
+    (hx₁ : T / (6 * |(n : ℝ)|) ≤ x) (hx₂ : x ≤ T / (3 * |(n : ℝ)|)) :
+    1 ≤ ‖AddCircle.fourier n (x : AddCircle T) - 1‖ := by
+  have hexp : (2 * π * I * n * x / T : ℂ) = I * ((2 * π * n * x / T : ℝ) : ℂ) := by
+    push_cast
+    ring
+  rw [AddCircle.fourier_coe_apply, hexp, Complex.norm_exp_I_mul_ofReal_sub_one, norm_mul,
+    Real.norm_two, Real.norm_eq_abs]
+  set y := 2 * π * n * x / T / 2
+  -- The angle `|y| = π |n| x / T` lies between `π / 6` and `π / 3`.
+  have hy : |y| = π * (|(n : ℝ)| * x) / T := by
+    have hx0 : 0 ≤ x := le_trans (by positivity) hx₁
+    simp only [y, abs_div, abs_mul, abs_two, abs_of_pos pi_pos, abs_of_nonneg hx0, abs_of_pos hT]
+    ring
+  have hlo : π / 6 ≤ |y| := by
+    rw [hy, le_div_iff₀ hT]
+    have := (div_le_iff₀ (by positivity : (0 : ℝ) < 6 * |(n : ℝ)|)).1 hx₁
+    nlinarith [pi_pos]
+  have hhi : |y| ≤ π / 2 := by
+    rw [hy, div_le_iff₀ hT]
+    have := (le_div_iff₀ (by positivity : (0 : ℝ) < 3 * |(n : ℝ)|)).1 hx₂
+    nlinarith [pi_pos]
+  have hsin : 1 / 2 ≤ Real.sin |y| := by
+    rw [← Real.sin_pi_div_six]
+    exact Real.sin_le_sin_of_le_of_le_pi_div_two (by linarith [pi_pos]) hhi hlo
+  have habs : Real.sin |y| ≤ |Real.sin y| := by
+    rcases abs_cases y with ⟨h, -⟩ | ⟨h, -⟩
+    · rw [h]
+      exact le_abs_self _
+    · rw [h, Real.sin_neg]
+      exact neg_le_abs _
+  linarith
+
+/-- **Integration by parts against a reparametrized monomial.** For a `C¹` lift `F` with
+`F (x + T) = F x + T`,
+`∫₀ᵀ e_{-n}(y) F'(y) (2πim/T) e_m(F y) dy = (2πin/T) ∫₀ᵀ e_{-n}(y) e_m(F y) dy`: the boundary
+terms of the integration by parts cancel because `y ↦ e_{-n}(y) e_m(F y)` is `T`-periodic. -/
+theorem integral_fourier_mul_deriv_fourier_comp {F F' : ℝ → ℝ}
+    (hF : ∀ x, HasDerivAt F (F' x) x) (hper : ∀ x, F (x + T) = F x + T) (hF'c : Continuous F')
+    (m n : ℤ) :
+    ∫ y in (0 : ℝ)..T, AddCircle.fourier (-n) (y : AddCircle T) *
+        ((F' y : ℂ) * (2 * π * I * m / T * AddCircle.fourier m (F y : AddCircle T))) =
+      2 * π * I * n / T * ∫ y in (0 : ℝ)..T, AddCircle.fourier (-n) (y : AddCircle T) *
+        AddCircle.fourier m (F y : AddCircle T) := by
+  have hFc : Continuous F := continuous_iff_continuousAt.2 fun x ↦ (hF x).continuousAt
+  have he (k : ℤ) : Continuous fun y : ℝ ↦ AddCircle.fourier k (y : AddCircle T) :=
+    (AddCircle.fourier k).continuous.comp continuous_quotient_mk'
+  have hv (y : ℝ) : HasDerivAt (fun y : ℝ ↦ AddCircle.fourier m (F y : AddCircle T))
+      ((F' y : ℂ) * (2 * π * I * m / T * AddCircle.fourier m (F y : AddCircle T))) y := by
+    rw [← real_smul]
+    exact (AddCircle.hasDerivAt_fourier T m (F y)).scomp y (hF y)
+  have hIBP := intervalIntegral.integral_mul_deriv_eq_deriv_mul_of_hasDerivAt
+    (v := fun y ↦ AddCircle.fourier m (F y : AddCircle T)) (he _).continuousOn ((he m).comp hFc).continuousOn
+    (fun y _ ↦ AddCircle.hasDerivAt_fourier T (-n) y) (fun y _ ↦ hv y)
+    ((continuous_const.mul (he _)).intervalIntegrable 0 T)
+    (((continuous_ofReal.comp hF'c).mul
+      (continuous_const.mul ((he m).comp hFc))).intervalIntegrable 0 T)
+  have hend : AddCircle.fourier (-n) ((T : ℝ) : AddCircle T) * AddCircle.fourier m (F T : AddCircle T) =
+      AddCircle.fourier (-n) ((0 : ℝ) : AddCircle T) * AddCircle.fourier m (F 0 : AddCircle T) := by
+    rw [show F T = F 0 + T by simpa using hper 0, AddCircle.coe_add, AddCircle.coe_period,
+      add_zero, AddCircle.coe_zero]
+  simp_rw [mul_assoc (2 * π * I * ((-n : ℤ) : ℂ) / T)] at hIBP
+  rw [hIBP, hend, sub_self, zero_sub, intervalIntegral.integral_const_mul]
+  push_cast
+  ring
+
+section GeometricKernel
+
+open MeasureTheory AddCircle
+
+/-- For `‖c‖ < 1` the geometric kernel `(1 - c * e_m)⁻¹` is continuous on the circle, since
+`c * e_m` never equals `1`. -/
+theorem continuous_inv_one_sub_mul_fourier {c : ℂ} (hc : ‖c‖ < 1) (m : ℤ) :
+    Continuous fun t : AddCircle T ↦ (1 - c * AddCircle.fourier m t)⁻¹ :=
+  (continuous_const.sub (continuous_const.mul (AddCircle.fourier m).continuous)).inv₀ fun t h ↦
+    hc.ne (by simpa [norm_fourier_apply] using congrArg norm (sub_eq_zero.1 h).symm)
+
+variable [Fact (0 < T)]
+
+/-- Integrating an `L¹` function against the geometric kernel `(1 - c * e_m)⁻¹` for `‖c‖ < 1`
+gives the series `∑ n, c ^ n * f̂ (-(n * m))` of its Fourier coefficients. -/
+theorem hasSum_integral_inv_one_sub_mul_fourier {f : AddCircle T → ℂ}
+    (hf : Integrable f haarAddCircle) {c : ℂ} (hc : ‖c‖ < 1) (m : ℤ) :
+    HasSum (fun n : ℕ ↦ c ^ n * AddCircle.fourierCoeff f (-(n * m)))
+      (∫ t, (1 - c * AddCircle.fourier m t)⁻¹ * f t ∂haarAddCircle) := by
+  have hpow (n : ℕ) (t : AddCircle T) : (AddCircle.fourier m t : ℂ) ^ n = AddCircle.fourier (n * m) t := by
+    rw [← fourier_pow, ContinuousMap.pow_apply]
+  set F : ℕ → AddCircle T → ℂ := fun n t ↦ c ^ n * (AddCircle.fourier (n * m) t * f t) with hF
+  have hF_int (n : ℕ) : Integrable (F n) haarAddCircle :=
+    (hf.bdd_mul (c := 1) (AddCircle.fourier _).continuous.aestronglyMeasurable
+      (ae_of_all _ fun t ↦ (norm_fourier_apply _ t).le)).const_mul _
+  have hF_norm (n : ℕ) : ∫ t, ‖F n t‖ ∂haarAddCircle = ‖c‖ ^ n * ∫ t, ‖f t‖ ∂haarAddCircle := by
+    simp only [hF, norm_mul, norm_pow, norm_fourier_apply, one_mul]
+    exact integral_const_mul _ _
+  have hsum := hasSum_integral_of_summable_integral_norm hF_int (by
+    simp_rw [hF_norm]
+    exact (summable_geometric_of_lt_one (norm_nonneg _) hc).mul_right _)
+  have hcoeff (n : ℕ) : ∫ t, F n t ∂haarAddCircle = c ^ n * AddCircle.fourierCoeff f (-(n * m)) := by
+    rw [integral_const_mul, AddCircle.fourierCoeff, neg_neg]
+    simp only [smul_eq_mul]
+  have hker (t : AddCircle T) : ∑' n, F n t = (1 - c * AddCircle.fourier m t)⁻¹ * f t := by
+    have hg : HasSum (fun n : ℕ ↦ (c * AddCircle.fourier m t) ^ n) (1 - c * AddCircle.fourier m t)⁻¹ :=
+      hasSum_geometric_of_norm_lt_one (by rwa [norm_mul, norm_fourier_apply, mul_one])
+    refine ((hg.mul_right (f t)).congr_fun fun n ↦ ?_).tsum_eq
+    simp only [hF, mul_pow, hpow, mul_assoc]
+  simp_rw [hcoeff, hker] at hsum
+  exact hsum
+
+end GeometricKernel
+
+end TauCeti
+
+namespace UnitAddTorus
+
+variable {d : Type*} [Fintype d]
+
+/-- A multivariate Fourier monomial turns a sum of points into a product:
+`mFourier n (x + y) = mFourier n x * mFourier n y`. -/
+theorem mFourier_apply_add (n : d → ℤ) (x y : UnitAddTorus d) :
+    mFourier n (x + y) = mFourier n x * mFourier n y := by
+  simp only [mFourier, ContinuousMap.coe_mk, Pi.add_apply, TauCeti.fourier_apply_add,
+    Finset.prod_mul_distrib]
+
+/-- A multivariate Fourier monomial turns a difference of points into a product with the
+monomial of the opposite index: `mFourier n (x - y) = mFourier n x * mFourier (-n) y`. -/
+theorem mFourier_apply_sub (n : d → ℤ) (x y : UnitAddTorus d) :
+    mFourier n (x - y) = mFourier n x * mFourier (-n) y := by
+  rw [sub_eq_add_neg, mFourier_apply_add]
+  simp only [mFourier, ContinuousMap.coe_mk, Pi.neg_apply, AddCircle.fourier_apply, smul_neg, neg_smul]
+
+/-- Multivariate Fourier monomials take values in the unit circle. -/
+@[simp]
+theorem norm_mFourier_apply (n : d → ℤ) (z : UnitAddTorus d) : ‖mFourier n z‖ = 1 := by
+  simp [mFourier, norm_prod]
+
+/-- A multivariate Fourier monomial on `UnitAddTorus d` evaluates to the fundamental circle
+character on the integer pairing `∑ i, k i • x i`. -/
+theorem mFourier_eq_fourier_sum (k : d → ℤ) (x : UnitAddTorus d) :
+    mFourier k x = AddCircle.fourier 1 (∑ i, k i • x i) := by
+  have h : ∏ i, AddCircle.toCircle (k i • x i) = AddCircle.toCircle (∑ i, k i • x i) := by
+    have h' := (map_prod (AddCircle.toCircle_addChar (T := (1 : ℝ))).toMonoidHom
+      (fun i ↦ Multiplicative.ofAdd (k i • x i)) Finset.univ).symm
+    simp only [AddChar.toMonoidHom_apply, toAdd_ofAdd, ← ofAdd_sum] at h'; exact h'
+  rw [mFourier, ContinuousMap.coe_mk, AddCircle.fourier_one]; simp only [AddCircle.fourier_apply]
+  have hcoe (c : Circle) : (c : ℂ) = Circle.coeHom c := (Circle.coeHom_apply c).symm
+  simp_rw [hcoe, ← map_prod Circle.coeHom, h]
+
+/-- Negating the argument conjugates a multivariate Fourier monomial. -/
+theorem mFourier_apply_neg (k : d → ℤ) (x : UnitAddTorus d) :
+    mFourier k (-x) = starRingEnd ℂ (mFourier k x) := by
+  rw [← mFourier_neg, mFourier_eq_fourier_sum, mFourier_eq_fourier_sum]; simp
+
+/-- Evaluating a multivariate Fourier monomial at a natural-number multiple raises its value to that
+power. -/
+theorem mFourier_apply_nsmul (k : d → ℤ) (n : ℕ) (x : UnitAddTorus d) :
+    mFourier k (n • x) = mFourier k x ^ n := by
+  rw [mFourier_eq_fourier_sum, mFourier_eq_fourier_sum, AddCircle.fourier_one, AddCircle.fourier_one,
+    (by simp [Finset.smul_sum, ← natCast_zsmul, zsmul_comm] :
+      ∑ i, k i • (n • x) i = n • ∑ i, k i • x i)]
+  simpa [AddCircle.toCircle_addChar] using congrArg ((↑) : Circle → ℂ)
+    (AddChar.map_nsmul_eq_pow AddCircle.toCircle_addChar n (∑ i, k i • x i))
+
+/-- Scaling the frequency vector by an integer `m` corresponds to evaluating `AddCircle.fourier m` on the
+integer pairing `∑ i, k i • x i`. -/
+theorem mFourier_zsmul (m : ℤ) (k : d → ℤ) (x : UnitAddTorus d) :
+    mFourier (m • k) x = AddCircle.fourier m (∑ i, k i • x i) := by
+  rw [mFourier_eq_fourier_sum, AddCircle.fourier_one, AddCircle.fourier_apply, Finset.smul_sum (r := m)]
+  congr 2; exact Finset.sum_congr rfl fun i _ ↦ by rw [Pi.smul_apply, smul_eq_mul, mul_zsmul]
+
+end UnitAddTorus
+
+/-- A torus point `α` is irrational iff every nontrivial Fourier character takes a value other
+than `1` at `α`. -/
+theorem TauCeti.torusIrrational_iff_mFourier {d : Type*} [Fintype d] {α : _root_.UnitAddTorus d} :
+    TauCeti.TorusIrrational α ↔ ∀ k : d → ℤ, k ≠ 0 → _root_.UnitAddTorus.mFourier k α ≠ 1 := by
+  rw [TauCeti.torusIrrational_def]
+  exact forall₂_congr fun _ _ ↦ by
+    simp [_root_.UnitAddTorus.mFourier_eq_fourier_sum, (one_ne_zero : (1 : ℝ) ≠ 0)]
+
+namespace TauCeti.UnitAddTorus
+
+open _root_.UnitAddTorus
+
+variable {d : Type*} [Fintype d]
+
+/-- The value of the multivariate Fourier monomial `mFourier n` at the image of `x : d → ℝ` is
+`exp (2πi ∑ i, n i * x i)`. -/
+theorem mFourier_coe_apply (n : d → ℤ) (x : d → ℝ) :
+    mFourier n (fun i ↦ (x i : UnitAddCircle)) = cexp (2 * π * I * ∑ i, (n i : ℂ) * x i) := by
+  simp only [mFourier, ContinuousMap.coe_mk, AddCircle.fourier_coe_apply, ← Complex.exp_sum]
+  rw [Finset.mul_sum]
+  refine congrArg cexp (Finset.sum_congr rfl fun i _ ↦ ?_)
+  push_cast
+  ring
+
+/-- The lift of the Fourier mode `mFourier n` to `d → ℝ` is smooth. -/
+theorem contDiff_mFourier_coe (n : d → ℤ) :
+    ContDiff ℝ ∞ fun y : d → ℝ ↦ mFourier n fun i ↦ (y i : UnitAddCircle) := by
+  have h : ContDiff ℝ ∞ fun t : ℝ ↦ (t : ℂ) := Complex.ofRealCLM.contDiff
+  simp only [mFourier_coe_apply]
+  fun_prop
+
+/-- The lift of the Fourier mode `mFourier n` has `k`-th derivative bounded by
+`(2π ∑ i, |n i|) ^ k`. -/
+theorem norm_iteratedFDeriv_mFourier_coe_le (n : d → ℤ) (k : ℕ) (x : d → ℝ) :
+    ‖iteratedFDeriv ℝ k (fun y : d → ℝ ↦ mFourier n fun i ↦ (y i : UnitAddCircle)) x‖ ≤
+      (2 * π * ∑ i, |(n i : ℝ)|) ^ k := by
+  -- The mode is `exp` composed with the real-linear map `y ↦ (∑ i, n i * y i) • 2πi`.
+  set L : (d → ℝ) →L[ℝ] ℝ := ∑ i, (n i : ℝ) • ContinuousLinearMap.proj i
+  have hLapply (y : d → ℝ) : L y = ∑ i, (n i : ℝ) * y i := by
+    simp [L]
+  have hL : ‖L‖ ≤ ∑ i, |(n i : ℝ)| := by
+    refine L.opNorm_le_bound (Finset.sum_nonneg fun i _ ↦ abs_nonneg _) fun y ↦ ?_
+    rw [hLapply, Finset.sum_mul]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun i _ ↦ ?_)
+    rw [abs_mul]
+    exact mul_le_mul_of_nonneg_left (norm_le_pi_norm y i) (abs_nonneg _)
+  set L' : (d → ℝ) →L[ℝ] ℂ := L.smulRight (2 * π * I)
+  have heq : (fun y : d → ℝ ↦ mFourier n fun i ↦ (y i : UnitAddCircle)) = cexp ∘ L' := by
+    funext y
+    simp only [mFourier_coe_apply, Function.comp_apply, L', ContinuousLinearMap.smulRight_apply,
+      hLapply, Complex.real_smul]
+    push_cast
+    ring_nf
+  have hnorm : ‖L'‖ ≤ 2 * π * ∑ i, |(n i : ℝ)| := by
+    rw [ContinuousLinearMap.norm_smulRight_apply, mul_comm]
+    have h2π : ‖(2 * π * I : ℂ)‖ = 2 * π := by
+      simp [abs_of_pos Real.pi_pos]
+    rw [h2π]
+    exact mul_le_mul_of_nonneg_left hL (by positivity)
+  rw [heq]
+  refine (L'.norm_iteratedFDeriv_comp_right_le Complex.contDiff_exp x
+    (mod_cast le_top)).trans ?_
+  -- `L' x` is purely imaginary, so every derivative of `exp` there has norm one.
+  have hre : (L' x).re = 0 := by
+    simp [L', ContinuousLinearMap.smulRight_apply]
+  rw [norm_iteratedFDeriv_real_cexp, Complex.norm_exp, hre, Real.exp_zero, one_mul]
+  exact pow_le_pow_left₀ (norm_nonneg _) hnorm k
+
+end TauCeti.UnitAddTorus
+
+namespace Matrix
+
+open UnitAddTorus
+
+variable {d d' : Type*} [Fintype d] [Fintype d']
+
+/-- The Fourier monomial `mFourier n` at the image of `θ` under the map of unit tori induced by an
+integer matrix `A` is the monomial `mFourier (Aᵀ *ᵥ n)` at `θ`. -/
+@[simp]
+theorem mFourier_smulVecHom (A : Matrix d d' ℤ) (n : d → ℤ) (θ : UnitAddTorus d') :
+    mFourier n (A.smulVecHom UnitAddCircle θ) = mFourier (Aᵀ *ᵥ n) θ := by
+  obtain ⟨x, rfl⟩ := TauCeti.UnitAddTorus.surjective_coe θ
+  have h : A.smulVecHom UnitAddCircle (fun j ↦ (x j : UnitAddCircle)) =
+      fun i ↦ ((∑ j, (A i j : ℝ) * x j : ℝ) : UnitAddCircle) := by
+    ext i
+    simp_rw [smulVecHom_apply, ← zsmul_eq_mul]
+    rw [← QuotientAddGroup.mk'_apply, map_sum]
+    simp
+  simp only [h, TauCeti.UnitAddTorus.mFourier_coe_apply]
+  congr 2
+  simp only [mulVec, dotProduct, transpose_apply]
+  push_cast
+  simp only [Finset.mul_sum, Finset.sum_mul]
+  rw [Finset.sum_comm]
+  exact Finset.sum_congr rfl fun j _ ↦ Finset.sum_congr rfl fun i _ ↦ by ring
+
+/-- The Fourier monomial `mFourier n` pulled back along the map of unit tori induced by an
+integer matrix `A` is the monomial `mFourier (Aᵀ *ᵥ n)`. -/
+@[simp]
+theorem mFourier_comp_smulVecHom (A : Matrix d d' ℤ) (n : d → ℤ) :
+    (mFourier n).comp (A.smulVecHom UnitAddCircle : C(UnitAddTorus d', UnitAddTorus d)) =
+      mFourier (Aᵀ *ᵥ n) := by
+  ext θ
+  simp
+
+end Matrix
