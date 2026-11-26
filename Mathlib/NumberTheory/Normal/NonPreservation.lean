@@ -9,6 +9,7 @@ public import Mathlib.Imported.NormalNumbers.CantorLiouvilleAll
 public import Mathlib.Imported.NormalNumbers.VisitDeviationB
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Bridge
+public import Mathlib.NumberTheory.Normal.BaseCantorDecay
 public import Mathlib.NumberTheory.Normal.QuarterCantorDecay
 
 /-!
@@ -20,7 +21,9 @@ base-`4` digits are all `1` or `2`, so `y` is not normal in any base `2 ^ k`. Fo
 pushforward of the quarter-Cantor law under `G` has polynomial Fourier decay
 (`NormalNumbers.QuarterCantorDecay.polyDecay`), and almost every `x = G y` is absolutely normal
 (Davenport–Erdős–LeVeque in every base). Then `x` is absolutely normal while `x ^ 2 = y`,
-`x⁻¹ = y`, or `exp x = y` is not normal in base `2 ^ k`.
+`x⁻¹ = y`, or `exp x = y` is not normal in base `2 ^ k`. For a base `b ≥ 3` the same argument
+runs on the base-`b` Cantor measure (`NormalNumbers.BaseCantorDecay`), whose points (shifted by
+`1`) have no digit `2`.
 
 ## Main statements
 
@@ -30,6 +33,8 @@ pushforward of the quarter-Cantor law under `G` has polynomial Fourier decay
   witness for the `√` case of Manai's Theorem 2.
 * `Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq`, `..._inv`, `..._exp`
 * `Real.exists_isNormalIn_two_pow_not_isNormalIn_sq`, `..._inv`, `..._exp`: bases `b = 2 ^ k`
+* `Real.exists_isNormalIn_not_isNormalIn_sq`, `..._inv`, `..._exp`, `..._mobius`: every base
+  `b ≥ 2`, using the base-`b` Cantor measure of `NormalNumbers.BaseCantorDecay` for `b ≥ 3`
 * `Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_mobius` and
   `Real.exists_isNormalIn_two_pow_not_isNormalIn_mobius`: Möbius maps with `c ≠ 0`
 
@@ -346,5 +351,51 @@ theorem exists_isNormalIn_two_pow_not_isNormalIn_mobius {k : ℕ} (hk : 0 < k) (
   obtain ⟨x, hx, h⟩ :=
     exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius a₁ a₂ c d hc hdet
   exact ⟨x, hx _ (two_le_two_pow hk), h k hk⟩
+
+/-! ### General bases -/
+
+open NormalNumbers.BaseCantorDecay
+
+/-- An absolutely normal number whose square is not normal in base `b`. -/
+theorem exists_isAbsolutelyNormal_not_isNormalIn_sq {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b (x ^ 2) := by
+  sorry
+
+/-- An absolutely normal number whose inverse is not normal in base `b`. -/
+theorem exists_isAbsolutelyNormal_not_isNormalIn_inv {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b x⁻¹ := by
+  sorry
+
+/-- An absolutely normal number whose exponential is not normal in base `b`. -/
+theorem exists_isAbsolutelyNormal_not_isNormalIn_exp {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b (Real.exp x) := by
+  sorry
+
+/-- An absolutely normal number whose Möbius image (`c ≠ 0`) is not normal in base `b`. -/
+theorem exists_isAbsolutelyNormal_not_isNormalIn_mobius {b : ℕ} (hb : 2 ≤ b) (a₁ a₂ c d : ℝ)
+    (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b ((a₁ * x + a₂) / (c * x + d)) := by
+  sorry
+
+/-- Squaring does not preserve base-`b` normality (`b ≥ 2`). -/
+theorem exists_isNormalIn_not_isNormalIn_sq {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (x ^ 2) := by
+  sorry
+
+/-- Inversion does not preserve base-`b` normality (`b ≥ 2`). -/
+theorem exists_isNormalIn_not_isNormalIn_inv {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b x⁻¹ := by
+  sorry
+
+/-- The exponential does not preserve base-`b` normality (`b ≥ 2`). -/
+theorem exists_isNormalIn_not_isNormalIn_exp {b : ℕ} (hb : 2 ≤ b) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (Real.exp x) := by
+  sorry
+
+/-- No Möbius map with `c ≠ 0` preserves base-`b` normality (`b ≥ 2`). -/
+theorem exists_isNormalIn_not_isNormalIn_mobius {b : ℕ} (hb : 2 ≤ b) (a₁ a₂ c d : ℝ)
+    (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b ((a₁ * x + a₂) / (c * x + d)) := by
+  sorry
 
 end Real

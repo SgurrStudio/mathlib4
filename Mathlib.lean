@@ -6710,6 +6710,7 @@ public import Mathlib.NumberTheory.Niven
 public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BaileyCrandall
 public import Mathlib.NumberTheory.Normal.BaireCategory
+public import Mathlib.NumberTheory.Normal.BaseCantorDecay
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.BitCount
