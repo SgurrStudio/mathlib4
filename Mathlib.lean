@@ -5137,6 +5137,14 @@ public import Mathlib.GroupTheory.Subsemigroup.Lemmas
 public import Mathlib.GroupTheory.Sylow
 public import Mathlib.GroupTheory.Torsion
 public import Mathlib.GroupTheory.Transfer
+public import Mathlib.Imported.MathlibForks.BigOHunter.TrapezoidalRulePeriodic
+public import Mathlib.Imported.MathlibForks.DavidFox998.Poussin
+public import Mathlib.Imported.MathlibForks.GoldenPhysicsProject.GaussSumModulus
+public import Mathlib.Imported.MathlibForks.JWhite.FourierEval
+public import Mathlib.Imported.MathlibForks.Kac3pro.GaussMap
+public import Mathlib.Imported.MathlibForks.Kratostau.ConvergentLowerBound
+public import Mathlib.Imported.MathlibForks.Localecho.IrrationalLiouvilleWith
+public import Mathlib.Imported.MathlibForks.Mycaule.DigitsPeriodic
 public import Mathlib.Imported.NormalNumbers.BaryBlockCount
 public import Mathlib.Imported.NormalNumbers.BlockRigidity
 public import Mathlib.Imported.NormalNumbers.Bridge
