@@ -7,9 +7,11 @@ module
 
 public import Mathlib.Algebra.Polynomial.Taylor
 public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 import Mathlib.Algebra.Order.Chebyshev
 import Mathlib.Algebra.Polynomial.Degree.SmallDegree
+import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 import Mathlib.Imported.TauCeti.Analysis.SpecificLimits.VanDerCorput
 import Mathlib.NumberTheory.Harmonic.Bounds
@@ -29,11 +31,13 @@ Tau Ceti) `d - 1` times, each time lowering the degree by one, and ends with a g
 ## Main statements
 
 * `Polynomial.norm_polyExpSum_pow_le`: the `d`-th difference test.
+* `Polynomial.eventually_norm_polyExpSum_le`: its uniform form, `o(T)` for leading coefficients
+  in `[T ^ (δ - d), T ^ (-δ)]`.
 -/
 
 @[expose] public section
 
-open Complex Finset
+open Complex Finset Filter Topology
 
 namespace Polynomial
 
@@ -280,5 +284,17 @@ theorem norm_polyExpSum_pow_le {d : ℕ} (hd : 1 ≤ d) : ∃ K : ℝ, 0 < K ∧
       _ ≤ 2 ^ (m - 1) * (2 ^ m * (1 / H + Y) + 4 ^ m * (K * (1 / H + Y))) := by
           gcongr; linarith
       _ = 2 ^ (m - 1) * (2 ^ m + 4 ^ m * K) * (1 / H + Y) := by ring
+
+/-- `(1 + log x) ^ m = o(x ^ r)` for every `r > 0`. -/
+theorem tendsto_one_add_log_pow_mul_rpow_neg (m : ℕ) {r : ℝ} (hr : 0 < r) :
+    Tendsto (fun x : ℝ ↦ (1 + Real.log x) ^ m * x ^ (-r)) atTop (𝓝 0) := by
+  sorry
+
+/-- **Uniform power saving**: a polynomial phase of degree `d` whose leading coefficient lies in
+`[T ^ (δ - d), T ^ (-δ)]` has exponential sum `o(T)` over `n < T`, uniformly. -/
+theorem eventually_norm_polyExpSum_le {d : ℕ} (hd : 1 ≤ d) {δ : ℝ} (hδ : 0 < δ) {ε : ℝ}
+    (hε : 0 < ε) : ∀ᶠ T : ℕ in atTop, ∀ φ : ℝ[X], φ.natDegree ≤ d →
+      (T : ℝ) ^ (δ - d) ≤ φ.coeff d → φ.coeff d ≤ (T : ℝ) ^ (-δ) → ‖polyExpSum φ T‖ ≤ ε * T := by
+  sorry
 
 end Polynomial

@@ -6,10 +6,17 @@ Authors: Rob
 module
 
 public import Mathlib.Algebra.Polynomial.Eval.Defs
+public import Mathlib.Analysis.SpecialFunctions.Log.Base
 public import Mathlib.NumberTheory.ArithmeticFunction.Misc
 public import Mathlib.NumberTheory.Normal.CopelandErdos
+public import Mathlib.NumberTheory.Normal.DifferenceTest
+public import Mathlib.NumberTheory.Normal.FejerCount
 
 import Mathlib.Algebra.Order.Chebyshev
+import Mathlib.Analysis.Polynomial.Basic
+import Mathlib.Imported.TauCeti.Analysis.Polynomial.L1Norm
+import Mathlib.NumberTheory.Normal.PiatetskiShapiro
+import Mathlib.Topology.Algebra.Order.Polynomial
 
 /-!
 # The Davenport–Erdős theorem
@@ -28,15 +35,23 @@ for every `θ < 1`.
 
 * `Real.isNormalIn_concatenation_polynomial`: the Davenport–Erdős theorem.
 * `Real.isNormalIn_concatenation_sq`: Besicovitch's theorem, the case `f = X ^ 2`.
+* `Real.isNormalIn_concatenation_of_growth`: normality of `0.a₀ a₁ a₂ …` for sequences of size
+  `≍ t ^ d` whose scaled Weyl sums are uniformly small.
 
 ## Proof
 
-Following Davenport and Erdős, it suffices by Piatetski-Shapiro's criterion
-(`Real.isNormalIn_of_eventually_le`) to bound, for `n ∈ [N, 2N)`, how often a block `w` occurs
-at a fixed distance from the end of the expansion of `f(n)`. The digits at distance `s` from the
-end of `f(n)` are `⌊f(n) / b ^ s⌋ mod b ^ k`, and these are equidistributed by Weyl's inequality
-for the polynomial `f(n) / b ^ (s + k)` (proved by van der Corput differencing, Tau Ceti's
-`vanDerCorput_inequality`), except for the `O(1)` leading digits.
+Following Davenport and Erdős, it suffices by Piatetski-Shapiro's hot-spot criterion
+(`Real.isNormalIn_of_eventually_le`, with `C = 8`) to bound how often a block `w` of length `k`
+occurs inside the terms `f(1), …, f(T)`
+(`Real.isNormalIn_concatenation_of_concatInternal_le`). Sort the occurrences by their distance
+`s` from the end of the term. The block at distance `s` in `f(t)` is `w` exactly when
+`f(t) / b ^ (s + k)` lies in an interval of length `b ^ (-k)` modulo one, and these are counted
+by Fejér squares (`Complex.card_fract_sub_lt_le`), giving `8 T / b ^ k` plus Weyl sums. For
+the positions `s` away from the `δ log T` lowest and highest ones, the leading coefficient
+of `h f(t) / b ^ (s + k)` lies in `[T ^ (δ - d), T ^ (-δ)]`, and the `d`-th difference test
+(`Polynomial.eventually_norm_polyExpSum_le`, by van der Corput differencing with Tau Ceti's
+`vanDerCorput_inequality`) makes the Weyl sums `o(T)`. The remaining `2 δ log T` positions cost
+a fraction `O(δ)` of the `≈ d T log T` digits (`Real.isNormalIn_concatenation_of_growth`).
 
 For squares there is an elementary proof by **Pollack and Vandehey**, which we follow for
 `Real.isNormalIn_concatenation_sq`: by the few-bad-terms criterion
@@ -666,6 +681,95 @@ theorem tendsto_concatBad_sq (hb : 2 ≤ b) (hk : 0 < k) (w : Fin k → Fin b) {
       linarith
 
 end Squares
+
+section Polynomials
+
+variable {a : ℕ → ℕ}
+
+/-- An upper bound on the occurrences of `w` inside the terms gives the same upper bound on its
+frequency in the concatenation, as long as terms are short compared to the total length. -/
+theorem eventually_concatOcc_le (hk : 0 < k) (hb : 0 < b) (w : Fin k → Fin b) {c : ℝ}
+    (hc : 0 ≤ c) (hT : Tendsto (fun T : ℕ ↦ (T : ℝ) / concatStart b a T) atTop (𝓝 0))
+    (hlen : Tendsto (fun T ↦ ((Nat.log b (a T) : ℝ) + 1) / concatStart b a T) atTop (𝓝 0))
+    (h : ∀ ε > 0, ∀ᶠ T in atTop, (concatInternal b a w T : ℝ) ≤ (c + ε) * concatStart b a T)
+    {ε : ℝ} (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop, (concatOcc b a w N : ℝ) ≤ (c + ε) * N := by
+  sorry
+
+/-- **Normality of a concatenation from an upper bound**: if every block `w` of length `k`
+occurs inside the terms at most `C b⁻ᵏ + o(1)` times per digit, and the terms are short, then
+the concatenation is normal (by Piatetski-Shapiro's hot-spot criterion). -/
+theorem isNormalIn_concatenation_of_concatInternal_le [NeZero b] (hb : 2 ≤ b) {C : ℝ}
+    (hC : 1 ≤ C) (hT : Tendsto (fun T : ℕ ↦ (T : ℝ) / concatStart b a T) atTop (𝓝 0))
+    (hlen : Tendsto (fun T ↦ ((Nat.log b (a T) : ℝ) + 1) / concatStart b a T) atTop (𝓝 0))
+    (h : ∀ k, 0 < k → ∀ (w : Fin k → Fin b) (ε : ℝ), 0 < ε → ∀ᶠ T in atTop,
+      (concatInternal b a w T : ℝ) ≤ (C * ((b : ℝ) ^ k)⁻¹ + ε) * concatStart b a T) :
+    IsNormalIn b (concatenation b a) := by
+  sorry
+
+/-- If the `k` digits of `m` ending `s` digits from the right encode `c`, then
+`m / b ^ (s + k) - c / b ^ k` lies in `[0, 1 / b ^ k)` modulo one. -/
+theorem fract_div_pow_sub_lt (hb : 0 < b) {m s c : ℕ} (h : m / b ^ s % b ^ k = c) :
+    Int.fract ((m : ℝ) / (b : ℝ) ^ (s + k) - c / (b : ℝ) ^ k) < 1 / ((b ^ k : ℕ) : ℝ) := by
+  sorry
+
+/-- The internal occurrences of `w` in the first `T` terms, sorted by position. -/
+theorem concatInternal_le_sum_card (hb : 0 < b) (hk : 0 < k) (w : Fin k → Fin b) {T L : ℕ}
+    (hL : ∀ t < T, Nat.log b (a t) + 1 ≤ L) :
+    concatInternal b a w T ≤ ∑ s ∈ range L, ((range T).filter fun t ↦
+      Int.fract ((a t : ℝ) / (b : ℝ) ^ (s + k) - (blockCode w : ℕ) / (b : ℝ) ^ k) <
+        1 / ((b ^ k : ℕ) : ℝ)).card := by
+  sorry
+
+/-- **Counting digit blocks with Weyl sums**: positions `s` at which all Weyl sums of
+`a t / b ^ (s + k)` are small contribute about `T / b ^ k` occurrences of `w`, the other positions
+at most `T`. -/
+theorem concatInternal_le_of_weylSum (hb : 0 < b) (hk : 0 < k) (w : Fin k → Fin b) {T L : ℕ}
+    (hL : ∀ t < T, Nat.log b (a t) + 1 ≤ L) (P : ℕ → Prop) [DecidablePred P] {ε : ℝ}
+    (hε : 0 ≤ ε) (hW : ∀ s < L, P s → ∀ h ∈ Ico 1 (b ^ k),
+      ‖Complex.weylSum (fun t ↦ (a t : ℝ) / (b : ℝ) ^ (s + k)) T h‖ ≤ ε * T) :
+    (concatInternal b a w T : ℝ) ≤
+      ((range L).filter fun s ↦ ¬ P s).card * T + L * (8 * T / (b : ℝ) ^ k + 16 * ε * T) := by
+  sorry
+
+/-- A natural number `n` has more than `logb b n` digits in base `b`. -/
+theorem logb_lt_natLog_add_one (n : ℕ) : logb b n < Nat.log b n + 1 := by
+  sorry
+
+/-- The number of digits of `M * T ^ d` is at most `logb M + d logb T` (plus one). -/
+theorem natLog_mul_pow_le {M : ℕ} (hM : 1 ≤ M) (d : ℕ) {T : ℕ} (hT : 1 ≤ T) :
+    (Nat.log b (M * T ^ d) : ℝ) ≤ logb b M + d * logb b T := by
+  sorry
+
+/-- Terms of polynomial size `≥ c t ^ d` have `≈ d logb T` digits on average. -/
+theorem eventually_concatStart_ge (hb : 1 < b) {d : ℕ} (hd : 1 ≤ d) {c : ℝ} (hc : 0 < c)
+    (hlow : ∀ᶠ t : ℕ in atTop, c * ((t : ℝ) + 1) ^ d ≤ a t) {η : ℝ} (hη : 0 < η) (hη1 : η < 1) :
+    ∀ᶠ T : ℕ in atTop, (1 - η) * d * T * logb b T ≤ concatStart b a T := by
+  sorry
+
+/-- Positions `s` at which the leading coefficient `A / b ^ (s + k)` of `f / b ^ (s + k)` is
+not in the range of the uniform power saving are `O(δ logb T)` in number. -/
+theorem card_filter_not_mid_le (hb : 1 < b) {A : ℝ} (hA : 1 ≤ A) {M : ℕ} (hM : 1 ≤ M)
+    (d k : ℕ) {T : ℕ} (hT : 1 ≤ T) {δ : ℝ} (hδ : 0 ≤ δ) :
+    (((range (Nat.log b (M * T ^ d) + 1)).filter fun s ↦ ¬((T : ℝ) ^ (δ - d) ≤
+      A / (b : ℝ) ^ (s + k) ∧ (b : ℝ) ^ k * A / (b : ℝ) ^ (s + k) ≤ (T : ℝ) ^ (-δ))).card : ℝ) ≤
+        2 * δ * logb b T + (logb b A + logb b M + k + 2) := by
+  sorry
+
+/-- **Normality of concatenations of polynomial-size sequences**: if `a t ≍ (t + 1) ^ d` and the
+Weyl sums of `a t / b ^ (s + k)` are uniformly `o(T)` whenever the leading coefficient
+`A / b ^ (s + k)` lies in `[T ^ (δ - d), T ^ (-δ) / b ^ k]`, then `0.a₀ a₁ a₂ …` is normal. -/
+theorem isNormalIn_concatenation_of_growth [NeZero b] (hb : 2 ≤ b) {d : ℕ} (hd : 1 ≤ d) {A : ℝ}
+    (hA : 1 ≤ A) {M : ℕ} (hM : 1 ≤ M) (hup : ∀ t, a t ≤ M * (t + 1) ^ d)
+    (hlow : ∀ᶠ t : ℕ in atTop, A / 2 * ((t : ℝ) + 1) ^ d ≤ a t)
+    (hW : ∀ k, 0 < k → ∀ δ : ℝ, 0 < δ → ∀ ε : ℝ, 0 < ε → ∀ᶠ T : ℕ in atTop,
+      ∀ s, ∀ h ∈ Ico 1 (b ^ k),
+      (T : ℝ) ^ (δ - d) ≤ A / (b : ℝ) ^ (s + k) →
+        (b : ℝ) ^ k * A / (b : ℝ) ^ (s + k) ≤ (T : ℝ) ^ (-δ) →
+          ‖Complex.weylSum (fun t ↦ (a t : ℝ) / (b : ℝ) ^ (s + k)) T h‖ ≤ ε * T) :
+    IsNormalIn b (concatenation b a) := by
+  sorry
+
+end Polynomials
 
 /-- **The Davenport–Erdős theorem**: if `f` is a non-constant integer polynomial with `f(n) > 0`
 for all `n ≥ 1`, then `0.f(1) f(2) f(3) …` is normal in every base `b ≥ 2`. -/
