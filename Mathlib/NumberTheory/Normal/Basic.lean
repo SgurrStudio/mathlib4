@@ -25,10 +25,12 @@ occurs with asymptotic frequency `b⁻ᵏ`. It is *absolutely normal* if it is n
 * `Real.IsSimplyNormalIn b x`: every digit occurs with frequency `1 / b`.
 * `Real.IsNormalIn b x`: every block of `k` digits occurs with frequency `b⁻ᵏ`.
 * `Real.IsAbsolutelyNormal x`: `x` is normal in every base `b ≥ 2`.
+* `Real.IsDisjunctiveIn b x`: every block of digits occurs in the base-`b` expansion of `x`.
 
 ## Main statements
 
 * `Real.IsNormalIn.isSimplyNormalIn`: normal numbers are simply normal.
+* `Real.IsNormalIn.isDisjunctiveIn`: normal numbers are disjunctive.
 * `Real.isNormalIn_add_intCast_iff`: normality only depends on the fractional part.
 * `Real.IsNormalIn.irrational`: a number normal in some base `b ≥ 2` is irrational.
 * `Real.isNormalIn_mul_pow_iff`: normality in base `b` is invariant under multiplication by
@@ -50,7 +52,8 @@ open Filter Topology
 namespace Real
 
 /-- The `n`-th digit (counted from `0`) after the radix point of the base-`b` expansion of `x`,
-namely `⌊x * b ^ (n + 1)⌋ mod b`. For `x ∈ [0, 1)` this agrees with `Real.digits x b n`. -/
+namely `⌊x * b ^ (n + 1)⌋ mod b`. For `x ∈ [0, 1)` this agrees with `Real.digits x b n`
+(`Real.val_digits_eq_digit`). -/
 noncomputable def digit (b : ℕ) (x : ℝ) (n : ℕ) : ℕ :=
   (⌊x * (b : ℝ) ^ (n + 1)⌋ % (b : ℤ)).toNat
 
@@ -67,7 +70,11 @@ def IsSimplyNormalIn (b : ℕ) (x : ℝ) : Prop :=
     (𝓝 (b : ℝ)⁻¹)
 
 /-- A real number `x` is *normal in base `b`* if every block `w` of `k` digits occurs in the
-base-`b` expansion of `x` with asymptotic frequency `b⁻ᵏ`. -/
+base-`b` expansion of `x` with asymptotic frequency `b⁻ᵏ`.
+
+The notion is only meaningful for `b ≥ 2`: in base `1` every digit is `0` and in base `0` there
+are no nonempty blocks, so every real number is normal in bases `0` and `1`. This is why
+`Real.IsAbsolutelyNormal` quantifies over `b ≥ 2`. -/
 def IsNormalIn (b : ℕ) (x : ℝ) : Prop :=
   ∀ (k : ℕ) (w : Fin k → Fin b), Tendsto (fun N : ℕ ↦ (blockCount b x w N : ℝ) / N) atTop
     (𝓝 ((b : ℝ) ^ k)⁻¹)
@@ -75,6 +82,11 @@ def IsNormalIn (b : ℕ) (x : ℝ) : Prop :=
 /-- A real number is *absolutely normal* if it is normal in every base `b ≥ 2`. -/
 def IsAbsolutelyNormal (x : ℝ) : Prop :=
   ∀ b : ℕ, 2 ≤ b → IsNormalIn b x
+
+/-- A real number `x` is *disjunctive* (or *rich*) *in base `b`* if every finite block of digits
+occurs (at least once) in the base-`b` expansion of `x`. Normal numbers are disjunctive. -/
+def IsDisjunctiveIn (b : ℕ) (x : ℝ) : Prop :=
+  ∀ (k : ℕ) (w : Fin k → Fin b), ∃ i : ℕ, ∀ j : Fin k, digit b x (i + j) = w j
 
 variable {b : ℕ} {x : ℝ}
 
@@ -117,6 +129,10 @@ theorem blockCount_le (b : ℕ) (x : ℝ) {k : ℕ} (w : Fin k → Fin b) (N : �
 
 theorem IsNormalIn.isSimplyNormalIn (h : IsNormalIn b x) : IsSimplyNormalIn b x := fun d ↦ by
   simpa using h 1 (fun _ ↦ d)
+
+/-- Normal numbers are disjunctive: every block of digits occurs. -/
+theorem IsNormalIn.isDisjunctiveIn (h : IsNormalIn b x) : IsDisjunctiveIn b x := by
+  sorry
 
 @[simp]
 theorem isNormalIn_add_intCast_iff (m : ℤ) : IsNormalIn b (x + m) ↔ IsNormalIn b x := by

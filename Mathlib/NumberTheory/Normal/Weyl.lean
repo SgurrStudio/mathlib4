@@ -23,6 +23,8 @@ analytic proofs of normality (Davenport–Erdős, Besicovitch, Schmidt).
 
 * `Real.isEquidistributedModOne_of_tendsto_weylSum`: **Weyl's criterion**.
 * `Real.isNormalIn_of_tendsto_weylSum`: the exponential-sum criterion for normality.
+* `Real.isEquidistributedModOne_iff_tendsto_weylSum`, `Real.isNormalIn_iff_tendsto_weylSum`: the
+  converse directions, from Tau Ceti's Weyl criterion (`Mathlib/Imported/TauCeti`).
 
 ## Proof
 
@@ -583,5 +585,28 @@ theorem isNormalIn_of_tendsto_weylSum {b : ℕ} {x : ℝ} (hb : 2 ≤ b)
   (isNormalIn_iff_isEquidistributedModOne hb).2 <|
     isEquidistributedModOne_of_tendsto_weylSum _ fun h hh ↦ by
       simpa only [Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_natCast] using hW h hh
+
+/-- **Weyl's criterion**, necessity: the nonzero Weyl means of an equidistributed sequence tend
+to `0`. -/
+theorem _root_.IsEquidistributedModOne.tendsto_weylSum {u : ℕ → ℝ} (hu : IsEquidistributedModOne u)
+    {h : ℤ} (hh : h ≠ 0) : Tendsto (fun N : ℕ ↦ (∑ n ∈ Finset.range N,
+      Complex.exp (2 * π * Complex.I * h * u n)) / N) atTop (𝓝 0) := by
+  sorry
+
+/-- **Weyl's criterion**: `u` is equidistributed modulo one iff all its nonzero Weyl means tend
+to `0`. -/
+theorem isEquidistributedModOne_iff_tendsto_weylSum (u : ℕ → ℝ) :
+    IsEquidistributedModOne u ↔ ∀ h : ℤ, h ≠ 0 → Tendsto (fun N : ℕ ↦ (∑ n ∈ Finset.range N,
+      Complex.exp (2 * π * Complex.I * h * u n)) / N) atTop (𝓝 0) :=
+  ⟨fun hu _ hh ↦ hu.tendsto_weylSum hh, isEquidistributedModOne_of_tendsto_weylSum u⟩
+
+/-- **Exponential-sum characterization of normality**: `x` is normal in base `b` iff
+`(1 / N) ∑_{n < N} e(h b ^ n x) → 0` for every integer `h ≠ 0`. -/
+theorem isNormalIn_iff_tendsto_weylSum {b : ℕ} {x : ℝ} (hb : 2 ≤ b) :
+    IsNormalIn b x ↔ ∀ h : ℤ, h ≠ 0 → Tendsto (fun N : ℕ ↦ (∑ n ∈ Finset.range N,
+      Complex.exp (2 * π * Complex.I * h * (x * (b : ℝ) ^ n))) / N) atTop (𝓝 0) := by
+  refine ⟨fun hx h hh ↦ ?_, isNormalIn_of_tendsto_weylSum hb⟩
+  simpa only [Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_natCast] using
+    ((isNormalIn_iff_isEquidistributedModOne hb).1 hx).tendsto_weylSum hh
 
 end Real
