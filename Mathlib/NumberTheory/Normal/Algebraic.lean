@@ -25,7 +25,7 @@ bounds the error from below by a constant times `b ^ (-(n * d))`.
 
 ## Main statements
 
-* `Real.fract_lt_of_digit_eq_zero`: if the first `m` digits of `y ∈ [0, 1)` vanish, then
+* `Real.mul_pow_lt_one_of_digit_eq_zero`: if the first `m` digits of `y ∈ [0, 1)` vanish, then
   `y < b ^ (-m)`.
 * `Real.exists_zero_run_le`: zero runs in the expansion of an irrational root of a nonzero
   integer polynomial of degree `d` starting at position `n` have length at most
