@@ -30,6 +30,11 @@ coefficient is at most `Ψ_K(pʳ w mˡ)` with `r = v mod k` (`charFun_le_rieszPs
 through the residues `≡ w mod pᵗ` modulo `p^{t+n}` as `l < pⁿ`. Averaging `Ψ_K` over a residue
 class modulo `pᵗ` gains a factor `1/√2` for each further base-`q` digit, because
 `∑_{r<q} |cos(θ + πr/q)| ≤ q/√2` (`sum_abs_cos_le`).
+
+## References
+
+* [W. M. Schmidt, *On normal numbers*][Schmidt1960]
+* [H. Davenport, P. Erdős, W. J. LeVeque, *On Weyl's criterion for uniform distribution*][DavenportErdosLeVeque1963]
 -/
 
 @[expose] public section

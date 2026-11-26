@@ -22,6 +22,10 @@ trigonometric polynomial of degree `< K`.
 ## Main statements
 
 * `Complex.card_fract_sub_lt_le`: the counting bound above.
+
+## References
+
+* [H. Davenport, P. Erdős, *Note on normal decimals*][DavenportErdos1952]
 -/
 
 @[expose] public section

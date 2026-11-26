@@ -33,6 +33,11 @@ Tau Ceti) `d - 1` times, each time lowering the degree by one, and ends with a g
 * `Polynomial.norm_polyExpSum_pow_le`: the `d`-th difference test.
 * `Polynomial.eventually_norm_polyExpSum_le`: its uniform form, `o(T)` for leading coefficients
   in `[T ^ (δ - d), T ^ (-δ)]`.
+
+## References
+
+* [H. Davenport, P. Erdős, *Note on normal decimals*][DavenportErdos1952]
+* [L. Kuipers, H. Niederreiter, *Uniform distribution of sequences*][KuipersNiederreiter1974]
 -/
 
 @[expose] public section

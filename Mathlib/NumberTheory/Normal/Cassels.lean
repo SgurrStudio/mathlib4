@@ -35,6 +35,11 @@ schedule with ratio tending to `1`. Expanding the square gives `μ̂(h(bⁿ − 
   only removes the leading cosine factors, which are `1`, so the sum over `l` is the orbit sum
   `∑_l Hf (c mˡ)` that `CantorLiouvilleAll.sum_Hf_le_b` bounds for the base `m` prime to `3`.
   No `d` is exceptional, since `bᵈ − 1 ≡ 2 mod 3`.
+
+## References
+
+* [J. W. S. Cassels, *On a problem of Steinhaus about normal numbers*][Cassels1959]
+* Trevor Morris, [normal-numbers](https://github.com/gotrevor/normal-numbers) (`CantorLiouvilleAll`)
 -/
 
 @[expose] public section

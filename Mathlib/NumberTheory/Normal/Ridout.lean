@@ -35,7 +35,7 @@ occurs. A run of digits `b - 1` gives the approximation `(p + 1) / b ^ n` from a
 
 ## References
 
-* [D. Ridout, *Rational approximations to algebraic numbers*, Mathematika 4 (1957)]
+* [D. Ridout, *Rational approximations to algebraic numbers*][Ridout1957]
 * [Y. Bugeaud, *Distribution modulo one and Diophantine approximation*][Bugeaud2012], Ch. 8
 -/
 

@@ -36,6 +36,11 @@ dependent (`Real.isNormalIn_iff_of_pow_eq_pow`). **Schmidt** (1960) proved the c
   no base `cʲ`.
 * `Real.forall_isNormalIn_imp_iff`: normality in base `b` implies normality in base `c` exactly
   when `b` and `c` are multiplicatively dependent.
+
+## References
+
+* [W. M. Schmidt, *On normal numbers*][Schmidt1960]
+* [Y. Bugeaud, *Distribution modulo one and Diophantine approximation*][Bugeaud2012]
 -/
 
 @[expose] public section

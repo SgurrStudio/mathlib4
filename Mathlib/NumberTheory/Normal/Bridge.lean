@@ -22,6 +22,10 @@ statement about `Real.IsNormalIn` in one line.
 
 * `Real.digitOf_fract`: Morris's digit map on `Int.fract x` is `Real.digit`.
 * `Real.isNormalIn_iff_isNormal`: the two notions of normality agree.
+
+## References
+
+* Trevor Morris, [normal-numbers](https://github.com/gotrevor/normal-numbers) (`RealDefs.lean`, `Counting.lean`)
 -/
 
 @[expose] public section
