@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.PrimeProducts
 public import Mathlib.Imported.SubspaceTheorems.DiophantineApproximation.Ridout
-public import Mathlib.NumberTheory.Normal.Basic
+public import Mathlib.NumberTheory.Normal.Algebraic
 
 /-!
 # Runs of equal digits in algebraic numbers are `o(n)`
@@ -64,23 +64,6 @@ private theorem run_le_of_lt (hb1 : (1 : ℝ) < b) {n m : ℕ} {ε : ℝ}
     Real.rpow_lt_rpow_left_iff hb1] at h
   push_cast at h
   nlinarith
-
-/-- If the first `m` base-`b` digits of `y ∈ [0, 1)` vanish, then `y * b ^ m < 1`.
-(A copy of the lemma of the same name in `Mathlib/NumberTheory/Normal/Algebraic.lean` on the
-Liouville branch; drop it when the two files meet.) -/
-private theorem mul_pow_lt_one_of_digit_eq_zero' (hb : 0 < b) {m : ℕ} :
-    ∀ {y : ℝ}, 0 ≤ y → y < 1 → (∀ j < m, digit b y j = 0) → y * (b : ℝ) ^ m < 1 := by
-  induction m with
-  | zero => intro y _ hy1 _; simpa using hy1
-  | succ m ih =>
-    intro y hy0 hy1 h
-    have hz := ih (Int.fract_nonneg (y * (b : ℝ) ^ 1)) (Int.fract_lt_one _) fun j hj ↦ by
-      rw [← digit_add_eq_digit_fract, add_comm]; exact h (j + 1) (by omega)
-    have hfl := floor_mul_eq_digit hb hy0 hy1
-    rw [h 0 (by omega), Nat.cast_zero] at hfl
-    have hy : y * (b : ℝ) ^ 1 = Int.fract (y * (b : ℝ) ^ 1) := by
-      rw [Int.fract, hfl, Int.cast_zero, sub_zero]
-    rwa [show y * (b : ℝ) ^ (m + 1) = y * (b : ℝ) ^ 1 * (b : ℝ) ^ m by ring, hy]
 
 /-- If the first `m` base-`b` digits of `y ∈ [0, 1)` are all `b - 1`, then
 `(1 - y) * b ^ m ≤ 1`. -/
@@ -177,26 +160,14 @@ theorem eventually_zero_run_le_mul (hb : 2 ≤ b) (halg : IsAlgebraic ℚ x) (hx
   have halg' : IsAlgebraic ℚ y := halg.sub (isAlgebraic_intCast _)
   filter_upwards [eventually_lt_abs_sub_div_pow hb halg' (hx.sub_intCast _) hε] with n hn m hrun
   have hBn : (0 : ℝ) < (b : ℝ) ^ n := by positivity
-  set z := Int.fract (y * (b : ℝ) ^ n)
-  have hz := mul_pow_lt_one_of_digit_eq_zero' hb0 (Int.fract_nonneg (y * (b : ℝ) ^ n))
-    (Int.fract_lt_one _) (m := m) fun j hj ↦ by
-      rw [← digit_add_eq_digit_fract, hy, digit_fract]; exact hrun j hj
   have hy0 : 0 ≤ y * (b : ℝ) ^ n := mul_nonneg (Int.fract_nonneg x) hBn.le
   have hyb : y * (b : ℝ) ^ n < (b : ℝ) ^ n := by
     nlinarith [Int.fract_lt_one x]
   have h := hn ⌊y * (b : ℝ) ^ n⌋ (Int.floor_nonneg.2 hy0) (by
     have : (⌊y * (b : ℝ) ^ n⌋ : ℝ) ≤ (b : ℝ) ^ n := (Int.floor_le _).trans hyb.le
     exact_mod_cast this)
-  have heq : |y - ⌊y * (b : ℝ) ^ n⌋ / (b : ℝ) ^ n| = z * ((b : ℝ) ^ n)⁻¹ := by
-    rw [abs_of_nonneg]
-    · simp only [z, Int.fract]; field_simp
-    · rw [sub_nonneg, div_le_iff₀ hBn]; exact Int.floor_le _
-  rw [heq] at h
-  refine run_le_of_lt hb1 (h.trans_le ?_)
-  rw [pow_add, mul_inv, mul_comm]
-  gcongr
-  rw [← one_div, le_div_iff₀ (by positivity)]
-  exact hz.le
+  exact run_le_of_lt hb1 (h.trans (abs_sub_floor_div_lt_of_digit_eq_zero hb0 fun j hj ↦ by
+    rw [hy, digit_fract]; exact hrun j hj))
 
 /-- **Runs of the digit `b - 1` in algebraic numbers are `o(n)`** (Ridout). -/
 theorem eventually_pred_run_le_mul (hb : 2 ≤ b) (halg : IsAlgebraic ℚ x) (hx : Irrational x)
