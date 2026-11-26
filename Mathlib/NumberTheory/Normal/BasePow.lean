@@ -10,7 +10,7 @@ public import Mathlib.NumberTheory.Normal.Rational
 
 import Mathlib.Algebra.Order.Floor.Semifield
 import Mathlib.Imported.NormalNumbers.Pillai
-import Mathlib.Imported.NormalNumbers.RealDefs
+import Mathlib.NumberTheory.Normal.Bridge
 
 /-!
 # Normality in bases `b` and `b ^ r`
@@ -35,7 +35,7 @@ Maxfield's theorem is proved with Piatetski-Shapiro's criterion
 in base `b`, and a block in base `b` at position `r q + t` is a slice of the two-digit block at
 position `q` in base `b ^ r`. Pillai's theorem is Trevor Morris's proof
 `NormalNumbers.pillai`, imported in `Mathlib/Imported/NormalNumbers`, transferred to
-`Real.IsNormalIn`.
+`Real.IsNormalIn` with `Real.isNormalIn_iff_isNormal`.
 
 ## References
 
@@ -262,13 +262,6 @@ theorem isNormalIn_iff_of_pow_eq_pow {c m n : ℕ} (hb : 2 ≤ b) (hc : 2 ≤ c)
     (hn : 0 < n) (h : b ^ m = c ^ n) : IsNormalIn b x ↔ IsNormalIn c x := by
   rw [← isNormalIn_pow_iff hb hm, h, isNormalIn_pow_iff hc hn]
 
-private theorem digitOf_fract (b : ℕ) (x : ℝ) (i : ℕ) :
-    NormalNumbers.digitOf b (Int.fract x) i = digit b x i := by
-  rw [← digit_fract, digit, NormalNumbers.digitOf,
-    Int.toNat_emod (Int.floor_nonneg.2 (mul_nonneg (Int.fract_nonneg x) (by positivity)))
-      (by positivity)]
-  simp
-
 /-- **Pillai's theorem**: if `x` is simply normal in every base `b ^ r`, `r ≥ 1`, then `x` is
 normal in base `b`. -/
 theorem isNormalIn_of_forall_isSimplyNormalIn_pow (hb : 2 ≤ b)
@@ -282,52 +275,7 @@ theorem isNormalIn_of_forall_isSimplyNormalIn_pow (hb : 2 ≤ b)
           := fun N ↦ by
         unfold blockCount; congr 1; ext q; simp [digitOf_fract]
       simpa only [e, Nat.cast_pow] using this
-  intro k w
-  rcases Nat.eq_zero_or_pos k with rfl | hk
-  · have e : ∀ N, blockCount b x w N = N := fun N ↦ by simp [blockCount]
-    simp only [e, pow_zero, inv_one]
-    refine tendsto_const_nhds.congr' ?_
-    filter_upwards [eventually_gt_atTop 0] with N hN
-    rw [div_self (by positivity)]
-  set wl : List ℕ := List.ofFn fun j : Fin k ↦ (w j : ℕ)
-  have hl := hseq wl (by simp [wl]; omega) (by simp [wl])
-  simp only [wl, List.length_ofFn, NormalNumbers.countOccurrences_range_map] at hl
-  set A : ℕ → ℕ := fun n ↦ ((Finset.range (n + 1)).filter fun i ↦ i + k ≤ n ∧
-    NormalNumbers.MatchesAt (NormalNumbers.digitOf b (Int.fract x)) wl i).card
-  have hM : ∀ i, NormalNumbers.MatchesAt (NormalNumbers.digitOf b (Int.fract x)) wl i ↔
-      ∀ j : Fin k, digit b x (i + j) = w j := fun i ↦ by
-    simp only [NormalNumbers.MatchesAt, wl, List.length_ofFn, digitOf_fract,
-      List.getD_eq_getElem?_getD, List.getElem?_ofFn]
-    constructor
-    · intro hi j; simpa [j.isLt] using hi j j.isLt
-    · intro hi j hj; simpa [hj] using hi ⟨j, hj⟩
-  have hAB : ∀ n, A n ≤ blockCount b x w n := fun n ↦ by
-    refine Finset.card_le_card fun i hi ↦ ?_
-    simp only [Finset.mem_filter, Finset.mem_range] at hi ⊢
-    exact ⟨by omega, (hM i).1 hi.2.2⟩
-  have hBA : ∀ n, blockCount b x w n ≤ A n + k := fun n ↦ by
-    have hsub : ((Finset.range n).filter fun i ↦ ∀ j : Fin k, digit b x (i + j) = w j) ⊆
-        ((Finset.range (n + 1)).filter fun i ↦ i + k ≤ n ∧
-          NormalNumbers.MatchesAt (NormalNumbers.digitOf b (Int.fract x)) wl i) ∪
-          Finset.Ico (n - k) n := by
-      intro i hi
-      simp only [Finset.mem_filter, Finset.mem_range] at hi
-      simp only [Finset.mem_union, Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
-      by_cases hik : i + k ≤ n
-      · exact Or.inl ⟨by omega, hik, (hM i).2 hi.2⟩
-      · exact Or.inr ⟨by omega, hi.1⟩
-    refine (Finset.card_le_card hsub).trans ((Finset.card_union_le _ _).trans ?_)
-    simp only [Nat.card_Ico]
-    exact Nat.add_le_add_left (by omega) _
-  have hk0 : Tendsto (fun n : ℕ ↦ (k : ℝ) / n) atTop (𝓝 0) :=
-    tendsto_const_div_atTop_nhds_zero_nat (k : ℝ)
-  have hup : Tendsto (fun n : ℕ ↦ (A n : ℝ) / n + k / n) atTop (𝓝 (((b : ℝ) ^ k)⁻¹ + 0)) :=
-    hl.add hk0
-  rw [add_zero] at hup
-  refine tendsto_of_tendsto_of_tendsto_of_le_of_le hl hup (fun n ↦ ?_) fun n ↦ ?_
-  · exact div_le_div_of_nonneg_right (by exact_mod_cast hAB n) (Nat.cast_nonneg _)
-  · rw [← add_div]
-    exact div_le_div_of_nonneg_right (by exact_mod_cast hBA n) (Nat.cast_nonneg _)
+  exact (isNormalIn_iff_isNormal b x).2 hseq
 
 /-- **Pillai's theorem** and **Niven–Zuckerman's theorem**: `x` is normal in base `b` if and only
 if it is simply normal in every base `b ^ r`, i.e. every aligned block of `r` base-`b` digits
