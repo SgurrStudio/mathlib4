@@ -36,6 +36,18 @@ mathematics, namespaces and authorship are unchanged. Each subfolder records its
 * Porting changes: the files are made into modules, `import Mathlib` is replaced by explicit
   imports, and three lemmas renamed upstream are restored (`List.getD_eq_getElem` as a local
   compatibility lemma, `tendsto_finsetSum`, a `positivity` call made explicit).
+* Also imported, from commit
+  [`6260625c6836d8bb172da4b011e089f63a728c41`](https://github.com/gotrevor/normal-numbers/tree/6260625c6836d8bb172da4b011e089f63a728c41):
+  the closure (15 files, 11 new; the 4 shared files are unchanged) of
+  `NormalNumbers.ComputableNormalB` (**a computable absolutely normal number**,
+  `NormalNumbers.ComputableNormalB.exists_computable_absNormal`: for a coin-driven real `G` with
+  polynomial Fourier decay there is a computable coin sequence `e` with `G e` normal in every
+  base; by derandomisation with conditional expectations, after Becher–Figueira). It depends only
+  on `propext`, `Classical.choice` and `Quot.sound`. Porting changes: the removed
+  `PMF.uniformOfFintype` coin is replaced by `Measure.uniformOfFinset univ` (`Derandomize.coin`,
+  with its probability instance), the deprecated root-namespace Fourier names become their
+  `AddCircle.` versions, `List.getD_eq_getElem` is restated locally, one `convert` step is
+  replaced by an explicit emptiness proof, and missing imports are added.
 
 ## Porting changes to `TauCeti/`
 
