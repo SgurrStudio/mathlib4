@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.NumberTheory.Normal.Cassels
+public import Mathlib.NumberTheory.Normal.SchmidtPrimePower
 public import Mathlib.NumberTheory.Transcendental.Liouville.Basic
 
 /-!
@@ -24,6 +25,10 @@ dependent (`Real.isNormalIn_iff_of_pow_eq_pow`). **Schmidt** (1960) proved the c
   `CantorLiouvilleAll`).
 * `Real.exists_isNormalIn_two_not_isNormalIn_three`: normality in base `2` does not imply
   normality in base `3`.
+* `Real.exists_isNormalIn_not_isNormalIn_of_isPrimePow`: Schmidt's theorem when `c` is a prime
+  power (`Real.SchmidtPrimePower`).
+* `Real.forall_isNormalIn_imp_iff_of_isPrimePow`: for a prime power `c`, normality in base `b`
+  implies normality in base `c` exactly when `b` and `c` are multiplicatively dependent.
 -/
 
 @[expose] public section
@@ -43,5 +48,36 @@ theorem exists_isNormalIn_two_not_isNormalIn_three :
     ∃ x : ℝ, IsNormalIn 2 x ∧ ¬ IsNormalIn 3 x := by
   obtain ⟨x, -, -, hx⟩ := exists_liouville_isNormalIn_iff_not_three_dvd
   exact ⟨x, (hx 2 le_rfl).2 (by norm_num), fun h ↦ (hx 3 (by norm_num)).1 h dvd_rfl⟩
+
+/-- **Schmidt's theorem** when `c` is a prime power: if `bᵐ ≠ cⁿ` for all `m, n ≥ 1`, some real
+number is normal in base `b` but not in base `c`. -/
+theorem exists_isNormalIn_not_isNormalIn_of_isPrimePow {b c : ℕ} (hb : 2 ≤ b)
+    (hc : IsPrimePow c) (h : ∀ m n : ℕ, 0 < m → 0 < n → b ^ m ≠ c ^ n) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn c x := by
+  obtain ⟨p, j, hp, hj, rfl⟩ := hc
+  have hp' : p.Prime := Nat.prime_iff.2 hp
+  have hpow : ∀ i, b ≠ p ^ i := by
+    rintro i rfl
+    have hi : 0 < i := by
+      rcases Nat.eq_zero_or_pos i with rfl | hi
+      · simp at hb
+      · exact hi
+    exact h j i hj hi (by rw [← pow_mul, ← pow_mul, mul_comm])
+  obtain ⟨x, hx, hnot⟩ := SchmidtPrimePower.exists_isNormalIn_forall_not_isNormalIn_pow hp' hb hpow
+  exact ⟨x, hx, hnot j hj⟩
+
+/-- For a prime power `c`, normality in base `b` implies normality in base `c` if and only if `b`
+and `c` are multiplicatively dependent. -/
+theorem forall_isNormalIn_imp_iff_of_isPrimePow {b c : ℕ} (hb : 2 ≤ b) (hc : IsPrimePow c) :
+    (∀ x : ℝ, IsNormalIn b x → IsNormalIn c x) ↔ ∃ m n : ℕ, 0 < m ∧ 0 < n ∧ b ^ m = c ^ n := by
+  constructor
+  · intro H
+    by_contra hdep
+    push Not at hdep
+    obtain ⟨x, hx, hnx⟩ := exists_isNormalIn_not_isNormalIn_of_isPrimePow hb hc
+      fun m n hm hn ↦ hdep m n hm hn
+    exact hnx (H x hx)
+  · rintro ⟨m, n, hm, hn, hmn⟩ x hx
+    exact (isNormalIn_iff_of_pow_eq_pow hb hc.two_le hm hn hmn).1 hx
 
 end Real

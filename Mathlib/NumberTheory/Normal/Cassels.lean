@@ -5,8 +5,8 @@ Authors: Rob
 -/
 module
 
-public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.Imported.NormalNumbers.CantorLiouvilleAll
+public import Mathlib.NumberTheory.Normal.Bridge
 
 /-!
 # Cassels' theorem: almost every point of the Cantor set is normal in other bases
