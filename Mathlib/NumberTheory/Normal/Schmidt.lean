@@ -34,11 +34,14 @@ namespace Real
 `3 ∤ b` (Trevor Morris's `CantorLiouvilleAll`). -/
 theorem exists_liouville_isNormalIn_iff_not_three_dvd :
     ∃ x : ℝ, x ∈ cantorSet ∧ Liouville x ∧ ∀ b : ℕ, 2 ≤ b → (IsNormalIn b x ↔ ¬ 3 ∣ b) := by
-  sorry
+  obtain ⟨e, -, hK, hL, hN⟩ :=
+    NormalNumbers.CantorLiouvilleAll.exists_computable_liouville_mem_cantorSet_normalProfile
+  exact ⟨_, hK, hL, fun b hb ↦ (isNormalIn_iff_isNormal b _).trans (hN b hb)⟩
 
 /-- Normality in base `2` does not imply normality in base `3`. -/
 theorem exists_isNormalIn_two_not_isNormalIn_three :
     ∃ x : ℝ, IsNormalIn 2 x ∧ ¬ IsNormalIn 3 x := by
-  sorry
+  obtain ⟨x, -, -, hx⟩ := exists_liouville_isNormalIn_iff_not_three_dvd
+  exact ⟨x, (hx 2 le_rfl).2 (by norm_num), fun h ↦ (hx 3 (by norm_num)).1 h dvd_rfl⟩
 
 end Real
