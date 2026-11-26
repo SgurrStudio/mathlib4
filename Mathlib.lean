@@ -6396,6 +6396,7 @@ public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.Normal.Champernowne
 public import Mathlib.NumberTheory.Normal.CopelandErdos
+public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Stoneham
