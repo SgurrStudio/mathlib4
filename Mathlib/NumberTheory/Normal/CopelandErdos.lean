@@ -792,10 +792,20 @@ theorem tendsto_succ_mul_succ_mul_exp {δ : ℝ} (hδ : 0 < δ) :
     have : (x + 1) * (x + 2) ≤ 6 * x ^ 2 := by nlinarith
     exact mul_le_mul_of_nonneg_right this (exp_pos _).le
 
-/-- The main estimate: the internal occurrences of `w` have frequency `b⁻ᵏ`. -/
-theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin b)
-    (ha : StrictMono a) (ha0 : 0 < a 0) (hdens : ∀ θ : ℝ, θ < 1 → ∀ᶠ N : ℕ in atTop,
-      (N : ℝ) ^ θ ≤ ((Finset.range (N + 1)).filter fun i ↦ a i ≤ N).card) :
+/-- The terms `a t`, `t ≤ T`, in which the frequency of `w` is off by at least `ε`. -/
+noncomputable def concatBad (b : ℕ) (a : ℕ → ℕ) (w : Fin k → Fin b) (ε : ℝ) (T : ℕ) :
+    Finset ℕ :=
+  (Finset.range (T + 1)).filter fun t ↦
+    ε * (Nat.log b (a t) + 1 + 1 - k : ℕ) ≤ |(natBlockCount b (Nat.log b (a t) + 1) (a t) w : ℝ) -
+      (Nat.log b (a t) + 1 + 1 - k : ℕ) / (b : ℝ) ^ k|
+
+/-- **The few-bad-terms criterion** (Copeland–Erdős; Pollack–Vandehey): the internal occurrences
+of `w` have frequency `b⁻ᵏ` as soon as, for every `ε > 0`, the terms in which the frequency of `w`
+is off by `ε` are negligible. -/
+theorem tendsto_concatInternal_div_of_concatBad (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin b)
+    (ha : StrictMono a) (ha0 : 0 < a 0) (hbad : ∀ ε : ℝ, 0 < ε → Tendsto (fun T ↦
+      ((Nat.log b (a T) : ℝ) + 1) * (concatBad b a w ε T).card / concatStart b a (T + 1)) atTop
+        (𝓝 0)) :
     Tendsto (fun T ↦ (concatInternal b a w T : ℝ) / concatStart b a T) atTop
       (𝓝 ((b : ℝ) ^ k)⁻¹) := by
   classical
@@ -804,25 +814,10 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
   intro η hη
   set ε := η / 4 with hε_def
   have hε : 0 < ε := by positivity
-  obtain ⟨C, ρ, hC, hρ0, hργ, hbad⟩ := exists_card_filter_le_exp hb hk w hε
-  set γ := Real.log b
-  have hγ : 0 < γ := Real.log_pos (by exact_mod_cast hb)
-  set θ := (ρ / γ + 1) / 2
-  have hθ1 : θ < 1 := by
-    have : ρ / γ < 1 := (div_lt_one hγ).2 hργ
-    simp only [θ]; linarith
-  have hθ0 : 0 ≤ θ := by simp only [θ]; positivity
-  set δ := θ * γ - ρ
-  have hδ : 0 < δ := by
-    have : θ * γ = (ρ + γ) / 2 := by simp only [θ]; field_simp
-    simp only [δ]; linarith
   set c : ℝ := ((b : ℝ) ^ k)⁻¹
   have hbk : (1 : ℝ) ≤ (b : ℝ) ^ k := one_le_pow₀ (by exact_mod_cast hb.le)
   have hc0 : 0 < c := by positivity
   have hc1 : c ≤ 1 := inv_le_one_of_one_le₀ hbk
-  have hk' : (0 : ℝ) < k := by exact_mod_cast hk
-  -- the three eventual bounds
-  have E1 := eventually_rpow_le_succ ha hdens hθ1
   have E2 : ∀ᶠ T : ℕ in atTop, k * ((T : ℝ) + 1) / concatStart b a (T + 1) < ε := by
     have h := ((tendsto_succ_div_concatStart hb ha ha0).comp (tendsto_add_atTop_nat 1)).const_mul
       (k : ℝ)
@@ -833,11 +828,7 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
     rw [mul_div_assoc]
     gcongr
     linarith
-  have E3 : ∀ᶠ T : ℕ in atTop, ((Nat.log b (a T) : ℝ) + 1) * ((Nat.log b (a T) : ℝ) + 2) *
-      exp (-(δ * Nat.log b (a T))) < ε / (C * exp ρ + 1) :=
-    ((tendsto_succ_mul_succ_mul_exp hδ).comp (tendsto_natCast_atTop_atTop.comp
-      (tendsto_natLog_comp_atTop hb ha))).eventually (gt_mem_nhds (by positivity))
-  filter_upwards [E1, E2, E3] with T h1 h2 h3
+  filter_upwards [E2, (hbad ε hε).eventually (gt_mem_nhds hε)] with T h2 h3
   -- notation
   set S := concatStart b a (T + 1)
   set m := Nat.log b (a T)
@@ -847,6 +838,7 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
   set n : ℕ → ℕ := fun t ↦ len t + 1 - k
   set P : ℕ → Prop := fun t ↦ ε * (n t : ℝ) ≤ |(I t : ℝ) - (n t : ℝ) / (b : ℝ) ^ k|
   set B := (Finset.range (T + 1)).filter P
+  have hBdef : B = concatBad b a w ε T := rfl
   have hlenL : ∀ t ∈ Finset.range (T + 1), len t ≤ L := fun t ht ↦ by
     have := Nat.log_mono_right (b := b) (ha.monotone (Nat.lt_succ_iff.1 (Finset.mem_range.1 ht)))
     simp only [len, L, m]; omega
@@ -857,30 +849,6 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
   have hSpos : (0 : ℝ) < S := by
     have := le_concatStart b a (T + 1)
     exact_mod_cast (show 0 < S by omega)
-  -- the number of exceptional terms
-  have hB : (B.card : ℝ) ≤ (L + 1) * (C * exp (ρ * L)) := by
-    have hinj : (B.card : ℝ) ≤ ∑ ℓ ∈ Finset.range (L + 1),
-        (((Finset.range (b ^ ℓ)).filter fun m ↦ ε * (ℓ + 1 - k : ℕ) ≤
-          |(natBlockCount b ℓ m w : ℝ) - (ℓ + 1 - k : ℕ) / (b : ℝ) ^ k|).card : ℝ) := by
-      rw [← Nat.cast_sum, ← Finset.card_sigma]
-      refine Nat.cast_le.2 (Finset.card_le_card_of_injOn (fun t ↦ ⟨len t, a t⟩) ?_ ?_)
-      · intro t ht
-        simp only [B, Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at ht
-        simp only [Finset.coe_sigma, Set.mem_sigma_iff, Finset.coe_range, Set.mem_Iio,
-          Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq]
-        refine ⟨Nat.lt_succ_of_le (hlenL t (Finset.mem_range.2 ht.1)),
-          Nat.lt_pow_succ_log_self hb _, ht.2⟩
-      · intro t _ t' _ e
-        simp only [Sigma.mk.injEq] at e
-        exact ha.injective (eq_of_heq e.2)
-    refine hinj.trans ((Finset.sum_le_sum fun ℓ _ ↦ hbad ℓ).trans ?_)
-    calc ∑ ℓ ∈ Finset.range (L + 1), C * exp (ρ * ℓ)
-        ≤ ∑ _ℓ ∈ Finset.range (L + 1), C * exp (ρ * L) := by
-          refine Finset.sum_le_sum fun ℓ hℓ ↦ ?_
-          have : (ℓ : ℝ) ≤ L := by exact_mod_cast Nat.lt_succ_iff.1 (Finset.mem_range.1 hℓ)
-          gcongr
-      _ = (L + 1) * (C * exp (ρ * L)) := by
-          rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
   -- the main inequality
   have hmain : |(concatInternal b a w (T + 1) : ℝ) - S * c| ≤
       ε * S + L * B.card + k * ((T : ℝ) + 1) := by
@@ -929,37 +897,11 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
       exact Finset.sum_congr rfl fun t _ ↦ by ring
     rw [this]
     exact (abs_add_le _ _).trans (by linarith)
-  -- the exceptional terms are negligible
-  have hexpS : exp (θ * γ * m) ≤ S := by
-    have hbm : ((b : ℝ) ^ m) ≤ a T := by
-      have := ha0.trans_le (ha.monotone (Nat.zero_le T))
-      exact_mod_cast Nat.pow_log_le_self b (by omega)
-    have e : ((b : ℝ) ^ m) ^ θ = exp (θ * γ * m) := by
-      rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity),
-        Real.rpow_def_of_pos (by exact_mod_cast (show 0 < b by omega))]
-      change exp (γ * ((m : ℝ) * θ)) = exp (θ * γ * m)
-      ring_nf
-    rw [← e]
-    refine (Real.rpow_le_rpow (by positivity) hbm hθ0).trans (h1.trans ?_)
-    have := le_concatStart b a (T + 1)
-    exact_mod_cast this
   have hbadS : L * B.card / S ≤ ε := by
-    have hL : (L : ℝ) = m + 1 := by simp only [L]; push_cast; ring
-    have hX : (L : ℝ) * B.card ≤ C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) *
-        exp (θ * γ * m) := by
-      calc (L : ℝ) * B.card ≤ L * ((L + 1) * (C * exp (ρ * L))) := by gcongr
-        _ = C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) * exp (θ * γ * m) := by
-          rw [hL, show ρ * ((m : ℝ) + 1) = ρ + -(δ * m) + θ * γ * m by simp only [δ]; ring,
-            exp_add, exp_add]
-          ring
-    rw [div_le_iff₀ hSpos]
-    refine hX.trans ?_
-    have hg : C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) ≤ ε := by
-      have hpos : 0 < C * exp ρ + 1 := by positivity
-      have := (lt_div_iff₀ hpos).1 h3
-      nlinarith [exp_pos (-(δ * m)), (by positivity : (0 : ℝ) ≤ ((m : ℝ) + 1) * ((m : ℝ) + 2) *
-        exp (-(δ * m)))]
-    exact mul_le_mul hg hexpS (by positivity) hε.le
+    rw [hBdef]
+    have : (L : ℝ) = (m : ℝ) + 1 := by simp only [L]; push_cast; ring
+    rw [this]
+    exact h3.le
   -- conclusion
   rw [Real.dist_eq]
   change |(concatInternal b a w (T + 1) : ℝ) / S - c| < η
@@ -977,12 +919,114 @@ theorem tendsto_concatInternal_div (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin 
     _ < ε + ε + ε + ε := by linarith
     _ = η := by simp only [ε]; ring
 
+/-- Under the density hypothesis of the Copeland–Erdős theorem, the terms in which the frequency
+of `w` is off by `ε` are negligible: by the large deviation bound there are at most
+`C exp (ρ ℓ)`, `ρ < log b`, of them with `ℓ` digits. -/
+theorem tendsto_concatBad_of_dens (hb : 1 < b) (hk : 0 < k) (w : Fin k → Fin b)
+    (ha : StrictMono a) (ha0 : 0 < a 0) (hdens : ∀ θ : ℝ, θ < 1 → ∀ᶠ N : ℕ in atTop,
+      (N : ℝ) ^ θ ≤ ((Finset.range (N + 1)).filter fun i ↦ a i ≤ N).card) {ε : ℝ} (hε : 0 < ε) :
+    Tendsto (fun T ↦ ((Nat.log b (a T) : ℝ) + 1) * (concatBad b a w ε T).card /
+      concatStart b a (T + 1)) atTop (𝓝 0) := by
+  classical
+  rw [Metric.tendsto_nhds]
+  intro η' hη'
+  obtain ⟨C, ρ, hC, hρ0, hργ, hbad⟩ := exists_card_filter_le_exp hb hk w hε
+  set γ := Real.log b
+  have hγ : 0 < γ := Real.log_pos (by exact_mod_cast hb)
+  set θ := (ρ / γ + 1) / 2
+  have hθ1 : θ < 1 := by
+    have : ρ / γ < 1 := (div_lt_one hγ).2 hργ
+    simp only [θ]; linarith
+  have hθ0 : 0 ≤ θ := by simp only [θ]; positivity
+  set δ := θ * γ - ρ
+  have hδ : 0 < δ := by
+    have : θ * γ = (ρ + γ) / 2 := by simp only [θ]; field_simp
+    simp only [δ]; linarith
+  have hη : 0 < η' / 2 := by positivity
+  have E1 := eventually_rpow_le_succ ha hdens hθ1
+  have E3 : ∀ᶠ T : ℕ in atTop, ((Nat.log b (a T) : ℝ) + 1) * ((Nat.log b (a T) : ℝ) + 2) *
+      exp (-(δ * Nat.log b (a T))) < (η' / 2) / (C * exp ρ + 1) :=
+    ((tendsto_succ_mul_succ_mul_exp hδ).comp (tendsto_natCast_atTop_atTop.comp
+      (tendsto_natLog_comp_atTop hb ha))).eventually (gt_mem_nhds (by positivity))
+  filter_upwards [E1, E3] with T h1 h3
+  set S := concatStart b a (T + 1)
+  set m := Nat.log b (a T)
+  set L := m + 1
+  set len : ℕ → ℕ := fun t ↦ Nat.log b (a t) + 1
+  set B := concatBad b a w ε T
+  have hlenL : ∀ t ∈ Finset.range (T + 1), len t ≤ L := fun t ht ↦ by
+    have := Nat.log_mono_right (b := b) (ha.monotone (Nat.lt_succ_iff.1 (Finset.mem_range.1 ht)))
+    simp only [len, L, m]; omega
+  have hSpos : (0 : ℝ) < S := by
+    have := le_concatStart b a (T + 1)
+    exact_mod_cast (show 0 < S by omega)
+  -- the number of exceptional terms
+  have hB : (B.card : ℝ) ≤ (L + 1) * (C * exp (ρ * L)) := by
+    have hinj : (B.card : ℝ) ≤ ∑ ℓ ∈ Finset.range (L + 1),
+        (((Finset.range (b ^ ℓ)).filter fun m ↦ ε * (ℓ + 1 - k : ℕ) ≤
+          |(natBlockCount b ℓ m w : ℝ) - (ℓ + 1 - k : ℕ) / (b : ℝ) ^ k|).card : ℝ) := by
+      rw [← Nat.cast_sum, ← Finset.card_sigma]
+      refine Nat.cast_le.2 (Finset.card_le_card_of_injOn (fun t ↦ ⟨len t, a t⟩) ?_ ?_)
+      · intro t ht
+        simp only [B, concatBad, Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq] at ht
+        simp only [Finset.coe_sigma, Set.mem_sigma_iff, Finset.coe_range, Set.mem_Iio,
+          Finset.coe_filter, Finset.mem_range, Set.mem_ofPred_eq]
+        refine ⟨Nat.lt_succ_of_le (hlenL t (Finset.mem_range.2 ht.1)),
+          Nat.lt_pow_succ_log_self hb _, ht.2⟩
+      · intro t _ t' _ e
+        simp only [Sigma.mk.injEq] at e
+        exact ha.injective (eq_of_heq e.2)
+    refine hinj.trans ((Finset.sum_le_sum fun ℓ _ ↦ hbad ℓ).trans ?_)
+    calc ∑ ℓ ∈ Finset.range (L + 1), C * exp (ρ * ℓ)
+        ≤ ∑ _ℓ ∈ Finset.range (L + 1), C * exp (ρ * L) := by
+          refine Finset.sum_le_sum fun ℓ hℓ ↦ ?_
+          have : (ℓ : ℝ) ≤ L := by exact_mod_cast Nat.lt_succ_iff.1 (Finset.mem_range.1 hℓ)
+          gcongr
+      _ = (L + 1) * (C * exp (ρ * L)) := by
+          rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; push_cast; ring
+  have hexpS : exp (θ * γ * m) ≤ S := by
+    have hbm : ((b : ℝ) ^ m) ≤ a T := by
+      have := ha0.trans_le (ha.monotone (Nat.zero_le T))
+      exact_mod_cast Nat.pow_log_le_self b (by omega)
+    have e : ((b : ℝ) ^ m) ^ θ = exp (θ * γ * m) := by
+      rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity),
+        Real.rpow_def_of_pos (by exact_mod_cast (show 0 < b by omega))]
+      change exp (γ * ((m : ℝ) * θ)) = exp (θ * γ * m)
+      ring_nf
+    rw [← e]
+    refine (Real.rpow_le_rpow (by positivity) hbm hθ0).trans (h1.trans ?_)
+    have := le_concatStart b a (T + 1)
+    exact_mod_cast this
+  have hL : (L : ℝ) = m + 1 := by simp only [L]; push_cast; ring
+  have hX : (L : ℝ) * B.card ≤ C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) *
+      exp (θ * γ * m) := by
+    calc (L : ℝ) * B.card ≤ L * ((L + 1) * (C * exp (ρ * L))) := by gcongr
+      _ = C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) * exp (θ * γ * m) := by
+        rw [hL, show ρ * ((m : ℝ) + 1) = ρ + -(δ * m) + θ * γ * m by simp only [δ]; ring,
+          exp_add, exp_add]
+        ring
+  have hg : C * exp ρ * (((m : ℝ) + 1) * ((m : ℝ) + 2) * exp (-(δ * m))) ≤ η' / 2 := by
+    have hpos : 0 < C * exp ρ + 1 := by positivity
+    have := (lt_div_iff₀ hpos).1 h3
+    nlinarith [exp_pos (-(δ * m)), (by positivity : (0 : ℝ) ≤ ((m : ℝ) + 1) * ((m : ℝ) + 2) *
+      exp (-(δ * m)))]
+  have hle : (L : ℝ) * B.card / S ≤ η' / 2 := by
+    rw [div_le_iff₀ hSpos]
+    exact hX.trans (mul_le_mul hg hexpS (by positivity) hη.le)
+  rw [Real.dist_eq, sub_zero, abs_of_nonneg (by positivity), ← hL]
+  linarith
+
 end Main
 
-/-- **Copeland–Erdős theorem** for digit sequences. -/
-theorem isNormalSeq_concatDigit (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMono a) (ha0 : 0 < a 0)
-    (hdens : ∀ θ : ℝ, θ < 1 → ∀ᶠ N : ℕ in atTop,
-      (N : ℝ) ^ θ ≤ ((Finset.range (N + 1)).filter fun i ↦ a i ≤ N).card) :
+/-- **The few-bad-terms criterion** for concatenations (Copeland–Erdős, Pollack–Vandehey): the
+concatenation of an increasing sequence `a` with `log a T = O(T)` is normal as soon as, for every
+block `w` and every `ε > 0`, the terms `a t` in which the frequency of `w` is off by `ε` are
+negligible. -/
+theorem isNormalSeq_concatDigit_of_concatBad (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMono a)
+    (ha0 : 0 < a 0) {c : ℕ} (hlog : ∀ᶠ T in atTop, Nat.log b (a T) ≤ c * (T + 1))
+    (hbad : ∀ k, 0 < k → ∀ (w : Fin k → Fin b) (ε : ℝ), 0 < ε → Tendsto (fun T ↦
+      ((Nat.log b (a T) : ℝ) + 1) * (concatBad b a w ε T).card / concatStart b a (T + 1)) atTop
+        (𝓝 0)) :
     IsNormalSeq b (concatDigit b a) := by
   intro k w
   rcases Nat.eq_zero_or_pos k with rfl | hk
@@ -998,7 +1042,7 @@ theorem isNormalSeq_concatDigit (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMon
     (concatStart_zero b a) (fun T hT ↦ (show 0 < T by omega).trans_le (le_concatStart b a T))
     (exists_lt_concatStart_succ b a) ?_ ?_
   · -- occurrences straddling two terms are negligible
-    have hI := tendsto_concatInternal_div hb1 hk w ha ha0 hdens
+    have hI := tendsto_concatInternal_div_of_concatBad hb1 hk w ha ha0 (hbad k hk w)
     have hT := (tendsto_succ_div_concatStart hb1 ha ha0).const_mul (k : ℝ)
     rw [mul_zero] at hT
     have hup := hI.add hT
@@ -1023,7 +1067,7 @@ theorem isNormalSeq_concatDigit (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMon
           ≤ (concatInternal b a w T + (k - 1) * T : ℕ) := by exact_mod_cast h
         _ ≤ _ := by push_cast at this ⊢; linarith
   · -- the length of a single term is negligible
-    have hT := (tendsto_succ_div_concatStart hb1 ha ha0).const_mul 2
+    have hT := (tendsto_succ_div_concatStart hb1 ha ha0).const_mul ((c : ℝ) + 1)
     rw [mul_zero] at hT
     have hup := hT.const_add 1
     rw [add_zero] at hup
@@ -1033,25 +1077,38 @@ theorem isNormalSeq_concatDigit (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMon
         exact_mod_cast (show 0 < T by omega).trans_le (le_concatStart b a T)
       rw [le_div_iff₀ hS, one_mul]
       exact_mod_cast concatStart_mono b a (Nat.le_succ T)
-    · have hθ : ((2 : ℕ) : ℝ)⁻¹ < 1 := by norm_num
-      filter_upwards [eventually_ge_atTop 1, eventually_rpow_le_succ ha hdens hθ] with T hT1 hD
+    · filter_upwards [eventually_ge_atTop 1, hlog] with T hT1 hD
       have hS : (0 : ℝ) < concatStart b a T := by
         exact_mod_cast (show 0 < T by omega).trans_le (le_concatStart b a T)
-      -- `a T ≤ (T + 1) ^ 2`, so `a T` has at most `2 (T + 1)` digits
-      have hsq : a T ≤ (T + 1) ^ 2 := by
-        have := pow_le_pow_left₀ (by positivity) hD 2
-        rw [Real.rpow_inv_natCast_pow (Nat.cast_nonneg _) two_ne_zero] at this
-        exact_mod_cast this
-      have hlog : Nat.log b (a T) < 2 * (T + 1) := by
-        refine Nat.log_lt_of_lt_pow (by have := ha0.trans_le (ha.monotone (Nat.zero_le T)); omega)
-          (hsq.trans_lt ?_)
-        rw [pow_mul', ]
-        exact Nat.pow_lt_pow_left (Nat.lt_pow_self hb1) two_ne_zero
-      have hS1 : (concatStart b a (T + 1) : ℝ) ≤ concatStart b a T + 2 * ((T : ℝ) + 1) := by
+      have hS1 : (concatStart b a (T + 1) : ℝ) ≤ concatStart b a T + (c + 1) * ((T : ℝ) + 1) := by
         have := concatStart_succ b a T
-        exact_mod_cast (show concatStart b a (T + 1) ≤ concatStart b a T + 2 * (T + 1) by omega)
+        have : concatStart b a (T + 1) ≤ concatStart b a T + (c + 1) * (T + 1) := by
+          rw [add_mul, one_mul]; omega
+        exact_mod_cast this
       rw [div_le_iff₀ hS, add_mul, one_mul, mul_div_assoc', div_mul_cancel₀ _ hS.ne']
       exact hS1
+
+/-- **Copeland–Erdős theorem** for digit sequences. -/
+theorem isNormalSeq_concatDigit (hb : 2 ≤ b) {a : ℕ → ℕ} (ha : StrictMono a) (ha0 : 0 < a 0)
+    (hdens : ∀ θ : ℝ, θ < 1 → ∀ᶠ N : ℕ in atTop,
+      (N : ℝ) ^ θ ≤ ((Finset.range (N + 1)).filter fun i ↦ a i ≤ N).card) :
+    IsNormalSeq b (concatDigit b a) := by
+  have hb1 : 1 < b := by omega
+  refine isNormalSeq_concatDigit_of_concatBad hb ha ha0 (c := 2) ?_ fun k hk w ε hε ↦
+    tendsto_concatBad_of_dens hb1 hk w ha ha0 hdens hε
+  have hθ : ((2 : ℕ) : ℝ)⁻¹ < 1 := by norm_num
+  filter_upwards [eventually_rpow_le_succ ha hdens hθ] with T hD
+  -- `a T ≤ (T + 1) ^ 2`, so `a T` has at most `2 (T + 1)` digits
+  have hsq : a T ≤ (T + 1) ^ 2 := by
+    have := pow_le_pow_left₀ (by positivity) hD 2
+    rw [Real.rpow_inv_natCast_pow (Nat.cast_nonneg _) two_ne_zero] at this
+    exact_mod_cast this
+  have hlog : Nat.log b (a T) < 2 * (T + 1) := by
+    refine Nat.log_lt_of_lt_pow (by have := ha0.trans_le (ha.monotone (Nat.zero_le T)); omega)
+      (hsq.trans_lt ?_)
+    rw [pow_mul']
+    exact Nat.pow_lt_pow_left (Nat.lt_pow_self hb1) two_ne_zero
+  omega
 
 /-- **Copeland–Erdős theorem**: if `a` is an increasing sequence of positive integers having at
 least `N ^ θ` terms below `N` for every `θ < 1` and all large `N`, then `0.a₀ a₁ a₂ …` is normal
