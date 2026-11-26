@@ -1049,8 +1049,8 @@ theorem card_filter_not_mid_le (hb : 1 < b) {A : ℝ} (hA : 1 ≤ A) {M : ℕ} (
 Weyl sums of `a t / b ^ (s + k)` are uniformly `o(T)` whenever the leading coefficient
 `A / b ^ (s + k)` lies in `[T ^ (δ - d), T ^ (-δ) / b ^ k]`, then `0.a₀ a₁ a₂ …` is normal. -/
 theorem isNormalIn_concatenation_of_growth [NeZero b] (hb : 2 ≤ b) {d : ℕ} (hd : 1 ≤ d) {A : ℝ}
-    (hA : 1 ≤ A) {M : ℕ} (hM : 1 ≤ M) (hup : ∀ t, a t ≤ M * (t + 1) ^ d)
-    (hlow : ∀ᶠ t : ℕ in atTop, A / 2 * ((t : ℝ) + 1) ^ d ≤ a t)
+    (hA : 1 ≤ A) {M : ℕ} (hM : 1 ≤ M) (hup : ∀ t, a t ≤ M * (t + 1) ^ d) {c : ℝ} (hc : 0 < c)
+    (hlow : ∀ᶠ t : ℕ in atTop, c * ((t : ℝ) + 1) ^ d ≤ a t)
     (hW : ∀ k, 0 < k → ∀ δ : ℝ, 0 < δ → ∀ ε : ℝ, 0 < ε → ∀ᶠ T : ℕ in atTop,
       ∀ s, ∀ h ∈ Ico 1 (b ^ k),
       (T : ℝ) ^ (δ - d) ≤ A / (b : ℝ) ^ (s + k) →
@@ -1065,7 +1065,7 @@ theorem isNormalIn_concatenation_of_growth [NeZero b] (hb : 2 ≤ b) {d : ℕ} (
     (tendsto_logb_atTop hb').comp tendsto_natCast_atTop_atTop
   have hS : ∀ η : ℝ, 0 < η → η < 1 → ∀ᶠ T : ℕ in atTop,
       (1 - η) * d * T * logb b T ≤ concatStart b a T := fun η hη hη1 ↦
-    eventually_concatStart_ge (a := a) hb1 hd (by positivity : 0 < A / 2) hlow hη hη1
+    eventually_concatStart_ge (a := a) hb1 hd hc hlow hη hη1
   have hlog : ∀ T t, t < T → Nat.log b (a t) + 1 ≤ Nat.log b (M * T ^ d) + 1 := fun T t ht ↦ by
     have : a t ≤ M * T ^ d := (hup t).trans (by gcongr; omega)
     have := Nat.log_mono_right (b := b) this
@@ -1233,7 +1233,7 @@ theorem isNormalIn_concatenation_polynomial {b : ℕ} [NeZero b] (hb : 2 ≤ b) 
     have hv : 0 ≤ A * ((t : ℝ) + 1) ^ d := by positivity
     rw [abs_of_nonneg hv, abs_le] at ht
     linarith [ht.1]
-  refine isNormalIn_concatenation_of_growth hb hf hA1 (by omega) hup hlow ?_
+  refine isNormalIn_concatenation_of_growth hb hf hA1 (by omega) hup (by positivity) hlow ?_
   intro k hk δ hδ ε hε
   filter_upwards [Polynomial.eventually_norm_polyExpSum_le (d := d) hf hδ hε] with T hT s h hh h1 h2
   rw [mem_Ico] at hh
