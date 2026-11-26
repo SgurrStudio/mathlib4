@@ -6730,6 +6730,7 @@ public import Mathlib.NumberTheory.Normal.Exp
 public import Mathlib.NumberTheory.Normal.FejerCount
 public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
+public import Mathlib.NumberTheory.Normal.Interleaving
 public import Mathlib.NumberTheory.Normal.MorseHedlund
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.NonPreservation
