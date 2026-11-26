@@ -39,6 +39,26 @@ an algebraic irrational number grows faster than `n`. -/
 theorem tendsto_complexity_digit_div_atTop {b : ℕ} (hb : 2 ≤ b) {x : ℝ} (hirr : Irrational x)
     (halg : IsAlgebraic ℚ x) :
     Tendsto (fun n ↦ (Function.complexity (digit b x) n : ℝ) / n) atTop atTop := by
-  sorry
+  have : NeZero b := ⟨by omega⟩
+  obtain ⟨y, hyx⟩ : ∃ y, y = Int.fract x := ⟨_, rfl⟩
+  have hy : y ∈ Set.Ico (0 : ℝ) 1 := hyx ▸ ⟨Int.fract_nonneg x, Int.fract_lt_one x⟩
+  have hya : ofDigits (digits y b) = y := ofDigits_digits (by omega) hy
+  have hyirr : Irrational y := by
+    rw [hyx, Int.fract]; exact hirr.sub_intCast ⌊x⌋
+  have hyalg : IsAlgebraic ℚ y := by
+    rw [hyx, Int.fract]; exact halg.sub (isAlgebraic_intCast (R := ℚ) ⌊x⌋)
+  have h := tendsto_complexity_div_atTop hb (a := digits y b) (by rw [hya]; exact hyirr)
+    (by rw [hya]; exact hyalg)
+  have hd : digit b x = Fin.val ∘ digits y b := by
+    funext n; rw [Function.comp_apply, val_digits_eq_digit hy, hyx, digit_fract]
+  have hc : ∀ n, Function.complexity (Fin.val ∘ digits y b) n =
+      Function.complexity (digits y b) n := fun n ↦ by
+    unfold Function.complexity Function.factors
+    rw [show (Set.range fun i ↦ Function.factor (Fin.val ∘ digits y b) i n) =
+      List.map Fin.val '' Set.range fun i ↦ Function.factor (digits y b) i n by
+        rw [← Set.range_comp]; congr 1; funext i
+        simp [Function.factor, List.map_ofFn]; rfl]
+    exact Set.ncard_image_of_injective _ (List.map_injective_iff.2 Fin.val_injective)
+  simpa only [hd, hc] using h
 
 end Real
