@@ -6699,6 +6699,7 @@ public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
 public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.Normal.Bridge
+public import Mathlib.NumberTheory.Normal.Cassels
 public import Mathlib.NumberTheory.Normal.Champernowne
 public import Mathlib.NumberTheory.Normal.Complexity
 public import Mathlib.NumberTheory.Normal.Computable
@@ -6709,6 +6710,7 @@ public import Mathlib.NumberTheory.Normal.FejerCount
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
+public import Mathlib.NumberTheory.Normal.Schmidt
 public import Mathlib.NumberTheory.Normal.Ridout
 public import Mathlib.NumberTheory.Normal.SqrtTwo
 public import Mathlib.NumberTheory.Normal.Stoneham
