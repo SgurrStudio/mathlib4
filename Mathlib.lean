@@ -6706,6 +6706,7 @@ public import Mathlib.NumberTheory.Normal.DifferenceTest
 public import Mathlib.NumberTheory.Normal.FejerCount
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
+public import Mathlib.NumberTheory.Normal.Ridout
 public import Mathlib.NumberTheory.Normal.SqrtTwo
 public import Mathlib.NumberTheory.Normal.Stoneham
 public import Mathlib.NumberTheory.Normal.Wall
