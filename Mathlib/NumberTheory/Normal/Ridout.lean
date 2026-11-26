@@ -110,7 +110,8 @@ theorem eventually_lt_abs_sub_div_pow (hb : 2 ≤ b) (halg : IsAlgebraic ℚ x) 
   classical
   have hb0 : b ≠ 0 := by omega
   have hb1 : (1 : ℝ) < b := by exact_mod_cast hb
-  set R := {β : ℚ | |x - (β : ℝ)| * (∏ l ∈ (∅ : Finset Nat.Primes), ((padicNorm (l : ℕ) β.num : ℚ) : ℝ))
+  set R := {β : ℚ | |x - (β : ℝ)|
+      * (∏ l ∈ (∅ : Finset Nat.Primes), ((padicNorm (l : ℕ) β.num : ℚ) : ℝ))
       * ∏ l ∈ b.primesOf, ((padicNorm (l : ℕ) β.den : ℚ) : ℝ)
     ≤ (max β.num.natAbs β.den : ℝ) ^ (-2 - ε)} with hRdef
   have hR : R.Finite := Rat.finite_setOf_ridout halg ∅ b.primesOf hε
