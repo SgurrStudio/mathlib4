@@ -6733,6 +6733,7 @@ public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.Interleaving
 public import Mathlib.NumberTheory.Normal.MorseHedlund
+public import Mathlib.NumberTheory.Normal.MulRigidity
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.NonPreservation
 public import Mathlib.NumberTheory.Normal.Pi

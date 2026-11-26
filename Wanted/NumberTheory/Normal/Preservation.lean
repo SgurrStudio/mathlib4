@@ -17,30 +17,25 @@ public import Mathlib.Topology.EMetricSpace.Lipschitz
 This file states (using `proof_wanted`) deep theorems and open conjectures concerning which maps
 preserve normality in a fixed base `b ≥ 2` or absolute normality:
 
-* Multiplicative rigidity for fixed base `b ≥ 2` and for absolute normality
-  (Dayan–Ganguly–Weiss; Hochman–Shmerkin; arXiv:2609.24665).
+* Multiplicative rigidity for absolute normality (Hochman–Shmerkin; arXiv:2609.24665).
 * Sharpness of `C²` rigidity: existence of a non-affine `C^{1,1}` diffeomorphism of `ℝ`
   preserving absolute normality (arXiv:2609.24665).
 
 Non-preservation under squaring, inversion, the exponential and Möbius maps, in every base and
-for absolute normality, is proved in `Mathlib.NumberTheory.Normal.NonPreservation`, and `C²`
-affine rigidity in `Mathlib.NumberTheory.Normal.Rigidity`.
+for absolute normality, is proved in `Mathlib.NumberTheory.Normal.NonPreservation`, `C²`
+affine rigidity in `Mathlib.NumberTheory.Normal.Rigidity`, and multiplicative rigidity in a fixed
+base in `Mathlib.NumberTheory.Normal.MulRigidity` (`Real.preserves_isNormalIn_mul_iff`).
 -/
 
 namespace Real
 
 /-! ### Multiplicative rigidity -/
 
-/-- **Multiplicative rigidity in a fixed base**: a real number `α` preserves base-`b` normality
-under multiplication (`b ≥ 2`) if and only if `α` is a nonzero rational number.
-
-The reverse implication is Wall's theorem (`Real.isNormalIn_mul_add_ratCast_iff`). The forward
-implication is a deep rigidity theorem (Dayan–Ganguly–Weiss; Hochman–Shmerkin; arXiv:2609.24665). -/
-proof_wanted preserves_isNormalIn_mul_iff {b : ℕ} (hb : 2 ≤ b) {α : ℝ} :
-    (∀ x : ℝ, IsNormalIn b x → IsNormalIn b (α * x)) ↔ ∃ q : ℚ, q ≠ 0 ∧ (q : ℝ) = α
-
 /-- **Multiplicative rigidity for absolute normality**: a real number `α` preserves absolute
-normality under multiplication if and only if `α` is a nonzero rational number. -/
+normality under multiplication if and only if `α` is a nonzero rational number.
+
+The fixed-base version is `Real.preserves_isNormalIn_mul_iff`; the absolute version needs the
+Hochman–Shmerkin equidistribution theorem for bases multiplicatively independent of `2`. -/
 proof_wanted preserves_isAbsolutelyNormal_mul_iff {α : ℝ} :
     (∀ x : ℝ, IsAbsolutelyNormal x → IsAbsolutelyNormal (α * x)) ↔
       ∃ q : ℚ, q ≠ 0 ∧ (q : ℝ) = α
