@@ -6716,6 +6716,8 @@ public import Mathlib.NumberTheory.Normal.Computable
 public import Mathlib.NumberTheory.Normal.CopelandErdos
 public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.DifferenceTest
+public import Mathlib.NumberTheory.Normal.Discrepancy
+public import Mathlib.NumberTheory.Normal.ErdosTuran
 public import Mathlib.NumberTheory.Normal.FejerCount
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
