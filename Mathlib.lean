@@ -6729,6 +6729,7 @@ public import Mathlib.NumberTheory.Normal.Discrepancy
 public import Mathlib.NumberTheory.Normal.ErdosTuran
 public import Mathlib.NumberTheory.Normal.Exp
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.FiniteState
 public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.Interleaving
