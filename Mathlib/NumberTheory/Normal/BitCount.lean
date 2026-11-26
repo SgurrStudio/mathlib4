@@ -51,6 +51,10 @@ Hence `N ≤ E * s ^ D + c` for constants `E, c`.
 * `Real.eventually_le_card_digit_eq_one`: the same, as `c * N ^ (1 / deg f) ≤ #ones` for large `N`.
 * `Real.eventually_le_card_digit_eq_one_of_isAlgebraic`: the Bailey–Borwein–Crandall–Pomerance
   bound with `d` the degree of `x` over `ℚ`.
+* `Real.exists_le_mul_card_digit_ne_zero_pow`, `Real.eventually_le_card_digit_ne_zero`,
+  `Real.eventually_le_card_digit_ne_zero_of_isAlgebraic`: the same for the number of nonzero
+  digits in any base `b ≥ 2` (Bugeaud, *Distribution modulo one and Diophantine approximation*,
+  §8).
 
 ## References
 
@@ -651,5 +655,32 @@ theorem eventually_le_card_digit_eq_one_of_isAlgebraic (halg : IsAlgebraic ℚ x
   have f0 : f ≠ 0 := by rintro h; rw [h, natDegree_zero] at hdeg; omega
   rw [← hdeg]
   exact eventually_le_card_digit_eq_one hx f0 fx
+
+/-- **Bailey–Borwein–Crandall–Pomerance in base `b`**, explicit form. If `x` is an irrational root
+of a nonzero integer polynomial `f` and `b ≥ 2`, there are constants `E` and `c` such that for
+every `N`, if `k` of the first `N` base-`b` digits of `x` are nonzero, then
+`N ≤ E * (k + 1) ^ f.natDegree + c`. -/
+theorem exists_le_mul_card_digit_ne_zero_pow {b : ℕ} (hb : 2 ≤ b) (hx : Irrational x) {f : ℤ[X]}
+    (f0 : f ≠ 0) (fx : aeval x f = 0) : ∃ E c : ℕ, ∀ N : ℕ,
+      N ≤ E * (((Finset.range N).filter fun n ↦ digit b x n ≠ 0).card + 1) ^ f.natDegree + c := by
+  sorry
+
+/-- **Bailey–Borwein–Crandall–Pomerance in base `b`.** If `x` is an irrational root of a nonzero
+integer polynomial `f` of degree `d` and `b ≥ 2`, there is `c > 0` such that for all large `N` at
+least `c * N ^ (1 / d)` of the first `N` base-`b` digits of `x` are nonzero. -/
+theorem eventually_le_card_digit_ne_zero {b : ℕ} (hb : 2 ≤ b) (hx : Irrational x) {f : ℤ[X]}
+    (f0 : f ≠ 0) (fx : aeval x f = 0) : ∃ c : ℝ, 0 < c ∧ ∀ᶠ N : ℕ in atTop,
+      c * (N : ℝ) ^ (1 / (f.natDegree : ℝ)) ≤
+        ((Finset.range N).filter fun n ↦ digit b x n ≠ 0).card := by
+  sorry
+
+/-- **Bailey–Borwein–Crandall–Pomerance in base `b`.** If `x` is an irrational algebraic number of
+degree `d` and `b ≥ 2`, there is `c > 0` such that for all large `N` at least `c * N ^ (1 / d)` of
+the first `N` base-`b` digits of `x` are nonzero. -/
+theorem eventually_le_card_digit_ne_zero_of_isAlgebraic {b : ℕ} (hb : 2 ≤ b)
+    (halg : IsAlgebraic ℚ x) (hx : Irrational x) : ∃ c : ℝ, 0 < c ∧ ∀ᶠ N : ℕ in atTop,
+      c * (N : ℝ) ^ (1 / ((minpoly ℚ x).natDegree : ℝ)) ≤
+        ((Finset.range N).filter fun n ↦ digit b x n ≠ 0).card := by
+  sorry
 
 end Real
