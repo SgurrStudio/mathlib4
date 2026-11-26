@@ -13,6 +13,7 @@ public import Wanted.GroupTheory.GroupAction.Jordan
 public import Wanted.LinearAlgebra.Matrix.Cartan.Basic
 public import Wanted.NumberTheory.Normal.Basic
 public import Wanted.NumberTheory.Normal.PiExp
+public import Wanted.NumberTheory.Normal.Preservation
 public import Wanted.Order.KrullDimension
 public import Wanted.Probability.Combinatorics.BinomialRandomGraph.Defs
 public import Wanted.Probability.Distributions.Binomial
