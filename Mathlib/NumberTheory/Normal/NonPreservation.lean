@@ -264,6 +264,207 @@ theorem exists_isAbsolutelyNormal_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
 
 end NormalNumbers.QuarterCantorDecay
 
+namespace NormalNumbers.BaseCantorDecay
+
+open ExplicitSquare CantorSelfSimilar DecayAeNormal QuarterCantorDecay
+
+variable {b : ℕ}
+
+theorem PolyDecayB.of_neg {F : ℝ → ℝ} (h : PolyDecayB b fun t => -F t) : PolyDecayB b F := by
+  obtain ⟨C, δ, hC, hδ, hd⟩ := h
+  refine ⟨C, δ, hC, hδ, fun ξ hξ => ?_⟩
+  have := hd (-ξ) (neg_ne_zero.2 hξ)
+  rw [abs_neg] at this
+  refine le_trans (le_of_eq ?_) this
+  unfold bFourier
+  congr 2; funext ω; congr 3; push_cast; ring
+
+/-- **Decay ⇒ `F(Y)` is absolutely normal for almost every base-`b` Cantor point `Y`.** -/
+theorem ae_isAbsolutelyNormal_of_polyDecayB {F : ℝ → ℝ} (hF : Measurable F)
+    (hd : PolyDecayB b F) :
+    ∀ᵐ ω ∂coinMeasure, Real.IsAbsolutelyNormal (F (bReal b ω)) := by
+  obtain ⟨C, δ, hC, hδ, hdec⟩ := hd
+  have hall : ∀ᵐ ω ∂coinMeasure, ∀ c : ℕ, 2 ≤ c → IsNormal c (F (bReal b ω)) := by
+    rw [ae_all_iff]; intro c
+    by_cases hc : 2 ≤ c
+    · filter_upwards [ae_isNormal_of_decay_b coinMeasure hc _ (hF.comp measurable_bReal)
+        hC hδ hdec] with ω hω _ using hω
+    · exact Filter.Eventually.of_forall fun ω h => absurd h hc
+  filter_upwards [hall] with ω hω c hc
+  exact (Real.isNormalIn_iff_isNormal c _).2 (hω c hc)
+
+/-- **Decay for `0 < a ≤ |G''| ≤ A`** on `[0, 1]`, `G''` of constant sign. -/
+theorem polyDecayB_of_abs (hb : 2 ≤ b) {G G' G'' : ℝ → ℝ} {a A : ℝ} (ha : 0 < a)
+    (hGm : Measurable G)
+    (hG : ∀ t ∈ W0, HasDerivAt G (G' t) t) (hG' : ∀ t ∈ W0, HasDerivAt G' (G'' t) t)
+    (hlo : ∀ t ∈ W0, a ≤ |G'' t|) (hhi : ∀ t ∈ W0, |G'' t| ≤ A)
+    (hsign : (∀ t ∈ W0, 0 < G'' t) ∨ ∀ t ∈ W0, G'' t < 0) : PolyDecayB b G := by
+  rcases hsign with hs | hs
+  · refine polyDecay hG hG' (a := a) (A := A) (fun t ht => ?_) (fun t ht => ?_) hb hGm ha
+    · simpa [abs_of_pos (hs t ht)] using hlo t ht
+    · exact (le_abs_self _).trans (hhi t ht)
+  · refine PolyDecayB.of_neg (polyDecay (F' := fun t => -G' t) (F'' := fun t => -G'' t)
+      (a := a) (A := A) (fun t ht => (hG t ht).neg) (fun t ht => (hG' t ht).neg)
+      (fun t ht => ?_) (fun t ht => ?_) hb hGm.neg ha)
+    · simpa [abs_of_neg (hs t ht)] using hlo t ht
+    · exact (neg_le_abs _).trans (hhi t ht)
+
+/-- The window `[1, 2]` reached after the shift `t ↦ t + 1`. -/
+abbrev W1 : Set ℝ := Set.Icc (1 : ℝ) 2
+
+theorem add_one_mem_W1 {t : ℝ} (ht : t ∈ W0) : t + 1 ∈ W1 :=
+  ⟨by linarith [ht.1], by linarith [ht.2]⟩
+
+/-- Decay of `t ↦ F (t + 1)` from bounds for `F''` on `[1, 2]`. -/
+theorem polyDecayB_shift (hb : 2 ≤ b) {F F' F'' : ℝ → ℝ} {a A : ℝ} (ha : 0 < a)
+    (hFm : Measurable F)
+    (hF : ∀ t ∈ W1, HasDerivAt F (F' t) t) (hF' : ∀ t ∈ W1, HasDerivAt F' (F'' t) t)
+    (hlo : ∀ t ∈ W1, a ≤ |F'' t|) (hhi : ∀ t ∈ W1, |F'' t| ≤ A)
+    (hsign : (∀ t ∈ W1, 0 < F'' t) ∨ ∀ t ∈ W1, F'' t < 0) :
+    PolyDecayB b fun t => F (t + 1) := by
+  have hs : ∀ t : ℝ, HasDerivAt (fun x : ℝ => x + 1) 1 t := fun t => (hasDerivAt_id' t).add_const 1
+  refine polyDecayB_of_abs hb (G' := fun t => F' (t + 1)) (G'' := fun t => F'' (t + 1)) ha
+    (hFm.comp (measurable_id.add_const 1))
+    (fun t ht => ((hF _ (add_one_mem_W1 ht)).comp t (hs t)).congr_deriv (mul_one _))
+    (fun t ht => ((hF' _ (add_one_mem_W1 ht)).comp t (hs t)).congr_deriv (mul_one _))
+    (fun t ht => hlo _ (add_one_mem_W1 ht)) (fun t ht => hhi _ (add_one_mem_W1 ht)) ?_
+  rcases hsign with h | h
+  · exact Or.inl fun t ht => h _ (add_one_mem_W1 ht)
+  · exact Or.inr fun t ht => h _ (add_one_mem_W1 ht)
+
+theorem pos_of_mem_W1 {t : ℝ} (ht : t ∈ W1) : 0 < t := lt_of_lt_of_le one_pos ht.1
+
+theorem polyDecayB_sqrt (hb : 2 ≤ b) : PolyDecayB b fun t => Real.sqrt (t + 1) := by
+  have hd : ∀ t ∈ W1, HasDerivAt (fun s => (2 * Real.sqrt s)⁻¹)
+      (-(2 * (2 * Real.sqrt t)⁻¹) / (2 * Real.sqrt t) ^ 2) t := fun t ht =>
+    (((Real.hasDerivAt_sqrt (pos_of_mem_W1 ht).ne').const_mul 2).congr_deriv
+      (by rw [one_div])).inv (by positivity [Real.sqrt_pos.2 (pos_of_mem_W1 ht)])
+  have heq : ∀ t ∈ W1, -(2 * (2 * Real.sqrt t)⁻¹) / (2 * Real.sqrt t) ^ 2 =
+      -(1 / (4 * Real.sqrt t ^ 3)) := fun t ht => by
+    have := Real.sqrt_pos.2 (pos_of_mem_W1 ht); field_simp; ring
+  have hs : ∀ t ∈ W1, 1 ≤ Real.sqrt t ∧ Real.sqrt t ≤ 3 / 2 := fun t ht => by
+    refine ⟨Real.le_sqrt_of_sq_le (by nlinarith [ht.1]), ?_⟩
+    have h0 := Real.sqrt_nonneg t
+    have h2 := Real.sq_sqrt (pos_of_mem_W1 ht).le
+    nlinarith [ht.2]
+  refine polyDecayB_shift hb (a := 1 / 16) (A := 1) (by norm_num)
+    Real.continuous_sqrt.measurable
+    (fun t ht => ((Real.hasDerivAt_sqrt (pos_of_mem_W1 ht).ne').congr_deriv (by rw [one_div])))
+    hd (fun t ht => ?_) (fun t ht => ?_) (Or.inr fun t ht => ?_)
+  · have h1 := (hs t ht).1; have h2 := (hs t ht).2
+    rw [heq t ht, abs_neg, abs_of_pos (by positivity),
+      div_le_div_iff₀ (by norm_num) (by positivity)]
+    nlinarith [pow_le_pow_left₀ (by linarith) h2 3]
+  · have h1 := (hs t ht).1
+    rw [heq t ht, abs_neg, abs_of_pos (by positivity), div_le_iff₀ (by positivity)]
+    nlinarith [pow_le_pow_left₀ (by norm_num) h1 3]
+  · rw [heq t ht, neg_neg_iff_pos]; have := (hs t ht).1; positivity
+
+theorem polyDecayB_inv (hb : 2 ≤ b) : PolyDecayB b fun t => (t + 1)⁻¹ := by
+  refine polyDecayB_shift hb (F := fun t => t⁻¹) (F' := fun t => -(t ^ 2)⁻¹)
+    (F'' := fun t => 2 / t ^ 3) (a := 1 / 4) (A := 2) (by norm_num) measurable_inv
+    (fun t ht => hasDerivAt_inv (pos_of_mem_W1 ht).ne')
+    (fun t ht => ((hasDerivAt_pow 2 t).inv
+      (by have := pos_of_mem_W1 ht; positivity)).neg.congr_deriv
+      (by have := pos_of_mem_W1 ht; field_simp; ring)) (fun t ht => ?_) (fun t ht => ?_)
+    (Or.inl fun t ht => by have := pos_of_mem_W1 ht; positivity)
+  · have := pos_of_mem_W1 ht
+    rw [abs_of_pos (by positivity), div_le_div_iff₀ (by norm_num) (by positivity)]
+    nlinarith [pow_le_pow_left₀ this.le ht.2 3]
+  · have := pos_of_mem_W1 ht
+    rw [abs_of_pos (by positivity), div_le_iff₀ (by positivity)]
+    nlinarith [one_le_pow₀ ht.1 (n := 3)]
+
+theorem polyDecayB_log (hb : 2 ≤ b) : PolyDecayB b fun t => Real.log (t + 1) := by
+  refine polyDecayB_shift hb (F' := fun t => t⁻¹) (F'' := fun t => -(t ^ 2)⁻¹)
+    (a := 1 / 4) (A := 1) (by norm_num) Real.measurable_log
+    (fun t ht => Real.hasDerivAt_log (pos_of_mem_W1 ht).ne')
+    (fun t ht => hasDerivAt_inv (pos_of_mem_W1 ht).ne') (fun t ht => ?_) (fun t ht => ?_)
+    (Or.inr fun t ht => by have := pos_of_mem_W1 ht; simp only [neg_neg_iff_pos]; positivity)
+  · have := pos_of_mem_W1 ht
+    rw [abs_neg, abs_of_pos (by positivity), ← one_div,
+      div_le_div_iff₀ (by norm_num) (by positivity)]
+    nlinarith [ht.2]
+  · have := pos_of_mem_W1 ht
+    rw [abs_neg, abs_of_pos (by positivity), ← one_div, div_le_iff₀ (by positivity)]
+    nlinarith [ht.1]
+
+/-- Base-`b` Cantor points plus an integer are not normal in base `b ≥ 3`. -/
+theorem not_isNormalIn_bReal_add (hb : 3 ≤ b) (ω : ℕ → Bool) (n : ℤ) :
+    ¬ Real.IsNormalIn b (bReal b ω + n) := by
+  rw [Real.isNormalIn_add_intCast_iff, Real.isNormalIn_iff_isNormal]
+  exact not_isNormal_bReal hb ω
+
+/-- The common witness in base `b ≥ 3`. -/
+theorem exists_of_aeB (hb : 3 ≤ b) {G H : ℝ → ℝ}
+    (hae : ∀ᵐ ω ∂coinMeasure, Real.IsAbsolutelyNormal (G (bReal b ω)))
+    (hHG : ∀ t ∈ W0, H (G t) = t + 1) :
+    ∃ x : ℝ, Real.IsAbsolutelyNormal x ∧ ¬ Real.IsNormalIn b (H x) := by
+  obtain ⟨ω, hω⟩ := hae.exists
+  refine ⟨_, hω, ?_⟩
+  rw [hHG _ (bReal_mem (by omega) ω)]
+  exact_mod_cast not_isNormalIn_bReal_add hb ω 1
+
+/-- **Möbius maps, base `b ≥ 3`.** -/
+theorem exists_isAbsolutelyNormal_mobiusB (hb : 2 ≤ b) (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
+    (hdet : a₁ * d - a₂ * c ≠ 0) : ∃ x : ℝ, Real.IsAbsolutelyNormal x ∧
+      ∃ ω : ℕ → Bool, ∃ r : ℤ, (a₁ * x + a₂) / (c * x + d) = bReal b ω + r := by
+  set s := a₁ / c
+  set r : ℤ := ⌈|s|⌉ + 2
+  set t : ℝ := r - s with htdef
+  have ht : 2 ≤ t := by
+    have h1 : |s| ≤ (⌈|s|⌉ : ℝ) := Int.le_ceil _
+    have h2 : s ≤ |s| := le_abs_self s
+    simp only [htdef, r]; push_cast; linarith
+  set E : ℝ := (a₁ * d - a₂ * c) / c ^ 2 with hEdef
+  have hE : E ≠ 0 := div_ne_zero hdet (pow_ne_zero 2 hc)
+  have hEa : 0 < |E| := abs_pos.2 hE
+  set G : ℝ → ℝ := fun y => -d / c - E * (y + t)⁻¹ with hGdef
+  have hv : ∀ y ∈ W0, 2 ≤ y + t ∧ y + t ≤ t + 1 := fun y hy =>
+    ⟨by linarith [hy.1], by linarith [hy.2]⟩
+  have hvpos : ∀ y ∈ W0, 0 < y + t := fun y hy => by linarith [(hv y hy).1]
+  have hGm : Measurable G :=
+    measurable_const.sub (measurable_const.mul (measurable_id.add_const t).inv)
+  have hd : PolyDecayB b G := by
+    refine polyDecayB_of_abs hb (G' := fun y => E * ((y + t) ^ 2)⁻¹)
+      (G'' := fun y => -(2 * E) / (y + t) ^ 3) (a := 2 * |E| / (t + 1) ^ 3) (A := 2 * |E| / 8)
+      (by positivity) hGm (fun y hy => ?_) (fun y hy => ?_) (fun y hy => ?_) (fun y hy => ?_) ?_
+    · have h0 := (hvpos y hy).ne'
+      exact ((((hasDerivAt_id' y).add_const t).inv h0).const_mul E).const_sub (-d / c)
+        |>.congr_deriv (by field_simp)
+    · have h0 := (hvpos y hy).ne'
+      exact (((((hasDerivAt_id' y).add_const t).fun_pow 2).inv (pow_ne_zero 2 h0)).const_mul E)
+        |>.congr_deriv (by field_simp; ring)
+    · have h0 := hvpos y hy
+      rw [neg_div, abs_neg, abs_div (2 * E), abs_mul, abs_two,
+        abs_of_pos (by positivity : (0 : ℝ) < (y + t) ^ 3)]
+      exact div_le_div_of_nonneg_left (by positivity) (by positivity)
+        (pow_le_pow_left₀ h0.le (hv y hy).2 3)
+    · have h0 := hvpos y hy
+      rw [neg_div, abs_neg, abs_div (2 * E), abs_mul, abs_two,
+        abs_of_pos (by positivity : (0 : ℝ) < (y + t) ^ 3)]
+      gcongr
+      calc (8 : ℝ) = 2 ^ 3 := by norm_num
+        _ ≤ (y + t) ^ 3 := pow_le_pow_left₀ (by norm_num) (hv y hy).1 3
+    · rcases lt_or_gt_of_ne hE with h | h
+      · exact Or.inl fun y hy => by have := hvpos y hy; apply div_pos (by linarith); positivity
+      · exact Or.inr fun y hy => by
+          have := hvpos y hy; apply div_neg_of_neg_of_pos (by linarith); positivity
+  obtain ⟨ω, hω⟩ := (ae_isAbsolutelyNormal_of_polyDecayB hGm hd).exists
+  refine ⟨G (bReal b ω), hω, ω, r, ?_⟩
+  have hy := bReal_mem hb ω
+  have hyr : bReal b ω + (r : ℝ) = (bReal b ω + t) + a₁ / c := by rw [htdef]; ring
+  have h0 : bReal b ω + t ≠ 0 := (hvpos _ hy).ne'
+  rw [hyr, hGdef]
+  simp only
+  generalize bReal b ω + t = v at h0 ⊢
+  have hden : c * (-d / c - E * v⁻¹) + d = -(c * E) / v := by field_simp; ring
+  rw [div_eq_iff (by rw [hden]; exact div_ne_zero (neg_ne_zero.2 (mul_ne_zero hc hE)) h0), hEdef]
+  field_simp
+  ring
+
+end NormalNumbers.BaseCantorDecay
+
 namespace Real
 
 open NormalNumbers.QuarterCantorDecay
@@ -359,43 +560,86 @@ open NormalNumbers.BaseCantorDecay
 /-- An absolutely normal number whose square is not normal in base `b`. -/
 theorem exists_isAbsolutelyNormal_not_isNormalIn_sq {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b (x ^ 2) := by
-  sorry
+  rcases (show b = 2 ∨ 3 ≤ b by omega) with rfl | hb3
+  · obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_sq
+    exact ⟨x, hx, by simpa using h 1 one_pos⟩
+  · have hm : Measurable fun t : ℝ => Real.sqrt (t + 1) :=
+      Real.continuous_sqrt.measurable.comp (measurable_id.add_const 1)
+    have hd : PolyDecayB b fun t : ℝ => Real.sqrt (t + 1) := polyDecayB_sqrt hb
+    have hae := ae_isAbsolutelyNormal_of_polyDecayB hm hd
+    have hHG : ∀ t ∈ W0, (fun x : ℝ => x ^ 2) ((fun t : ℝ => Real.sqrt (t + 1)) t) = t + 1 := by
+      intro t ht
+      have : (0 : ℝ) ≤ t := ht.1
+      exact Real.sq_sqrt (by linarith)
+    have := exists_of_aeB (b := b) (G := fun t : ℝ => Real.sqrt (t + 1))
+      (H := fun x : ℝ => x ^ 2) hb3 hae hHG
+    exact this
 
 /-- An absolutely normal number whose inverse is not normal in base `b`. -/
 theorem exists_isAbsolutelyNormal_not_isNormalIn_inv {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b x⁻¹ := by
-  sorry
+  rcases (show b = 2 ∨ 3 ≤ b by omega) with rfl | hb3
+  · obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_inv
+    exact ⟨x, hx, by simpa using h 1 one_pos⟩
+  · have hm : Measurable fun t : ℝ => (t + 1)⁻¹ := (measurable_id.add_const 1).inv
+    have hd : PolyDecayB b fun t : ℝ => (t + 1)⁻¹ := polyDecayB_inv hb
+    have hae := ae_isAbsolutelyNormal_of_polyDecayB hm hd
+    have hHG : ∀ t ∈ W0, (fun x : ℝ => x⁻¹) ((fun t : ℝ => (t + 1)⁻¹) t) = t + 1 :=
+      fun t _ => inv_inv _
+    exact exists_of_aeB (b := b) (G := fun t : ℝ => (t + 1)⁻¹) (H := fun x : ℝ => x⁻¹)
+      hb3 hae hHG
 
 /-- An absolutely normal number whose exponential is not normal in base `b`. -/
 theorem exists_isAbsolutelyNormal_not_isNormalIn_exp {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b (Real.exp x) := by
-  sorry
+  rcases (show b = 2 ∨ 3 ≤ b by omega) with rfl | hb3
+  · obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_exp
+    exact ⟨x, hx, by simpa using h 1 one_pos⟩
+  · have hm : Measurable fun t : ℝ => Real.log (t + 1) :=
+      Real.measurable_log.comp (measurable_id.add_const 1)
+    have hd : PolyDecayB b fun t : ℝ => Real.log (t + 1) := polyDecayB_log hb
+    have hae := ae_isAbsolutelyNormal_of_polyDecayB hm hd
+    have hHG : ∀ t ∈ W0, Real.exp ((fun t : ℝ => Real.log (t + 1)) t) = t + 1 := by
+      intro t ht
+      have : (0 : ℝ) ≤ t := ht.1
+      exact Real.exp_log (by linarith)
+    exact exists_of_aeB (b := b) (G := fun t : ℝ => Real.log (t + 1)) (H := Real.exp)
+      hb3 hae hHG
 
 /-- An absolutely normal number whose Möbius image (`c ≠ 0`) is not normal in base `b`. -/
 theorem exists_isAbsolutelyNormal_not_isNormalIn_mobius {b : ℕ} (hb : 2 ≤ b) (a₁ a₂ c d : ℝ)
     (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
     ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsNormalIn b ((a₁ * x + a₂) / (c * x + d)) := by
-  sorry
+  rcases (show b = 2 ∨ 3 ≤ b by omega) with rfl | hb3
+  · obtain ⟨x, hx, h⟩ :=
+      exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius a₁ a₂ c d hc hdet
+    exact ⟨x, hx, by simpa using h 1 one_pos⟩
+  · obtain ⟨x, hx, ω, r, he⟩ := exists_isAbsolutelyNormal_mobiusB hb a₁ a₂ c d hc hdet
+    exact ⟨x, hx, by rw [he]; exact not_isNormalIn_bReal_add hb3 ω r⟩
 
 /-- Squaring does not preserve base-`b` normality (`b ≥ 2`). -/
 theorem exists_isNormalIn_not_isNormalIn_sq {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (x ^ 2) := by
-  sorry
+  obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_not_isNormalIn_sq hb
+  exact ⟨x, hx b hb, h⟩
 
 /-- Inversion does not preserve base-`b` normality (`b ≥ 2`). -/
 theorem exists_isNormalIn_not_isNormalIn_inv {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b x⁻¹ := by
-  sorry
+  obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_not_isNormalIn_inv hb
+  exact ⟨x, hx b hb, h⟩
 
 /-- The exponential does not preserve base-`b` normality (`b ≥ 2`). -/
 theorem exists_isNormalIn_not_isNormalIn_exp {b : ℕ} (hb : 2 ≤ b) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b (Real.exp x) := by
-  sorry
+  obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_not_isNormalIn_exp hb
+  exact ⟨x, hx b hb, h⟩
 
 /-- No Möbius map with `c ≠ 0` preserves base-`b` normality (`b ≥ 2`). -/
 theorem exists_isNormalIn_not_isNormalIn_mobius {b : ℕ} (hb : 2 ≤ b) (a₁ a₂ c d : ℝ)
     (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b ((a₁ * x + a₂) / (c * x + d)) := by
-  sorry
+  obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_not_isNormalIn_mobius hb a₁ a₂ c d hc hdet
+  exact ⟨x, hx b hb, h⟩
 
 end Real
