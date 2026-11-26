@@ -270,7 +270,8 @@ theorem exists_of_pos {b : ℕ} (hb : 2 ≤ b) {f F' F'' : ℝ → ℝ}
     simp only [G'']
     rw [abs_div, abs_mul, abs_neg, abs_of_pos (by positivity : (0 : ℝ) < F' (G0 t) ^ 3),
       abs_of_pos (by positivity : (0 : ℝ) < (s : ℝ) ^ 2)]
-  refine exists_of_window hb (q := q) (show s ≠ 0 by exact_mod_cast hs1.ne') (G := G) (G' := G') (G'' := G'')
+  refine exists_of_window hb (q := q) (show s ≠ 0 by exact_mod_cast hs1.ne')
+    (G := G) (G' := G') (G'' := G'')
     (a := |F'' p| / 2 * s ^ 2 / (3 * F' p / 2) ^ 3)
     (A := 3 * |F'' p| / 2 * s ^ 2 / (F' p / 2) ^ 3) (by positivity) hGm
     (fun t ht => hG t (hIU t ht)) (fun t ht => hG' t (hIU t ht)) (fun t ht => ?_)
