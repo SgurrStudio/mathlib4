@@ -26,6 +26,8 @@ occurs with asymptotic frequency `b⁻ᵏ`. It is *absolutely normal* if it is n
 * `Real.IsNormalIn b x`: every block of `k` digits occurs with frequency `b⁻ᵏ`.
 * `Real.IsAbsolutelyNormal x`: `x` is normal in every base `b ≥ 2`.
 * `Real.IsDisjunctiveIn b x`: every block of digits occurs in the base-`b` expansion of `x`.
+* `Real.IsNormalSeq b d`: the digit sequence `d : ℕ → ℕ` is normal in base `b`, so that
+  `Real.IsNormalIn b x ↔ Real.IsNormalSeq b (Real.digit b x)` (`Real.isNormalIn_iff_isNormalSeq`).
 
 ## Main statements
 
@@ -88,7 +90,18 @@ occurs (at least once) in the base-`b` expansion of `x`. Normal numbers are disj
 def IsDisjunctiveIn (b : ℕ) (x : ℝ) : Prop :=
   ∀ (k : ℕ) (w : Fin k → Fin b), ∃ i : ℕ, ∀ j : Fin k, digit b x (i + j) = w j
 
+/-- A digit sequence `d : ℕ → ℕ` is *normal in base `b`* if every block `w` of `k` base-`b`
+digits occurs in it with asymptotic frequency `b⁻ᵏ`. -/
+def IsNormalSeq (b : ℕ) (d : ℕ → ℕ) : Prop :=
+  ∀ (k : ℕ) (w : Fin k → Fin b), Tendsto (fun N : ℕ ↦
+    (((Finset.range N).filter fun i ↦ ∀ j : Fin k, d (i + j) = w j).card : ℝ) / N) atTop
+      (𝓝 ((b : ℝ) ^ k)⁻¹)
+
 variable {b : ℕ} {x : ℝ}
+
+/-- `x` is normal in base `b` iff its digit sequence `Real.digit b x` is normal. -/
+theorem isNormalIn_iff_isNormalSeq : IsNormalIn b x ↔ IsNormalSeq b (digit b x) := by
+  simp only [IsNormalIn, IsNormalSeq, blockCount]
 
 theorem digit_lt (hb : 0 < b) (x : ℝ) (n : ℕ) : digit b x n < b := by
   have hb' : (0 : ℤ) < b := by exact_mod_cast hb

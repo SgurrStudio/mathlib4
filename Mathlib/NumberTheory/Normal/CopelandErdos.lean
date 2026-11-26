@@ -26,7 +26,6 @@ theorem (`Mathlib.NumberTheory.Normal.Champernowne`).
 
 ## Main definitions
 
-* `Real.IsNormalSeq b d`: the digit sequence `d : ℕ → ℕ` is normal in base `b`.
 * `Real.concatStart b a t`, `Real.concatDigit b a n`: positions and digits of the concatenation
   of the base-`b` expansions of `a 0, a 1, …`.
 * `Real.concatenation b a`: the real number `0.a₀ a₁ a₂ …` in base `b`.
@@ -62,13 +61,6 @@ open Filter Topology
 namespace Real
 
 variable {b : ℕ} {x : ℝ}
-
-/-- A digit sequence `d : ℕ → ℕ` is *normal in base `b`* if every block `w` of `k` base-`b`
-digits occurs in it with asymptotic frequency `b⁻ᵏ`. -/
-def IsNormalSeq (b : ℕ) (d : ℕ → ℕ) : Prop :=
-  ∀ (k : ℕ) (w : Fin k → Fin b), Tendsto (fun N : ℕ ↦
-    (((Finset.range N).filter fun i ↦ ∀ j : Fin k, d (i + j) = w j).card : ℝ) / N) atTop
-      (𝓝 ((b : ℝ) ^ k)⁻¹)
 
 /-- `Real.digit` agrees with Mathlib's `Real.digits` on `[0, 1)`. -/
 theorem val_digits_eq_digit [NeZero b] {x : ℝ} (hx : x ∈ Set.Ico (0 : ℝ) 1) (n : ℕ) :
@@ -116,9 +108,6 @@ theorem digit_ofDigits {b : ℕ} (hb : 1 < b) (a : ℕ → Fin b)
         (dvd_pow_self b (by have := Finset.mem_range.1 hi; omega)).mul_left _
     rw [hq, Nat.mul_add_mod, Nat.mod_eq_of_lt (a n).isLt]
   rw [digit, hfl, ← Int.natCast_mod, Int.toNat_natCast, hmod]
-
-theorem isNormalIn_iff_isNormalSeq : IsNormalIn b x ↔ IsNormalSeq b (digit b x) := by
-  simp only [IsNormalIn, IsNormalSeq, blockCount]
 
 /-- A real number whose digit sequence is normal in base `b ≥ 2` is normal in base `b`. -/
 theorem isNormalIn_ofDigits (hb : 2 ≤ b) {d : ℕ → Fin b} (h : IsNormalSeq b fun n ↦ d n) :

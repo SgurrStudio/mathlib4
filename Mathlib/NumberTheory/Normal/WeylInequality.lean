@@ -24,9 +24,9 @@ The proof is Vaughan's (Lemma 2.4):
 * Weyl differencing (`Polynomial.polyExpSum_sq_le`, from van der Corput's inequality) `k - 1`
   times, with `H = N`, lowers the phase to a linear one with frequency `k! α h₁ ⋯ h_{k-1}`; its
   geometric series is at most `min(N, 1 / ‖k! α h₁ ⋯ h_{k-1}‖)`
-  (`Polynomial.norm_polyExpSum_pow_le_weylSum`).
+  (`Polynomial.norm_polyExpSum_pow_le_weylMinSum`).
 * Regrouping by `m = h₁ ⋯ h_{k-1}` costs a factor `N ^ ε` by the divisor bound
-  (`TauCeti.exists_pos_card_divisors_le_rpow`), see `Polynomial.weylSum_le`.
+  (`TauCeti.exists_pos_card_divisors_le_rpow`), see `Polynomial.weylMinSum_le`.
 * The type I bound (`TauCeti.sum_min_inv_distInt_le`) sums the resulting
   `∑_{m ≤ k! N ^ (k-1)} min(N, 1 / ‖α m‖)`.
 
@@ -52,9 +52,9 @@ noncomputable def weylMin (N : ℕ) (β : ℝ) : ℝ :=
 
 /-- The iterated sum `∑_{h₁, …, h_j ∈ [1, N)} min(N, 1 / ‖β h₁ ⋯ h_j‖)` left after `j` Weyl
 differencings. -/
-noncomputable def weylSum (N : ℕ) : ℕ → ℝ → ℝ
+noncomputable def weylMinSum (N : ℕ) : ℕ → ℝ → ℝ
   | 0, β => weylMin N β
-  | j + 1, β => ∑ h ∈ Ico 1 N, weylSum N j (β * h)
+  | j + 1, β => ∑ h ∈ Ico 1 N, weylMinSum N j (β * h)
 
 theorem weylMin_nonneg (N : ℕ) (β : ℝ) : 0 ≤ weylMin N β := by
   unfold weylMin
@@ -62,7 +62,7 @@ theorem weylMin_nonneg (N : ℕ) (β : ℝ) : 0 ≤ weylMin N β := by
   · positivity
   · exact le_min (Nat.cast_nonneg N) (inv_nonneg.2 (distInt_nonneg _))
 
-theorem weylSum_nonneg (N j : ℕ) (β : ℝ) : 0 ≤ weylSum N j β := by
+theorem weylMinSum_nonneg (N j : ℕ) (β : ℝ) : 0 ≤ weylMinSum N j β := by
   induction j generalizing β with
   | zero => exact weylMin_nonneg N β
   | succ j ih => exact sum_nonneg fun h _ ↦ ih _
@@ -92,15 +92,15 @@ theorem norm_polyExpSum_le_weylMin {φ : ℝ[X]} (hφ : φ.natDegree ≤ 1) {L N
     exact inv_anti₀ hpos (by linarith)
 
 /-- **Weyl differencing**, iterated `j` times with `H = N`. -/
-theorem norm_polyExpSum_pow_le_weylSum (j : ℕ) : ∃ K : ℝ, 0 < K ∧
+theorem norm_polyExpSum_pow_le_weylMinSum (j : ℕ) : ∃ K : ℝ, 0 < K ∧
     ∀ (N L : ℕ) (φ : ℝ[X]), 1 ≤ N → L ≤ N → φ.natDegree ≤ j + 1 →
       (‖polyExpSum φ L‖ / N) ^ 2 ^ j ≤
-        K * (1 / N + weylSum N j ((j + 1).factorial * φ.coeff (j + 1)) / (N : ℝ) ^ (j + 1)) := by
+        K * (1 / N + weylMinSum N j ((j + 1).factorial * φ.coeff (j + 1)) / (N : ℝ) ^ (j + 1)) := by
   induction j with
   | zero =>
     refine ⟨1, one_pos, fun N L φ hN hLN hφ ↦ ?_⟩
     have hN0 : (0 : ℝ) < N := by exact_mod_cast hN
-    simp only [pow_zero, pow_one, zero_add, Nat.factorial_one, Nat.cast_one, one_mul, weylSum]
+    simp only [pow_zero, pow_one, zero_add, Nat.factorial_one, Nat.cast_one, one_mul, weylMinSum]
     have := norm_polyExpSum_le_weylMin hφ hLN
     have h0 : 0 ≤ 1 / (N : ℝ) := by positivity
     calc ‖polyExpSum φ L‖ / N ≤ weylMin N (φ.coeff 1) / N := by gcongr
@@ -115,11 +115,11 @@ theorem norm_polyExpSum_pow_le_weylSum (j : ℕ) : ∃ K : ℝ, 0 < K ∧
     set c := φ.coeff (j + 1 + 1)
     set x : ℕ → ℝ := fun h ↦ ‖polyExpSum (taylor (h : ℝ) φ - φ) (L - h)‖ / N
     have hx0 : ∀ h, 0 ≤ x h := fun h ↦ by positivity
-    set W := weylSum N (j + 1) ((j + 1 + 1).factorial * c)
+    set W := weylMinSum N (j + 1) ((j + 1 + 1).factorial * c)
     set Y := W / (N : ℝ) ^ (j + 1 + 1)
-    have hY : 0 ≤ Y := div_nonneg (weylSum_nonneg _ _ _) (by positivity)
+    have hY : 0 ≤ Y := div_nonneg (weylMinSum_nonneg _ _ _) (by positivity)
     have hxh : ∀ h ∈ Ico 1 N, x h ^ m ≤
-        K * (1 / N + weylSum N j ((j + 1 + 1).factorial * c * h) / (N : ℝ) ^ (j + 1)) := by
+        K * (1 / N + weylMinSum N j ((j + 1 + 1).factorial * c * h) / (N : ℝ) ^ (j + 1)) := by
       intro h hh
       obtain ⟨hdeg, hcoeff⟩ := natDegree_taylor_sub_le hφ (h : ℝ)
       have := hKj N (L - h) _ hN (by omega) hdeg
@@ -132,11 +132,11 @@ theorem norm_polyExpSum_pow_le_weylSum (j : ℕ) : ∃ K : ℝ, 0 < K ∧
           W / (N : ℝ) ^ (j + 1)) := by
         refine (sum_le_sum hxh).trans (le_of_eq ?_)
         rw [← mul_sum, sum_add_distrib]
-        simp only [W, weylSum, sum_div]
+        simp only [W, weylMinSum, sum_div]
       have h2 : ∑ _h ∈ Ico 1 N, 1 / (N : ℝ) ≤ 1 := by
         rw [sum_const, Nat.card_Ico, nsmul_eq_mul, mul_one_div, div_le_one hN0]
         exact_mod_cast Nat.sub_le N 1
-      have hW : 0 ≤ W / (N : ℝ) ^ (j + 1) := div_nonneg (weylSum_nonneg _ _ _) (by positivity)
+      have hW : 0 ≤ W / (N : ℝ) ^ (j + 1) := div_nonneg (weylMinSum_nonneg _ _ _) (by positivity)
       calc 1 / (N : ℝ) * ∑ h ∈ Ico 1 N, x h ^ m
           ≤ 1 / N * (K * (1 + W / (N : ℝ) ^ (j + 1))) := by
             gcongr; exact h1.trans (by gcongr)
@@ -200,13 +200,13 @@ theorem sum_Ico_sum_Icc_mul_le {f : ℕ → ℝ} (hf : ∀ n, 0 ≤ f n) (N M : 
     exact Prod.ext h (Nat.eq_of_mul_eq_mul_left h1 h2)
 
 /-- The divisor bound turns the iterated sum into a single sum, at the cost of `N ^ δ`. -/
-theorem weylSum_le (j : ℕ) {δ : ℝ} (hδ : 0 < δ) : ∃ A : ℝ, 0 < A ∧
+theorem weylMinSum_le (j : ℕ) {δ : ℝ} (hδ : 0 < δ) : ∃ A : ℝ, 0 < A ∧
     ∀ (N : ℕ) (β : ℝ), 1 ≤ N →
-      weylSum N j β ≤ A * (N : ℝ) ^ δ * ∑ m ∈ Icc 1 (N ^ j), weylMin N (β * m) := by
+      weylMinSum N j β ≤ A * (N : ℝ) ^ δ * ∑ m ∈ Icc 1 (N ^ j), weylMin N (β * m) := by
   induction j generalizing δ with
   | zero =>
     refine ⟨1, one_pos, fun N β hN ↦ ?_⟩
-    simp only [weylSum, pow_zero, Icc_self, sum_singleton, Nat.cast_one, mul_one, one_mul]
+    simp only [weylMinSum, pow_zero, Icc_self, sum_singleton, Nat.cast_one, mul_one, one_mul]
     exact le_mul_of_one_le_left (weylMin_nonneg N β)
       (Real.one_le_rpow (by exact_mod_cast hN) hδ.le)
   | succ j ih =>
@@ -230,7 +230,7 @@ theorem weylSum_le (j : ℕ) {δ : ℝ} (hδ : 0 < δ) : ∃ A : ℝ, 0 < A ∧
             congr 1
             push_cast
             field_simp
-    calc weylSum N (j + 1) β = ∑ h ∈ Ico 1 N, weylSum N j (β * h) := rfl
+    calc weylMinSum N (j + 1) β = ∑ h ∈ Ico 1 N, weylMinSum N j (β * h) := rfl
       _ ≤ ∑ h ∈ Ico 1 N, A * (N : ℝ) ^ (δ / 2) * ∑ m ∈ Icc 1 (N ^ j), g (h * m) := by
           refine sum_le_sum fun h _ ↦ (hAj N _ hN).trans (le_of_eq ?_)
           congr 1
@@ -308,8 +308,8 @@ theorem norm_polyExpSum_le_weyl {k : ℕ} (hk : 1 ≤ k) {ε : ℝ} (hε : 0 < �
   simp only [Nat.add_sub_cancel]
   set δ := ε / 2
   have hδ : 0 < δ := half_pos hε
-  obtain ⟨K, hK, hKw⟩ := norm_polyExpSum_pow_le_weylSum j
-  obtain ⟨A, hA, hAw⟩ := weylSum_le j hδ
+  obtain ⟨K, hK, hKw⟩ := norm_polyExpSum_pow_le_weylMinSum j
+  obtain ⟨A, hA, hAw⟩ := weylMinSum_le j hδ
   have hF : (1 : ℝ) ≤ (j + 1).factorial := by exact_mod_cast Nat.factorial_pos _
   set F : ℝ := ((j + 1).factorial : ℝ)
   set D := 1 + Real.log (2 * F) + 2 * (j + 1) / δ
@@ -351,7 +351,7 @@ theorem norm_polyExpSum_le_weyl {k : ℕ} (hk : 1 ≤ k) {ε : ℝ} (hε : 0 < �
   push Not at hqN
   -- Weyl differencing, the divisor bound, and the type I bound
   set α := φ.coeff (j + 1)
-  set W := weylSum N j (F * α)
+  set W := weylMinSum N j (F * α)
   have h1 := hKw N N φ hN le_rfl hφ
   have h2 : W ≤ A * (N : ℝ) ^ δ * ∑ m ∈ Icc 1 (N ^ j), weylMin N (F * α * m) := hAw N _ hN
   have h3 := sum_weylMin_le hq ha hα N (N ^ j) (j + 1).factorial
