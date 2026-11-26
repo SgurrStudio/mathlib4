@@ -6697,6 +6697,7 @@ public import Mathlib.NumberTheory.Niven
 public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
+public import Mathlib.NumberTheory.Normal.BitCount
 public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.NumberTheory.Normal.Cassels
