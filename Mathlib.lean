@@ -5342,6 +5342,7 @@ public import Mathlib.Imported.TauCeti.Analysis.Calculus.IteratedFDeriv.Basic
 public import Mathlib.Imported.TauCeti.Analysis.Calculus.IteratedFDeriv.Bilinear
 public import Mathlib.Imported.TauCeti.Analysis.Calculus.IteratedFDeriv.CompLinear
 public import Mathlib.Imported.TauCeti.Analysis.Calculus.IteratedFDeriv.Prod
+public import Mathlib.Imported.TauCeti.Analysis.Complex.UpperHalfPlane.Exp
 public import Mathlib.Imported.TauCeti.Analysis.Fourier.Monomial
 public import Mathlib.Imported.TauCeti.Analysis.Fourier.ZMod
 public import Mathlib.Imported.TauCeti.Analysis.MvPolynomial.L1Norm
@@ -5375,10 +5376,13 @@ public import Mathlib.Imported.TauCeti.Data.Finsupp.Weight
 public import Mathlib.Imported.TauCeti.Data.Int.MaxAbs
 public import Mathlib.Imported.TauCeti.Data.Nat.Choose.Central
 public import Mathlib.Imported.TauCeti.Data.Nat.Factorial.NatCast
+public import Mathlib.Imported.TauCeti.Data.Nat.GCD
 public import Mathlib.Imported.TauCeti.Data.Rat.BoundedDen
 public import Mathlib.Imported.TauCeti.Data.Rat.NumDenDvd
 public import Mathlib.Imported.TauCeti.Data.ZMod.Count
 public import Mathlib.Imported.TauCeti.Data.ZMod.FinEquiv
+public import Mathlib.Imported.TauCeti.Data.ZMod.OrderOf
+public import Mathlib.Imported.TauCeti.Data.ZMod.Units
 public import Mathlib.Imported.TauCeti.Dynamics.BirkhoffSum.Average
 public import Mathlib.Imported.TauCeti.Dynamics.BirkhoffSum.Limsup
 public import Mathlib.Imported.TauCeti.Dynamics.BirkhoffSum.Maximal
@@ -5390,6 +5394,7 @@ public import Mathlib.Imported.TauCeti.GroupTheory.Coset.Fiber
 public import Mathlib.Imported.TauCeti.GroupTheory.Finiteness
 public import Mathlib.Imported.TauCeti.GroupTheory.NoncommPiCoprod
 public import Mathlib.Imported.TauCeti.GroupTheory.OrderOfElement.Cauchy
+public import Mathlib.Imported.TauCeti.GroupTheory.OrderOfElement.NegOne
 public import Mathlib.Imported.TauCeti.LinearAlgebra.Alternating.Basic
 public import Mathlib.Imported.TauCeti.LinearAlgebra.Alternating.LinearDependent
 public import Mathlib.Imported.TauCeti.LinearAlgebra.BilinearForm.Basic
@@ -5439,6 +5444,13 @@ public import Mathlib.Imported.TauCeti.MeasureTheory.Measure.ProbabilityMeasure.
 public import Mathlib.Imported.TauCeti.MeasureTheory.Measure.Real
 public import Mathlib.Imported.TauCeti.MeasureTheory.Measure.Restrict
 public import Mathlib.Imported.TauCeti.MeasureTheory.Measure.WithDensity
+public import Mathlib.Imported.TauCeti.NumberTheory.ArithmeticFunction.DivisorBounds
+public import Mathlib.Imported.TauCeti.NumberTheory.ArithmeticFunction.Misc
+public import Mathlib.Imported.TauCeti.NumberTheory.ArithmeticFunction.Sigma.Basic
+public import Mathlib.Imported.TauCeti.NumberTheory.ArithmeticFunction.TwistedDivisorSum
+public import Mathlib.Imported.TauCeti.NumberTheory.ArithmeticFunction.Zeta
+public import Mathlib.Imported.TauCeti.NumberTheory.CircleMethod.AdditiveCharacter
+public import Mathlib.Imported.TauCeti.NumberTheory.CircleMethod.TypeISum
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Exponent
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.HeightApproximation
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Roth.Auxiliary
@@ -5450,10 +5462,13 @@ public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Rot
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Roth.SumEstimate
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Roth.Theorem
 public import Mathlib.Imported.TauCeti.NumberTheory.DiophantineApproximation.Roth.ValueBounds
+public import Mathlib.Imported.TauCeti.NumberTheory.DirichletCharacter.Basic
+public import Mathlib.Imported.TauCeti.NumberTheory.Divisors
 public import Mathlib.Imported.TauCeti.NumberTheory.Equidistribution.Linear
 public import Mathlib.Imported.TauCeti.NumberTheory.Equidistribution.Polynomial
 public import Mathlib.Imported.TauCeti.NumberTheory.Equidistribution.VanDerCorput
 public import Mathlib.Imported.TauCeti.NumberTheory.Equidistribution.Weyl
+public import Mathlib.Imported.TauCeti.NumberTheory.Harmonic.Basic
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.Affine
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.Basic
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.Finsupp
@@ -5467,6 +5482,7 @@ public import Mathlib.Imported.TauCeti.NumberTheory.Height.Polynomial.Factor
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.Polynomial.RootMultiplicity
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.Rat
 public import Mathlib.Imported.TauCeti.NumberTheory.Height.SInteger
+public import Mathlib.Imported.TauCeti.NumberTheory.MulChar.Basic
 public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.AdjoinPair
 public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.FinitePlace.Basic
 public import Mathlib.Imported.TauCeti.NumberTheory.NumberField.Global.Places.Basic

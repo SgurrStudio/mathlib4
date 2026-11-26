@@ -16,6 +16,15 @@ mathematics, namespaces and authorship are unchanged. Each subfolder records its
   * `TauCeti.Probability.Ergodic.PointwiseErgodic` (**Birkhoff's pointwise ergodic theorem**),
   * `TauCeti.NumberTheory.Equidistribution.Polynomial` (**Weyl's criterion**, van der Corput's
     inequality and difference theorem, Weyl's polynomial equidistribution theorem).
+* Also imported from `main` at commit
+  [`3f8fe7e39a6021d79ff29476fca5b92b73861bf2`](https://github.com/TauCetiProject/TauCeti/tree/3f8fe7e39a6021d79ff29476fca5b92b73861bf2):
+  the closure (16 new files; the 4 shared files are unchanged) of
+  * `TauCeti.NumberTheory.CircleMethod.TypeISum` (the **type I bound**
+    `∑_{m ≤ M} min(X / m, 1 / ‖mα‖) ≤ 16 (X / q + M + q) log (2Mq)`,
+    `TauCeti.sum_min_inv_distInt_le`, the circle-method input to Weyl's inequality),
+  * `TauCeti.NumberTheory.ArithmeticFunction.DivisorBounds` (the **divisor bound**
+    `d(n) ≪_ε n ^ ε`, `exists_pos_card_divisors_le_rpow`).
+  These need no porting changes.
 * Authors: the Tau Ceti contributors.
 
 ## `NormalNumbers/`
