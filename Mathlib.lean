@@ -6735,6 +6735,7 @@ public import Mathlib.NumberTheory.Normal.FiniteState
 public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.Interleaving
+public import Mathlib.NumberTheory.Normal.LosslessTransducer
 public import Mathlib.NumberTheory.Normal.MorseHedlund
 public import Mathlib.NumberTheory.Normal.MulRigidity
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
