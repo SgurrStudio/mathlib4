@@ -6707,6 +6707,7 @@ public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.NumberTheory.MulChar.Lemmas
 public import Mathlib.NumberTheory.Multiplicity
 public import Mathlib.NumberTheory.Niven
+public import Mathlib.NumberTheory.Normal.Agafonov
 public import Mathlib.NumberTheory.Normal.Algebraic
 public import Mathlib.NumberTheory.Normal.BaileyCrandall
 public import Mathlib.NumberTheory.Normal.BaireCategory
@@ -6729,6 +6730,7 @@ public import Mathlib.NumberTheory.Normal.Discrepancy
 public import Mathlib.NumberTheory.Normal.ErdosTuran
 public import Mathlib.NumberTheory.Normal.Exp
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.FiniteState
 public import Mathlib.NumberTheory.Normal.FormalConjectures
 public import Mathlib.NumberTheory.Normal.FormalConjecturesComplexity
 public import Mathlib.NumberTheory.Normal.Interleaving
