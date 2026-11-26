@@ -66,7 +66,8 @@ proof_wanted exists_affine_of_contDiff_two_preserves_isAbsolutelyNormal {f : ℝ
 
 The absolute-normality versions, and the base-`b` versions for `b = 2 ^ k`, are proved in
 `Mathlib.NumberTheory.Normal.NonPreservation`
-(`Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq` and its `inv`, `exp` siblings).
+(`Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq` and its `inv`, `exp`, `mobius`
+siblings).
 The general base `b` needs a base-`b` analogue of the quarter-Cantor set. -/
 
 /-- Squaring does not preserve base-`b` normality (`b ≥ 2`). -/
@@ -86,12 +87,6 @@ preserves base-`b` normality (`b ≥ 2`). -/
 proof_wanted exists_isNormalIn_not_isNormalIn_mobius {b : ℕ} (hb : 2 ≤ b)
     (a₁ a₂ c d : ℝ) (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn b ((a₁ * x + a₂) / (c * x + d))
-
-/-- No non-degenerate Möbius transformation `x ↦ (a₁ * x + a₂) / (c * x + d)` with `c ≠ 0`
-preserves absolute normality. -/
-proof_wanted exists_isAbsolutelyNormal_not_isAbsolutelyNormal_mobius
-    (a₁ a₂ c d : ℝ) (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
-    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal ((a₁ * x + a₂) / (c * x + d))
 
 /-! ### Sharpness of `C²` rigidity -/
 

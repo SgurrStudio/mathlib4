@@ -12,7 +12,7 @@ public import Mathlib.NumberTheory.Normal.Bridge
 public import Mathlib.NumberTheory.Normal.QuarterCantorDecay
 
 /-!
-# Squaring, inversion and the exponential do not preserve normality
+# Squaring, inversion, the exponential and Möbius maps do not preserve normality
 
 Let `y` run over the quarter-Cantor set (`NormalNumbers.CantorSelfSimilar.cantorReal`): its
 base-`4` digits are all `1` or `2`, so `y` is not normal in any base `2 ^ k`. For `G` one of
@@ -30,6 +30,8 @@ pushforward of the quarter-Cantor law under `G` has polynomial Fourier decay
   witness for the `√` case of Manai's Theorem 2.
 * `Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_sq`, `..._inv`, `..._exp`
 * `Real.exists_isNormalIn_two_pow_not_isNormalIn_sq`, `..._inv`, `..._exp`: bases `b = 2 ^ k`
+* `Real.exists_isAbsolutelyNormal_not_isAbsolutelyNormal_mobius` and
+  `Real.exists_isNormalIn_two_pow_not_isNormalIn_mobius`: Möbius maps with `c ≠ 0`
 
 ## References
 
@@ -194,6 +196,13 @@ theorem exists_of_ae {G H : ℝ → ℝ}
   rw [hHG _ (cantorReal_mem_window ω)]
   exact not_isNormalIn_two_pow_cantorReal ω hk
 
+/-- **Möbius maps.** For `c ≠ 0` and nonzero determinant there is an absolutely normal `x`
+whose Möbius image is a quarter-Cantor point plus an integer. -/
+theorem exists_isAbsolutelyNormal_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
+    (hdet : a₁ * d - a₂ * c ≠ 0) : ∃ x : ℝ, Real.IsAbsolutelyNormal x ∧
+      ∃ ω : ℕ → Bool, ∃ r : ℤ, (a₁ * x + a₂) / (c * x + d) = cantorReal ω + r := by
+  sorry
+
 end NormalNumbers.QuarterCantorDecay
 
 namespace Real
@@ -257,5 +266,24 @@ theorem exists_isNormalIn_two_pow_not_isNormalIn_exp {k : ℕ} (hk : 0 < k) :
     ∃ x : ℝ, IsNormalIn (2 ^ k) x ∧ ¬ IsNormalIn (2 ^ k) (Real.exp x) := by
   obtain ⟨x, hx, h⟩ := exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_exp
   exact ⟨x, hx _ (two_le_two_pow hk), h k hk⟩
+
+/-- An absolutely normal number whose image under a Möbius map with `c ≠ 0` is not normal in any
+base `2 ^ k`. -/
+theorem exists_isAbsolutelyNormal_forall_not_isNormalIn_two_pow_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
+    (hdet : a₁ * d - a₂ * c ≠ 0) : ∃ x : ℝ, IsAbsolutelyNormal x ∧
+      ∀ k : ℕ, 0 < k → ¬ IsNormalIn (2 ^ k) ((a₁ * x + a₂) / (c * x + d)) := by
+  sorry
+
+/-- No Möbius map with `c ≠ 0` preserves absolute normality. -/
+theorem exists_isAbsolutelyNormal_not_isAbsolutelyNormal_mobius (a₁ a₂ c d : ℝ) (hc : c ≠ 0)
+    (hdet : a₁ * d - a₂ * c ≠ 0) :
+    ∃ x : ℝ, IsAbsolutelyNormal x ∧ ¬ IsAbsolutelyNormal ((a₁ * x + a₂) / (c * x + d)) := by
+  sorry
+
+/-- No Möbius map with `c ≠ 0` preserves normality in base `2 ^ k`. -/
+theorem exists_isNormalIn_two_pow_not_isNormalIn_mobius {k : ℕ} (hk : 0 < k) (a₁ a₂ c d : ℝ)
+    (hc : c ≠ 0) (hdet : a₁ * d - a₂ * c ≠ 0) :
+    ∃ x : ℝ, IsNormalIn (2 ^ k) x ∧ ¬ IsNormalIn (2 ^ k) ((a₁ * x + a₂) / (c * x + d)) := by
+  sorry
 
 end Real
