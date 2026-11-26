@@ -6742,6 +6742,7 @@ public import Mathlib.NumberTheory.Normal.Ridout
 public import Mathlib.NumberTheory.Normal.Schmidt
 public import Mathlib.NumberTheory.Normal.SchmidtGeneral
 public import Mathlib.NumberTheory.Normal.SchmidtPrimePower
+public import Mathlib.NumberTheory.Normal.SlidingWindow
 public import Mathlib.NumberTheory.Normal.SqrtTwo
 public import Mathlib.NumberTheory.Normal.Stoneham
 public import Mathlib.NumberTheory.Normal.StonehamNonNormal
