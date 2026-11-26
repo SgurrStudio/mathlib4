@@ -6703,6 +6703,7 @@ public import Mathlib.NumberTheory.Normal.CopelandErdos
 public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.DifferenceTest
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Stoneham
