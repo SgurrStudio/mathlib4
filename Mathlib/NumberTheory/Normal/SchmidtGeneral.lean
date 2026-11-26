@@ -25,11 +25,12 @@ Choose a prime `p ∣ q` minimising `v_p(b) / v_p(q)` and put `s = v_p(q)`, `r =
 Fourier coefficient is at most `Ψ_K(pᵉ Y Bᵐ)`.
 
 * By the Chinese remainder theorem, `1/q^{i+1}` splits into a `p`-part with a unit numerator and a
-  `q'`-part (`exists_Psi_le_Phi`). Once `m ≥ K q'`, the `q'`-part is periodic in `m` with period
-  `φ(q'ᴷ)` (`dvd_pow_mul_pow_totient_sub_one`), so on each residue class it is a fixed phase.
+  `q'`-part (`exists_rieszPsi_le_rieszPhi`). Once `m ≥ K q'`, the `q'`-part is periodic in `m`
+  with period `φ(q'ᴷ)` (`dvd_pow_mul_pow_totient_sub_one`), so on each residue class it is a
+  fixed phase.
 * Along the class, `Bᵐ` runs through a residue class modulo `pᵗ` with `t` bounded independently of
-  `K` (lifting the exponent, `tg_pow_totient`), and averaging the `p`-part over such a class gains a
-  factor `1/√2` for each further digit (`sum_Phi_class_le`).
+  `K` (lifting the exponent, `lteVal_pow_totient`), and averaging the `p`-part over such a class
+  gains a factor `1/√2` for each further digit (`sum_rieszPhi_class_le`).
 * The pairs where `v_p(bᵈ − 1)` is large are few (`card_bad_le`).
 
 Together these give the second moment bound `secondMoment_le` and `ae_isNormal`.
@@ -102,20 +103,20 @@ theorem sum_abs_cos_mul_le (q : ℕ) (hq : 1 ≤ q) (a : ℤ) (ha : ¬ (q : ℤ)
 /-! ### Riesz products with unit multipliers and phases -/
 
 /-- `Φ_K(z) = ∏_{i<K} |cos(π(aᵢ z / p^{γ(i+1)+δ} + βᵢ))|`. -/
-noncomputable def Phi (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) : ℝ :=
+noncomputable def rieszPhi (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) : ℝ :=
   ∏ i ∈ Finset.range K, |Real.cos (Real.pi * (a i * z / (p : ℝ) ^ (γ * (i + 1) + δ) + β i))|
 
-theorem Phi_nonneg (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
-    0 ≤ Phi p γ δ a β K z :=
+theorem rieszPhi_nonneg (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
+    0 ≤ rieszPhi p γ δ a β K z :=
   Finset.prod_nonneg fun _ _ ↦ abs_nonneg _
 
-theorem Phi_le_one (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
-    Phi p γ δ a β K z ≤ 1 :=
+theorem rieszPhi_le_one (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
+    rieszPhi p γ δ a β K z ≤ 1 :=
   Finset.prod_le_one₀ (fun _ _ ↦ abs_nonneg _) fun _ _ ↦ Real.abs_cos_le_one _
 
-theorem Phi_add (p γ δ : ℕ) (hp : 1 ≤ p) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) (w : ℤ) :
-    Phi p γ δ a β K (z + (p : ℝ) ^ (γ * K + δ) * w) = Phi p γ δ a β K z := by
-  unfold Phi
+theorem rieszPhi_add (p γ δ : ℕ) (hp : 1 ≤ p) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) (w : ℤ) :
+    rieszPhi p γ δ a β K (z + (p : ℝ) ^ (γ * K + δ) * w) = rieszPhi p γ δ a β K z := by
+  unfold rieszPhi
   refine Finset.prod_congr rfl fun i hi ↦ ?_
   simp only [Finset.mem_range] at hi
   have hp0 : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
@@ -130,24 +131,24 @@ theorem Phi_add (p γ δ : ℕ) (hp : 1 ≤ p) (a : ℕ → ℤ) (β : ℕ → �
     rw [hK]; push_cast; field_simp; ring
   rw [this, abs_cos_add_int_mul_pi]
 
-theorem Phi_succ (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
-    Phi p γ δ a β (K + 1) z = Phi p γ δ a β K z *
+theorem rieszPhi_succ (p γ δ : ℕ) (a : ℕ → ℤ) (β : ℕ → ℝ) (K : ℕ) (z : ℝ) :
+    rieszPhi p γ δ a β (K + 1) z = rieszPhi p γ δ a β K z *
       |Real.cos (Real.pi * (a K * z / (p : ℝ) ^ (γ * (K + 1) + δ) + β K))| :=
   Finset.prod_range_succ _ _
 
 /-- **Averaging `Φ` over a residue class.** If `τ + n₀ = γ K₀ + δ`, the average of `Φ_{K₀+I}`
 over one period of the class `c₀ + pᵗ ℤ` is at most `2^{-I/2}`. -/
-theorem sum_Phi_class_le (p γ δ : ℕ) (hp : 2 ≤ p) (hγ : 1 ≤ γ) (a : ℕ → ℤ)
+theorem sum_rieszPhi_class_le (p γ δ : ℕ) (hp : 2 ≤ p) (hγ : 1 ≤ γ) (a : ℕ → ℤ)
     (ha : ∀ i, ¬ (p : ℤ) ∣ a i) (β : ℕ → ℝ) (τ n₀ K₀ : ℕ) (hK : τ + n₀ = γ * K₀ + δ)
     (c₀ : ℝ) (I : ℕ) :
-    ∑ j ∈ Finset.range (p ^ n₀ * (p ^ γ) ^ I), Phi p γ δ a β (K₀ + I) (c₀ + p ^ τ * j) ≤
+    ∑ j ∈ Finset.range (p ^ n₀ * (p ^ γ) ^ I), rieszPhi p γ δ a β (K₀ + I) (c₀ + p ^ τ * j) ≤
       p ^ n₀ * (p ^ γ) ^ I * Real.sqrt 2⁻¹ ^ I := by
   set q := p ^ γ with hq
   have hq2 : 2 ≤ q := le_trans hp (Nat.le_self_pow (by omega) p)
   induction I with
   | zero =>
     simp only [pow_zero, mul_one, add_zero]
-    refine (Finset.sum_le_sum fun j _ ↦ Phi_le_one _ _ _ _ _ _ _).trans ?_
+    refine (Finset.sum_le_sum fun j _ ↦ rieszPhi_le_one _ _ _ _ _ _ _).trans ?_
     simp
   | succ I ih =>
     set L := p ^ n₀ * q ^ I
@@ -157,15 +158,15 @@ theorem sum_Phi_class_le (p γ δ : ℕ) (hp : 2 ≤ p) (hγ : 1 ≤ γ) (a : �
     rw [show p ^ n₀ * q ^ (I + 1) = L * q by simp only [L]; ring, sum_range_mul_eq,
       Finset.sum_comm]
     have hp0 : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.2 (by omega)
-    have hterm : ∀ u t : ℕ, Phi p γ δ a β (K₀ + (I + 1)) (c₀ + p ^ τ * ((L * t + u : ℕ) : ℝ)) =
-        Phi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u) *
+    have hterm : ∀ u t : ℕ, rieszPhi p γ δ a β (K₀ + (I + 1)) (c₀ + p ^ τ * ((L * t + u : ℕ) : ℝ)) =
+        rieszPhi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u) *
           |Real.cos (Real.pi * (a (K₀ + I) * (c₀ + p ^ τ * u) /
             (p : ℝ) ^ (γ * (K₀ + I + 1) + δ) + β (K₀ + I)) + Real.pi * a (K₀ + I) * t / q)| := by
       intro u t
       have e : c₀ + (p : ℝ) ^ τ * ((L * t + u : ℕ) : ℝ) =
           (c₀ + p ^ τ * u) + (p : ℝ) ^ (γ * (K₀ + I) + δ) * ((t : ℤ) : ℝ) := by
         push_cast; rw [← hL]; ring
-      rw [← add_assoc, Phi_succ, e, Phi_add p γ δ (by omega)]
+      rw [← add_assoc, rieszPhi_succ, e, rieszPhi_add p γ δ (by omega)]
       simp only [Int.cast_natCast]
       congr 2
       have hpow : (p : ℝ) ^ (γ * (K₀ + I + 1) + δ) = (p : ℝ) ^ (γ * (K₀ + I) + δ) * q := by
@@ -174,11 +175,11 @@ theorem sum_Phi_class_le (p γ δ : ℕ) (hp : 2 ≤ p) (hγ : 1 ≤ γ) (a : �
     simp_rw [hterm, ← Finset.mul_sum]
     have haq : ∀ i, ¬ ((q : ℕ) : ℤ) ∣ a i := fun i h ↦
       ha i ((Int.natCast_dvd_natCast.2 (dvd_pow_self p (by omega))).trans h)
-    calc _ ≤ ∑ u ∈ Finset.range L, Phi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u) *
+    calc _ ≤ ∑ u ∈ Finset.range L, rieszPhi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u) *
             (q * Real.sqrt 2⁻¹) :=
           Finset.sum_le_sum fun u _ ↦ mul_le_mul_of_nonneg_left
-            (sum_abs_cos_mul_le q (by omega) _ (haq _) _) (Phi_nonneg _ _ _ _ _ _ _)
-      _ = (∑ u ∈ Finset.range L, Phi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u)) *
+            (sum_abs_cos_mul_le q (by omega) _ (haq _) _) (rieszPhi_nonneg _ _ _ _ _ _ _)
+      _ = (∑ u ∈ Finset.range L, rieszPhi p γ δ a β (K₀ + I) (c₀ + p ^ τ * u)) *
             (q * Real.sqrt 2⁻¹) := (Finset.sum_mul _ _ _).symm
       _ ≤ (L * Real.sqrt 2⁻¹ ^ I) * (q * Real.sqrt 2⁻¹) := by
           gcongr; exact_mod_cast ih
@@ -299,11 +300,11 @@ theorem crt_identity {E P Q x y z z₁ w R : ℝ} (hE : E ≠ 0) (hP : P ≠ 0) 
 
 /-- **CRT splitting of `Ψ`.** With `q = p^γ q'`, `p ∤ q'` and `e + δ = γ i₁`, the factors
 `i ≥ i₁` of `Ψ_{i₁+K'}(pᵉ z)` form a `Φ` whose phases only depend on `z mod q'^{i₁+K'}`. -/
-theorem exists_Psi_le_Phi (p γ q' : ℕ) (hp : p.Prime) (hγ : 1 ≤ γ) (hq' : 1 ≤ q')
+theorem exists_rieszPsi_le_rieszPhi (p γ q' : ℕ) (hp : p.Prime) (hγ : 1 ≤ γ) (hq' : 1 ≤ q')
     (hpq : ¬ p ∣ q') (e δ i₁ K' : ℕ) (he : e + δ = γ * i₁) :
     ∃ a : ℕ → ℤ, (∀ i, ¬ (p : ℤ) ∣ a i) ∧ ∀ z₁ : ℤ, ∃ β : ℕ → ℝ, ∀ z : ℤ,
       (q' : ℤ) ^ (i₁ + K') ∣ z - z₁ →
-      Psi (p ^ γ * q') (i₁ + K') ((p : ℝ) ^ e * z) ≤ Phi p γ δ a β K' z := by
+      rieszPsi (p ^ γ * q') (i₁ + K') ((p : ℝ) ^ e * z) ≤ rieszPhi p γ δ a β K' z := by
   have hcop : ∀ i, ∃ u v : ℤ,
       u * (q' : ℤ) ^ (i₁ + i + 1) + v * (p : ℤ) ^ (γ * (i + 1) + δ) = 1 := fun i ↦
     IsCoprime.pow (Nat.isCoprime_iff_coprime.2 ((Nat.Prime.coprime_iff_not_dvd hp).2 hpq).symm)
@@ -317,7 +318,7 @@ theorem exists_Psi_le_Phi (p γ q' : ℕ) (hp : p.Prime) (hγ : 1 ≤ γ) (hq' :
     exact hp.one_lt.ne' (Nat.dvd_one.1 this)
   refine ⟨fun i ↦ y i * z₁ / (q' : ℝ) ^ (i₁ + i + 1), fun z hz ↦ ?_⟩
   obtain ⟨w, hw⟩ := hz
-  unfold Psi Phi
+  unfold rieszPsi rieszPhi
   rw [Finset.prod_range_add]
   have h1 : ∏ i ∈ Finset.range i₁,
       |Real.cos (Real.pi * ((p : ℝ) ^ e * z) / ((p ^ γ * q' : ℕ) : ℝ) ^ (i + 1))| ≤ 1 :=
@@ -359,25 +360,25 @@ theorem dvd_pow_mul_pow_sub_one {B c' K : ℕ} (hB : 1 ≤ B) (hc' : 1 ≤ c') {
   exact (dvd_pow_mul_pow_totient_sub_one hB hc' hM).trans
     (mul_dvd_mul_left _ (Nat.pow_sub_one_dvd_pow_sub_one B hD))
 
-theorem tg_pow_totient {p : ℕ} [hp : Fact p.Prime] {B c' : ℕ} (hB : ¬ p ∣ B) (hB2 : 2 ≤ B)
+theorem lteVal_pow_totient {p : ℕ} [hp : Fact p.Prime] {B c' : ℕ} (hB : ¬ p ∣ B) (hB2 : 2 ≤ B)
     (hc' : 1 ≤ c') (hpc : ¬ p ∣ c') {K : ℕ} (hK : 1 ≤ K) :
-    tg p (B ^ Nat.totient (c' ^ K)) = tg p B + multiplicity p (Nat.totient c') := by
+    lteVal p (B ^ Nat.totient (c' ^ K)) = lteVal p B + multiplicity p (Nat.totient c') := by
   have hΦ : Nat.totient (c' ^ K) ≠ 0 := (Nat.totient_pos.2 (pow_pos (by omega) _)).ne'
-  rw [← multiplicity_totient_pow hc' hpc hK, ← lte_Eg hB hB2 hΦ]
-  simp only [tg]; rw [← pow_mul, ← pow_mul, mul_comm]
+  rw [← multiplicity_totient_pow hc' hpc hK, ← lte_lteExp hB hB2 hΦ]
+  simp only [lteVal]; rw [← pow_mul, ← pow_mul, mul_comm]
 
 /-- **Orbit sum.** With `q = p^γ q'`, `p ∤ q'B Y`, `e + δ = γ i₁` and `K' ≥ T + 1`,
 `∑_{m<S} Ψ_{i₁+K'}(pᵉ Y Bᵐ) ≤ (i₁+K') q' + (S + E q^{i₁+K'}) 2^{-(K'-T-1)/2}`. -/
-theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (hq' : 1 ≤ q')
+theorem sum_rieszPsi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (hq' : 1 ≤ q')
     (hpq : ¬ p ∣ q') {B : ℕ} (hB : ¬ p ∣ B) (hB2 : 2 ≤ B) (Y : ℕ) (hY : ¬ p ∣ Y)
     (e δ i₁ K' : ℕ) (he : e + δ = γ * i₁)
-    (hK' : tg p B + multiplicity p (Nat.totient q') + 1 ≤ K') (S : ℕ) :
-    ∑ m ∈ Finset.range S, Psi (p ^ γ * q') (i₁ + K') ((p : ℝ) ^ e * ((Y * B ^ m : ℕ) : ℝ)) ≤
-      (i₁ + K') * q' + (S + Eg p * ((p ^ γ * q' : ℕ) : ℝ) ^ (i₁ + K')) *
-        Real.sqrt 2⁻¹ ^ (K' - (tg p B + multiplicity p (Nat.totient q')) - 1) := by
+    (hK' : lteVal p B + multiplicity p (Nat.totient q') + 1 ≤ K') (S : ℕ) :
+    ∑ m ∈ Finset.range S, rieszPsi (p ^ γ * q') (i₁ + K') ((p : ℝ) ^ e * ((Y * B ^ m : ℕ) : ℝ)) ≤
+      (i₁ + K') * q' + (S + lteExp p * ((p ^ γ * q' : ℕ) : ℝ) ^ (i₁ + K')) *
+        Real.sqrt 2⁻¹ ^ (K' - (lteVal p B + multiplicity p (Nat.totient q')) - 1) := by
   obtain ⟨K, hKdef⟩ : ∃ K, K = i₁ + K' := ⟨_, rfl⟩
   obtain ⟨q, hqdef⟩ : ∃ q, q = p ^ γ * q' := ⟨_, rfl⟩
-  obtain ⟨T, hTdef⟩ : ∃ T, T = tg p B + multiplicity p (Nat.totient q') := ⟨_, rfl⟩
+  obtain ⟨T, hTdef⟩ : ∃ T, T = lteVal p B + multiplicity p (Nat.totient q') := ⟨_, rfl⟩
   rw [← hKdef, ← hqdef, ← hTdef]
   rw [← hTdef] at hK'
   set ρ := Real.sqrt 2⁻¹
@@ -386,15 +387,15 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
   have hK1 : 1 ≤ K := by omega
   obtain ⟨Φ, hΦdef⟩ : ∃ Φ, Φ = Nat.totient (q' ^ K) := ⟨_, rfl⟩
   have hΦ0 : 0 < Φ := hΦdef ▸ Nat.totient_pos.2 (pow_pos (by omega) _)
-  obtain ⟨E, hEdef⟩ : ∃ E, E = Eg p := ⟨_, rfl⟩
-  have hE : 1 ≤ E := by rw [hEdef, Eg]; omega
+  obtain ⟨E, hEdef⟩ : ∃ E, E = lteExp p := ⟨_, rfl⟩
+  have hE : 1 ≤ E := by rw [hEdef, lteExp]; omega
   obtain ⟨mB, hmBdef⟩ : ∃ mB, mB = B ^ Φ := ⟨_, rfl⟩
   have hmB2 : 2 ≤ mB := hmBdef ▸ le_trans hB2 (Nat.le_self_pow hΦ0.ne' B)
   have hmB : ¬ p ∣ mB := fun h ↦ hB (hp.out.dvd_of_dvd_pow (hmBdef ▸ h))
-  obtain ⟨t, htdef⟩ : ∃ t, t = tg p mB := ⟨_, rfl⟩
-  have ht : t = T := by rw [htdef, hmBdef, hΦdef, hTdef, tg_pow_totient hB hB2 hq' hpq hK1]
+  obtain ⟨t, htdef⟩ : ∃ t, t = lteVal p mB := ⟨_, rfl⟩
+  have ht : t = T := by rw [htdef, hmBdef, hΦdef, hTdef, lteVal_pow_totient hB hB2 hq' hpq hK1]
   obtain ⟨L, hLdef⟩ : ∃ L, L = Φ * E := ⟨_, rfl⟩
-  have hgL : mB ^ Eg p = B ^ L := by rw [hmBdef, hLdef, hEdef, ← pow_mul]
+  have hgL : mB ^ lteExp p = B ^ L := by rw [hmBdef, hLdef, hEdef, ← pow_mul]
   have htK : t + 1 ≤ K' := by omega
   have htγ : t ≤ γ * K' := le_trans (by omega) (Nat.le_mul_of_pos_left K' (by omega))
   obtain ⟨n, hndef⟩ : ∃ n, n = γ * K' + δ - t := ⟨_, rfl⟩
@@ -403,8 +404,8 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
   have hP0 : 0 < P := by
     rw [hPdef, hLdef]; exact Nat.mul_pos (Nat.mul_pos hΦ0 (by omega)) (pow_pos (by omega) _)
   obtain ⟨m₀, hm₀⟩ : ∃ m₀, m₀ = K * q' := ⟨_, rfl⟩
-  set f : ℕ → ℝ := fun m ↦ Psi q K ((p : ℝ) ^ e * ((Y * B ^ m : ℕ) : ℝ)) with hf
-  have hf0 : ∀ m, 0 ≤ f m := fun m ↦ Psi_nonneg _ _ _
+  set f : ℕ → ℝ := fun m ↦ rieszPsi q K ((p : ℝ) ^ e * ((Y * B ^ m : ℕ) : ℝ)) with hf
+  have hf0 : ∀ m, 0 ≤ f m := fun m ↦ rieszPsi_nonneg _ _ _
   -- the first `m₀` terms
   have h1 : ∑ m ∈ Finset.range S, f m ≤ m₀ + ∑ m ∈ Finset.range S, f (m₀ + m) := by
     calc ∑ m ∈ Finset.range S, f m ≤ ∑ m ∈ Finset.range (m₀ + S), f m :=
@@ -415,13 +416,13 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
       _ ≤ m₀ + ∑ m ∈ Finset.range S, f (m₀ + m) := by
           gcongr
           calc ∑ m ∈ Finset.range m₀, f m ≤ ∑ m ∈ Finset.range m₀, (1 : ℝ) :=
-                Finset.sum_le_sum fun m _ ↦ Psi_le_one _ _ _
+                Finset.sum_le_sum fun m _ ↦ rieszPsi_le_one _ _ _
             _ = m₀ := by simp
   -- divisibilities
   have hdvdq : ∀ M D, m₀ ≤ M → Φ ∣ D → q' ^ K ∣ B ^ M * (B ^ D - 1) := fun M D hM hD ↦
     dvd_pow_mul_pow_sub_one (by omega) hq' (hm₀ ▸ hM) (hΦdef ▸ hD)
   have hdvdp : p ^ (t + n) ∣ B ^ P - 1 := by
-    have := dvd_pow_Eg_pow_sub_one hmB hmB2 n
+    have := dvd_pow_lteExp_pow_sub_one hmB hmB2 n
     rwa [hgL, ← pow_mul, ← htdef, ← hPdef] at this
   have hcopq : Nat.Coprime (p ^ (t + n)) (q' ^ K) :=
     Nat.Coprime.pow _ _ ((Nat.Prime.coprime_iff_not_dvd hp.out).2 hpq)
@@ -446,9 +447,9 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
     have hq1 : 1 ≤ q := by
       rw [hqdef]; exact Nat.one_le_iff_ne_zero.2 (mul_ne_zero (pow_ne_zero _ hp.out.ne_zero)
         (by omega))
-    rw [this, Psi_add q K hq1]
+    rw [this, rieszPsi_add q K hq1]
   -- one residue class of `m` modulo `L`
-  obtain ⟨a, ha, hβ⟩ := exists_Psi_le_Phi p γ q' hp.out hγ hq' hpq e δ i₁ K' he
+  obtain ⟨a, ha, hβ⟩ := exists_rieszPsi_le_rieszPhi p γ q' hp.out hγ hq' hpq e δ i₁ K' he
   have hclass : ∀ u, ∑ j ∈ Finset.range (p ^ n), f (m₀ + (L * j + u)) ≤
       p ^ n * ρ ^ (K' - t - 1) := by
     intro u
@@ -460,38 +461,39 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
       · exact hB (hp.out.dvd_of_dvd_pow h)
     obtain ⟨β, hβ'⟩ := hβ (c : ℤ)
     have hfj : ∀ j, f (m₀ + (L * j + u)) ≤
-        Phi p γ δ a β K' ((c * (mB ^ Eg p) ^ j : ℕ) : ℝ) := by
+        rieszPhi p γ δ a β K' ((c * (mB ^ lteExp p) ^ j : ℕ) : ℝ) := by
       intro j
-      have heq : Y * B ^ (m₀ + (L * j + u)) = c * (mB ^ Eg p) ^ j := by
+      have heq : Y * B ^ (m₀ + (L * j + u)) = c * (mB ^ lteExp p) ^ j := by
         rw [hcdef, hgL, ← pow_mul, mul_assoc, ← pow_add]; congr 2; ring
       simp only [hf]; rw [heq]
       have hg1 : 1 ≤ B ^ (L * j) := Nat.one_le_pow _ _ (by omega)
       have hd := hdvdq (m₀ + u) (L * j) (by omega)
         (by rw [hLdef]; exact ((dvd_mul_right Φ E).mul_right j))
-      have h2 : (q' : ℤ) ^ (i₁ + K') ∣ ((c * (mB ^ Eg p) ^ j : ℕ) : ℤ) - (c : ℤ) := by
-        have : ((c * (mB ^ Eg p) ^ j : ℕ) : ℤ) - (c : ℤ) =
+      have h2 : (q' : ℤ) ^ (i₁ + K') ∣ ((c * (mB ^ lteExp p) ^ j : ℕ) : ℤ) - (c : ℤ) := by
+        have : ((c * (mB ^ lteExp p) ^ j : ℕ) : ℤ) - (c : ℤ) =
             ((Y * (B ^ (m₀ + u) * (B ^ (L * j) - 1)) : ℕ) : ℤ) := by
           rw [hcdef, hgL, ← pow_mul]; push_cast [Nat.cast_sub hg1]; ring
         rw [this, ← hKdef]; exact_mod_cast hd.mul_left Y
       have := hβ' _ h2
       rw [← hKdef, ← hqdef] at this
       exact_mod_cast this
-    have hF : ∀ w z : ℕ, Phi p γ δ a β K' (((w + p ^ (t + n) * z : ℕ) : ℝ)) =
-        Phi p γ δ a β K' ((w : ℕ) : ℝ) := by
+    have hF : ∀ w z : ℕ, rieszPhi p γ δ a β K' (((w + p ^ (t + n) * z : ℕ) : ℝ)) =
+        rieszPhi p γ δ a β K' ((w : ℕ) : ℝ) := by
       intro w z
-      have := Phi_add p γ δ (by omega) a β K' (w : ℝ) (z : ℤ)
+      have := rieszPhi_add p γ δ (by omega) a β K' (w : ℝ) (z : ℤ)
       rw [← htn] at this; push_cast; exact_mod_cast this
     calc ∑ j ∈ Finset.range (p ^ n), f (m₀ + (L * j + u))
-        ≤ ∑ j ∈ Finset.range (p ^ n), Phi p γ δ a β K' ((c * (mB ^ Eg p) ^ j : ℕ) : ℝ) :=
+        ≤ ∑ j ∈ Finset.range (p ^ n), rieszPhi p γ δ a β K' ((c * (mB ^ lteExp p) ^ j : ℕ) : ℝ) :=
           Finset.sum_le_sum fun j _ ↦ hfj j
-      _ = ∑ j ∈ Finset.range (p ^ n), Phi p γ δ a β K' ((c % p ^ t + p ^ t * j : ℕ) : ℝ) :=
-          orbit_sum_eq p (mB ^ Eg p) t n c (by have := two_le_pow_Eg hp.out hmB2 (p := p); omega)
-            (fun h ↦ hmB (hp.out.dvd_of_dvd_pow h)) (htdef ▸ pow_tg_dvd p mB)
-            (htdef ▸ not_dvd_pow_Eg_sub_one hmB hmB2 n) hc
-            (fun w ↦ Phi p γ δ a β K' (w : ℝ)) hF
+      _ = ∑ j ∈ Finset.range (p ^ n), rieszPhi p γ δ a β K' ((c % p ^ t + p ^ t * j : ℕ) : ℝ) :=
+          orbit_sum_eq p (mB ^ lteExp p) t n c
+            (by have := two_le_pow_lteExp hp.out hmB2 (p := p); omega)
+            (fun h ↦ hmB (hp.out.dvd_of_dvd_pow h)) (htdef ▸ pow_lteVal_dvd p mB)
+            (htdef ▸ not_dvd_pow_lteExp_sub_one hmB hmB2 n) hc
+            (fun w ↦ rieszPhi p γ δ a β K' (w : ℝ)) hF
       _ ≤ p ^ n * ρ ^ (K' - t - 1) := by
           have htt : t ≤ γ * (t + 1) := le_trans (by omega) (Nat.le_mul_of_pos_left _ (by omega))
-          have h := sum_Phi_class_le p γ δ hp2 hγ a ha β t (γ * (t + 1) + δ - t) (t + 1)
+          have h := sum_rieszPhi_class_le p γ δ hp2 hγ a ha β t (γ * (t + 1) + δ - t) (t + 1)
             (by omega) ((c % p ^ t : ℕ) : ℝ) (K' - t - 1)
           have hn : p ^ (γ * (t + 1) + δ - t) * (p ^ γ) ^ (K' - t - 1) = p ^ n := by
             rw [← pow_mul, ← pow_add]; congr 1
@@ -511,9 +513,9 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
   have h4 := sum_periodic_le (fun m ↦ f (m₀ + m)) (fun m ↦ hf0 _) P hP0
     (fun m ↦ show f (m₀ + (m + P)) = f (m₀ + m) by rw [← add_assoc]; exact hper m)
     (ρ ^ (K' - t - 1)) hperiod S
-  have hPle : (P : ℝ) ≤ Eg p * (q : ℝ) ^ K := by
+  have hPle : (P : ℝ) ≤ lteExp p * (q : ℝ) ^ K := by
     have hn : n ≤ γ * K := by rw [hKdef, Nat.mul_add]; omega
-    have : P ≤ Eg p * q ^ K := by
+    have : P ≤ lteExp p * q ^ K := by
       rw [hPdef, hLdef, hqdef, mul_pow, ← pow_mul, ← hEdef, hΦdef]
       calc Nat.totient (q' ^ K) * E * p ^ n ≤ q' ^ K * E * p ^ (γ * K) := by
             gcongr
@@ -533,7 +535,7 @@ theorem sum_Psi_orbit_le (p γ q' : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (h
 /-- Few `d < N` have a large `v_p(bᵈ − 1)`: by lifting the exponent they are multiples of
 `p^{J+1}`. -/
 theorem card_bad_le {p : ℕ} [hp : Fact p.Prime] {b : ℕ} (hb : 2 ≤ b) (J N : ℕ) :
-    ((Finset.Ico 1 N).filter fun d ↦ ¬ (b ^ d - 1).factorization p ≤ tg p b + J).card ≤
+    ((Finset.Ico 1 N).filter fun d ↦ ¬ (b ^ d - 1).factorization p ≤ lteVal p b + J).card ≤
       N / p ^ (J + 1) := by
   rw [← Nat.Ioc_filter_dvd_card_eq_div]
   refine Finset.card_le_card fun d hd ↦ ?_
@@ -551,25 +553,25 @@ theorem card_bad_le {p : ℕ} [hp : Fact p.Prime] {b : ℕ} (hb : 2 ≤ b) (J N 
     have : p ∣ 1 := by
       have := Nat.dvd_sub h1 h; rwa [Nat.sub_sub_self h2] at this
     exact hp.out.one_lt.ne' (Nat.dvd_one.1 this)
-  have hne : (b ^ Eg p) ^ d - 1 ≠ 0 := by
-    have := Nat.le_self_pow (by omega : d ≠ 0) (b ^ Eg p)
-    have := two_le_pow_Eg hp.out hb (p := p); omega
-  have h1 : p ^ (tg p b + J + 1) ∣ (b ^ Eg p) ^ d - 1 := by
+  have hne : (b ^ lteExp p) ^ d - 1 ≠ 0 := by
+    have := Nat.le_self_pow (by omega : d ≠ 0) (b ^ lteExp p)
+    have := two_le_pow_lteExp hp.out hb (p := p); omega
+  have h1 : p ^ (lteVal p b + J + 1) ∣ (b ^ lteExp p) ^ d - 1 := by
     refine (pow_dvd_pow p (by omega)).trans ((Nat.ordProj_dvd (b ^ d - 1) p).trans ?_)
     rw [← pow_mul, mul_comm]
     exact Nat.pow_sub_one_dvd_pow_sub_one b (dvd_mul_right d _)
-  rw [multiplicity_dvd_iff_le hne, lte_Eg hpb hb (by omega)] at h1
+  rw [multiplicity_dvd_iff_le hne, lte_lteExp hpb hb (by omega)] at h1
   exact (multiplicity_dvd_iff_le (by omega)).2 (by omega)
 
 /-- **Second moment bound** for `X_q`, `q = p^γ q'`, in a base `b` with `bˢ = qʳ B`, `p ∤ B`. -/
 theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ) (hq' : 1 ≤ q')
     (hpq : ¬ p ∣ q') {b B : ℕ} (hb : 2 ≤ b) (hs : 1 ≤ s)
     (hbs : b ^ s = (p ^ γ * q') ^ r * B) (hB : ¬ p ∣ B) (hB2 : 2 ≤ B) (h : ℤ) (hh : h ≠ 0)
-    (J K : ℕ) (hK : h.natAbs.factorization p + s * b.factorization p + (tg p b + J) +
-      (tg p B + multiplicity p (Nat.totient q')) + 1 + J ≤ K) (N : ℕ) :
-    ∫ ω, ‖∑ n ∈ Finset.range N, ee (h * (b : ℝ) ^ n * X (p ^ γ * q') ω)‖ ^ 2 ∂coinMeasure ≤
+    (J K : ℕ) (hK : h.natAbs.factorization p + s * b.factorization p + (lteVal p b + J) +
+      (lteVal p B + multiplicity p (Nat.totient q')) + 1 + J ≤ K) (N : ℕ) :
+    ∫ ω, ‖∑ n ∈ Finset.range N, ee (h * (b : ℝ) ^ n * coinPoint (p ^ γ * q') ω)‖ ^ 2 ∂coinMeasure ≤
       N + 2 * (((N / p ^ (J + 1) : ℕ) : ℝ) * N + N * (s * (K * q' +
-        (((N / s : ℕ) : ℝ) + 1 + Eg p * ((p ^ γ * q' : ℕ) : ℝ) ^ K) * Real.sqrt 2⁻¹ ^ J))) := by
+        (((N / s : ℕ) : ℝ) + 1 + lteExp p * ((p ^ γ * q' : ℕ) : ℝ) ^ K) * Real.sqrt 2⁻¹ ^ J))) := by
   obtain ⟨q, hqdef⟩ : ∃ q, q = p ^ γ * q' := ⟨_, rfl⟩
   rw [← hqdef]
   have hp2 := hp.out.two_le
@@ -581,7 +583,7 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
   have hρ0 : 0 ≤ ρ := Real.sqrt_nonneg _
   have hρ1 : ρ ≤ 1 := by
     rw [show (1 : ℝ) = Real.sqrt 1 by simp]; exact Real.sqrt_le_sqrt (by norm_num)
-  set T := tg p B + multiplicity p (Nat.totient q')
+  set T := lteVal p B + multiplicity p (Nat.totient q')
   set Y : ℕ → ℕ → ℕ := fun d ε ↦ h.natAbs * b ^ ε * (b ^ d - 1) with hYdef
   set v : ℕ → ℕ → ℕ := fun d ε ↦ (Y d ε).factorization p with hvdef
   set Y' : ℕ → ℕ → ℕ := fun d ε ↦ Y d ε / p ^ v d ε with hY'def
@@ -592,7 +594,7 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
   have hY0 : ∀ d ε, 1 ≤ d → Y d ε ≠ 0 := fun d ε hd ↦
     mul_ne_zero (mul_ne_zero (Int.natAbs_ne_zero.2 hh) (pow_ne_zero _ (by omega))) (hbd0 d hd)
   set G : ℕ → ℕ → ℝ := fun d l ↦
-    Psi q K ((p : ℝ) ^ v d (l % s) * ((Y' d (l % s) * B ^ (l / s) : ℕ) : ℝ)) with hGdef
+    rieszPsi q K ((p : ℝ) ^ v d (l % s) * ((Y' d (l % s) * B ^ (l / s) : ℕ) : ℝ)) with hGdef
   have hfreq : ∀ l d, 1 ≤ d → |(h : ℝ) * ((b : ℝ) ^ (l + d) - (b : ℝ) ^ l)| =
       (q : ℝ) ^ (r * (l / s)) *
         ((p : ℝ) ^ v d (l % s) * ((Y' d (l % s) * B ^ (l / s) : ℕ) : ℝ)) := by
@@ -614,21 +616,21 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
     rw [mul_pow, ← pow_mul]
     linear_combination (-(q : ℝ) ^ (r * (l / s)) * (B : ℝ) ^ (l / s)) * hpY
   have hΦ : ∀ l d, 1 ≤ d → ∀ ξ : ℝ, |ξ| = |(h : ℝ) * ((b : ℝ) ^ (l + d) - (b : ℝ) ^ l)| →
-      ‖∫ ω, ee (ξ * X q ω) ∂coinMeasure‖ ≤ G d l := fun l d hd ξ hξ ↦
-    charFun_le_Psi q hq ξ _ K _ (hξ.trans (hfreq l d hd))
+      ‖∫ ω, ee (ξ * coinPoint q ω) ∂coinMeasure‖ ≤ G d l := fun l d hd ξ hξ ↦
+    charFun_le_rieszPsi q hq ξ _ K _ (hξ.trans (hfreq l d hd))
   have hpair := pair_sum_le
-    (fun n m' ↦ ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m')) * X q ω) ∂coinMeasure‖) G
-    (fun d l ↦ Psi_nonneg _ _ _)
+    (fun n m' ↦ ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m')) * coinPoint q ω) ∂coinMeasure‖) G
+    (fun d l ↦ rieszPsi_nonneg _ _ _)
     (fun n ↦ by simpa using charFun_le q hq 0 0)
     (fun n m' hmn ↦ hΦ m' (n - m') (by omega) _ (by rw [show m' + (n - m') = n by omega]))
     (fun n m' hmn ↦ hΦ n (m' - n) (by omega) _ (by
       rw [show n + (m' - n) = m' by omega, ← abs_neg]; congr 1; ring)) N
   -- the bound for one `d`
-  set A : ℝ := s * (K * q' + (((N / s : ℕ) : ℝ) + 1 + Eg p * (q : ℝ) ^ K) * ρ ^ J) with hAdef
+  set A : ℝ := s * (K * q' + (((N / s : ℕ) : ℝ) + 1 + lteExp p * (q : ℝ) ^ K) * ρ ^ J) with hAdef
   have hA : 0 ≤ A := by positivity
   have hall : ∀ d, ∑ l ∈ Finset.range N, G d l ≤ N := fun d ↦
-    (Finset.sum_le_sum fun l _ ↦ Psi_le_one _ _ _).trans (by simp)
-  have hgood : ∀ d, 1 ≤ d → (b ^ d - 1).factorization p ≤ tg p b + J →
+    (Finset.sum_le_sum fun l _ ↦ rieszPsi_le_one _ _ _).trans (by simp)
+  have hgood : ∀ d, 1 ≤ d → (b ^ d - 1).factorization p ≤ lteVal p b + J →
       ∑ l ∈ Finset.range N, G d l ≤ A := by
     intro d hd hgd
     set S := N / s + 1
@@ -637,22 +639,23 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
       simp only [S]; rw [Nat.mul_add, mul_one]; omega
     calc ∑ l ∈ Finset.range N, G d l ≤ ∑ l ∈ Finset.range (s * S), G d l :=
           Finset.sum_le_sum_of_subset_of_nonneg (Finset.range_subset_range.2 hNS)
-            (fun _ _ _ ↦ Psi_nonneg _ _ _)
+            (fun _ _ _ ↦ rieszPsi_nonneg _ _ _)
       _ = ∑ ε ∈ Finset.range s, ∑ m ∈ Finset.range S, G d (s * m + ε) := by
           rw [sum_range_mul_eq, Finset.sum_comm]
-      _ ≤ ∑ ε ∈ Finset.range s, (K * q' + (((N / s : ℕ) : ℝ) + 1 + Eg p * (q : ℝ) ^ K) * ρ ^ J) :=
+      _ ≤ ∑ ε ∈ Finset.range s,
+            (K * q' + (((N / s : ℕ) : ℝ) + 1 + lteExp p * (q : ℝ) ^ K) * ρ ^ J) :=
           Finset.sum_le_sum fun ε hε ↦ ?_
       _ = A := by rw [hAdef, Finset.sum_const, Finset.card_range, nsmul_eq_mul]
     have hεs : ε < s := Finset.mem_range.1 hε
     have hG : ∀ m, G d (s * m + ε) =
-        Psi q K ((p : ℝ) ^ v d ε * ((Y' d ε * B ^ m : ℕ) : ℝ)) := by
+        rieszPsi q K ((p : ℝ) ^ v d ε * ((Y' d ε * B ^ m : ℕ) : ℝ)) := by
       intro m
       have h1 : (s * m + ε) % s = ε := by
         rw [Nat.add_mod, Nat.mul_mod_right, zero_add, Nat.mod_mod, Nat.mod_eq_of_lt hεs]
       have h2 : (s * m + ε) / s = m := by
         rw [Nat.mul_add_div (by omega), Nat.div_eq_of_lt hεs, add_zero]
       simp only [hGdef, h1, h2]
-    have hvle : v d ε ≤ h.natAbs.factorization p + s * b.factorization p + (tg p b + J) := by
+    have hvle : v d ε ≤ h.natAbs.factorization p + s * b.factorization p + (lteVal p b + J) := by
       simp only [hvdef, hYdef]
       rw [Nat.factorization_mul (mul_ne_zero (Int.natAbs_ne_zero.2 hh) (pow_ne_zero _ (by omega)))
         (hbd0 d hd), Nat.factorization_mul (Int.natAbs_ne_zero.2 hh) (pow_ne_zero _ (by omega)),
@@ -665,7 +668,7 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
     have he : v d ε + (γ - 1) * v d ε = γ * v d ε := by
       obtain ⟨g, rfl⟩ : ∃ g, γ = g + 1 := ⟨γ - 1, by omega⟩
       simp only [Nat.add_sub_cancel]; ring
-    have := sum_Psi_orbit_le p γ q' hγ hq' hpq hB hB2 (Y' d ε) hY' (v d ε) ((γ - 1) * v d ε)
+    have := sum_rieszPsi_orbit_le p γ q' hγ hq' hpq hB hB2 (Y' d ε) hY' (v d ε) ((γ - 1) * v d ε)
       (v d ε) (K - v d ε) he (by omega) S
     have e2 : v d ε + (K - v d ε) = K := by omega
     have e1 : ((v d ε : ℕ) : ℝ) + ((K - v d ε : ℕ) : ℝ) = K := by exact_mod_cast e2
@@ -681,23 +684,23 @@ theorem secondMoment_le (p γ q' r s : ℕ) [hp : Fact p.Prime] (hγ : 1 ≤ γ)
       ((N / p ^ (J + 1) : ℕ) : ℝ) * N + N * A := by
     calc ∑ d ∈ Finset.Ico 1 N, ∑ l ∈ Finset.range N, G d l
         ≤ ∑ d ∈ Finset.Ico 1 N,
-            ((if ¬ (b ^ d - 1).factorization p ≤ tg p b + J then (N : ℝ) else 0) + A) := by
+            ((if ¬ (b ^ d - 1).factorization p ≤ lteVal p b + J then (N : ℝ) else 0) + A) := by
           refine Finset.sum_le_sum fun d hd ↦ ?_
           simp only [Finset.mem_Ico] at hd
-          by_cases hbad : (b ^ d - 1).factorization p ≤ tg p b + J
+          by_cases hbad : (b ^ d - 1).factorization p ≤ lteVal p b + J
           · simp only [hbad, not_true_eq_false, ite_false, zero_add]; exact hgood d hd.1 hbad
           · simp only [hbad, not_false_eq_true, ite_true]; linarith [hall d]
-      _ = (((Finset.Ico 1 N).filter fun d ↦ ¬ (b ^ d - 1).factorization p ≤ tg p b + J).card :
+      _ = (((Finset.Ico 1 N).filter fun d ↦ ¬ (b ^ d - 1).factorization p ≤ lteVal p b + J).card :
             ℝ) * N + (N - 1 : ℕ) * A := by
           rw [Finset.sum_add_distrib, ← Finset.sum_filter, Finset.sum_const, Finset.sum_const,
             nsmul_eq_mul, nsmul_eq_mul, Nat.card_Ico]
       _ ≤ _ := by
           have h1 : ((((Finset.Ico 1 N).filter fun d ↦
-              ¬ (b ^ d - 1).factorization p ≤ tg p b + J).card : ℕ) : ℝ) ≤
+              ¬ (b ^ d - 1).factorization p ≤ lteVal p b + J).card : ℕ) : ℝ) ≤
               ((N / p ^ (J + 1) : ℕ) : ℝ) := by exact_mod_cast card_bad_le hb J N
           have h2 : ((N - 1 : ℕ) : ℝ) ≤ N := by exact_mod_cast Nat.sub_le N 1
           gcongr
-  refine (secondMoment_expand (X q) (measurable_X q) b h N).trans (hpair.trans ?_)
+  refine (secondMoment_expand (coinPoint q) (measurable_coinPoint q) b h N).trans (hpair.trans ?_)
   linarith
 
 /-! ### Almost sure normality -/
@@ -715,7 +718,7 @@ theorem le_mul_rpow_neg_half {N : ℕ} (hN : 1 ≤ N) {x : ℝ} (hx : x ^ 2 ≤ 
 normal in base `b`. -/
 theorem ae_isNormal {q b : ℕ} (hq : 2 ≤ q) (hb : 2 ≤ b)
     (hind : ∀ m n : ℕ, 0 < m → 0 < n → b ^ m ≠ q ^ n) :
-    ∀ᵐ ω ∂coinMeasure, IsNormal b (X q ω) := by
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (coinPoint q ω) := by
   obtain ⟨p, r, s, hp, hpq, hs, hdvd, hpB, hB2⟩ := exists_reduction hb hq hind
   have : Fact p.Prime := ⟨hp⟩
   obtain ⟨B, hBdef⟩ : ∃ B, B = b ^ s / q ^ r := ⟨_, rfl⟩
@@ -742,12 +745,12 @@ theorem ae_isNormal {q b : ℕ} (hq : 2 ≤ q) (hb : 2 ≤ b)
     have : ρ ^ 2 = 2⁻¹ := Real.sq_sqrt (by norm_num); nlinarith
   set c := -Real.log ρ / ((2 * Q : ℕ) : ℝ)
   have hc : 0 < c := div_pos (neg_pos.2 (Real.log_neg hρ0 hρ1)) (by positivity)
-  refine ae_isNormal_of_secondMoment coinMeasure hb (X Q) (measurable_X Q) sched
+  refine ae_isNormal_of_secondMoment coinMeasure hb (coinPoint Q) (measurable_coinPoint Q) sched
     sched_strictMono sched_ratio ?_
   intro h hh
-  set C1 := h.natAbs.factorization p + s * b.factorization p + tg p b +
-    (tg p B + multiplicity p (Nat.totient q')) + 1
-  set E := Eg p
+  set C1 := h.natAbs.factorization p + s * b.factorization p + lteVal p b +
+    (lteVal p B + multiplicity p (Nat.totient q')) + 1
+  set E := lteExp p
   set C : ℝ := 1 + 4 * ρ⁻¹ + 2 * s * q' * (C1 + 1) + 2 * s + 2 * s * E * (Q : ℝ) ^ C1
   have hC : 0 < C := by positivity
   refine (summable_sched_bound C c hC hc).of_nonneg_of_le
@@ -864,10 +867,10 @@ theorem exists_isNormalIn_forall_not_isNormalIn_pow {b c : ℕ} (hb : 2 ≤ b) (
   have hq : 4 ≤ c ^ 2 := by nlinarith
   obtain ⟨ω, hω⟩ := (ae_isNormal (q := c ^ 2) (by omega) hb fun m n hm hn h ↦
     hind m (2 * n) hm (by omega) (by rw [h, ← pow_mul])).exists
-  refine ⟨X (c ^ 2) ω, (isNormalIn_iff_isNormal b _).2 hω, fun j hj hn ↦ ?_⟩
+  refine ⟨coinPoint (c ^ 2) ω, (isNormalIn_iff_isNormal b _).2 hω, fun j hj hn ↦ ?_⟩
   have hcj : 2 ≤ c ^ j := le_trans hc (Nat.le_self_pow (by omega) c)
   rw [isNormalIn_iff_of_pow_eq_pow (c := c ^ 2) hcj (by omega) (m := 2) (n := j) (by norm_num)
     (by omega) (by rw [← pow_mul, ← pow_mul, mul_comm])] at hn
-  exact not_isNormalIn_X (c ^ 2) (by omega) ω hn
+  exact not_isNormalIn_coinPoint (c ^ 2) (by omega) ω hn
 
 end Real.SchmidtGeneral

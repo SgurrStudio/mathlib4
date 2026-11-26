@@ -50,54 +50,54 @@ namespace Cassels
 open DecayAeNormal
 
 /-- All ternary positions free: the Cantor measure. -/
-abbrev T : ℕ → Bool := fun _ ↦ true
+abbrev allFree : ℕ → Bool := fun _ ↦ true
 
-theorem posSet_T (v k : ℕ) : posSet T v k = Finset.Ico (v + 1) (v + k) := by
+theorem posSet_allFree (v k : ℕ) : posSet allFree v k = Finset.Ico (v + 1) (v + k) := by
   ext p; simp [posSet]; omega
 
 /-- With every position free, the majorant `Hf` does not depend on the offset. -/
-theorem Hf_T (v k : ℕ) (u : ℝ) : Hf T v k u = Hf T 0 k u := by
+theorem Hf_allFree (v k : ℕ) (u : ℝ) : Hf allFree v k u = Hf allFree 0 k u := by
   unfold Hf
-  rw [posSet_T, posSet_T, show v + 1 = 1 + v by ring, show v + k = k + v by ring,
+  rw [posSet_allFree, posSet_allFree, show v + 1 = 1 + v by ring, show v + k = k + v by ring,
     ← Finset.prod_Ico_add']
   refine Finset.prod_congr (by simp) fun p _ ↦ ?_
   congr 2
   rw [pow_zero, one_mul, show p + v + 1 = (p + 1) + v by ring, pow_add]
   field_simp
 
-theorem card_posSet_T (j : ℕ) : (posSet T 0 (j + 1)).card = j := by
-  simp [posSet_T]
+theorem card_posSet_allFree (j : ℕ) : (posSet allFree 0 (j + 1)).card = j := by
+  simp [posSet_allFree]
 
 /-- The Fourier coefficient of the Cantor measure at `3ᵛ u` is bounded by the majorant of `u`. -/
 theorem charFun_le_Hf (ξ : ℝ) (v j u : ℕ) (hξ : |ξ| = 3 ^ v * (u : ℝ)) :
-    ‖∫ ω, ee (ξ * pt T ω) ∂coinMeasure‖ ≤ Hf T 0 (j + 1) u := by
-  have h1 := charFun_real (v + (j + 1)) T ξ
-  have h2 : Bf T (v + (j + 1)) ξ ≤ Hf T v (j + 1) u := by
-    rw [← Bf_abs, hξ]; exact Bf_le_Hf T v (j + 1) u
-  exact (h1.trans h2).trans (le_of_eq (Hf_T v (j + 1) u))
+    ‖∫ ω, ee (ξ * pt allFree ω) ∂coinMeasure‖ ≤ Hf allFree 0 (j + 1) u := by
+  have h1 := charFun_real (v + (j + 1)) allFree ξ
+  have h2 : Bf allFree (v + (j + 1)) ξ ≤ Hf allFree v (j + 1) u := by
+    rw [← Bf_abs, hξ]; exact Bf_le_Hf allFree v (j + 1) u
+  exact (h1.trans h2).trans (le_of_eq (Hf_allFree v (j + 1) u))
 
-theorem charFun_le_one (ξ : ℝ) : ‖∫ ω, ee (ξ * pt T ω) ∂coinMeasure‖ ≤ 1 := by
-  simpa using charFun_real 0 T ξ
+theorem charFun_le_one (ξ : ℝ) : ‖∫ ω, ee (ξ * pt allFree ω) ∂coinMeasure‖ ≤ 1 := by
+  simpa using charFun_real 0 allFree ξ
 
 /-- The second moment expanded into Fourier coefficients. -/
 theorem secondMoment_expand (b : ℕ) (h : ℤ) (N : ℕ) :
-    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt T ω)‖ ^ 2 ∂coinMeasure ≤
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt allFree ω)‖ ^ 2 ∂coinMeasure ≤
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-        ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt T ω) ∂coinMeasure‖ := by
-  have hG := measurable_pt T
-  have hint : ∀ ξ : ℝ, Integrable (fun ω ↦ ee (ξ * pt T ω)) coinMeasure := fun ξ ↦
+        ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt allFree ω) ∂coinMeasure‖ := by
+  have hG := measurable_pt allFree
+  have hint : ∀ ξ : ℝ, Integrable (fun ω ↦ ee (ξ * pt allFree ω)) coinMeasure := fun ξ ↦
     Integrable.of_bound ((measurable_ee.comp (hG.const_mul ξ)).aestronglyMeasurable) 1
       (Filter.Eventually.of_forall fun ω ↦ (norm_ee _).le)
-  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt T ω)‖ ^ 2 : ℝ) : ℂ) =
+  have hexp : ∀ ω, ((‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt allFree ω)‖ ^ 2 : ℝ) : ℂ) =
       ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt T ω) := by
+        ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt allFree ω) := by
     intro ω
-    rw [sq_norm_sum_ee (fun k ↦ h * (b : ℝ) ^ k * pt T ω)]
+    rw [sq_norm_sum_ee (fun k ↦ h * (b : ℝ) ^ k * pt allFree ω)]
     refine Finset.sum_congr rfl fun n _ ↦ Finset.sum_congr rfl fun m _ ↦ ?_
     congr 1; ring
-  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt T ω)‖ ^ 2 ∂coinMeasure : ℝ) :
-      ℂ) = ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
-        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt T ω) ∂coinMeasure := by
+  have hI : ((∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt allFree ω)‖ ^ 2
+      ∂coinMeasure : ℝ) : ℂ) = ∑ n ∈ Finset.range N, ∑ m ∈ Finset.range N,
+        ∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m)) * pt allFree ω) ∂coinMeasure := by
     rw [← integral_complex_ofReal]
     simp_rw [hexp]
     rw [integral_finsetSum _ fun n _ ↦ integrable_finsetSum _ fun m _ ↦ hint _]
@@ -112,7 +112,7 @@ theorem secondMoment_expand (b : ℕ) (h : ℤ) (N : ℕ) :
 /-- **Second moment for `b = 3ᵃ m`**, `a ≥ 1`, `m ≥ 2`, `3 ∤ m`. -/
 theorem secondMoment_le_three_dvd {b a m : ℕ} (hbam : b = 3 ^ a * m) (ha : 1 ≤ a) (hm : 2 ≤ m)
     (hm3 : ¬ 3 ∣ m) (h : ℤ) (hh : h ≠ 0) (N : ℕ) (hN : 1 ≤ N) :
-    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt T ω)‖ ^ 2 ∂coinMeasure ≤
+    ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt allFree ω)‖ ^ 2 ∂coinMeasure ≤
       N + 6 * (N : ℝ) ^ 2 * (3 / 2 : ℝ) ^ tb m * (2 / 3 : ℝ) ^ (Nat.log 3 N / 2) := by
   obtain ⟨e, h', hh3, hhe⟩ :=
     Nat.exists_eq_pow_mul_and_not_dvd (Int.natAbs_ne_zero.2 hh) 3 (by norm_num)
@@ -121,7 +121,7 @@ theorem secondMoment_le_three_dvd {b a m : ℕ} (hbam : b = 3 ^ a * m) (ha : 1 �
     (Nat.pow_le_pow_right (by norm_num) (Nat.div_le_self _ _)).trans
       (Nat.pow_log_le_self 3 (by omega))
   have hb1 : 1 ≤ b := by subst hbam; exact Nat.one_le_iff_ne_zero.2 (by positivity)
-  set G : ℕ → ℕ → ℝ := fun d l ↦ Hf T 0 (j + 1) ((h' * (b ^ d - 1) * m ^ l : ℕ) : ℝ)
+  set G : ℕ → ℕ → ℝ := fun d l ↦ Hf allFree 0 (j + 1) ((h' * (b ^ d - 1) * m ^ l : ℕ) : ℝ)
   have hfreq : ∀ l d : ℕ, |(h : ℝ) * ((b : ℝ) ^ (l + d) - (b : ℝ) ^ l)| =
       3 ^ (e + a * l) * ((h' * (b ^ d - 1) * m ^ l : ℕ) : ℝ) := by
     intro l d
@@ -133,10 +133,10 @@ theorem secondMoment_le_three_dvd {b a m : ℕ} (hbam : b = 3 ^ a * m) (ha : 1 �
     rw [Nat.cast_mul, Nat.cast_mul, Nat.cast_sub (Nat.one_le_pow d b (by omega)), hbam]
     push_cast; ring
   have hΦ : ∀ l d : ℕ, ∀ ξ : ℝ, |ξ| = |(h : ℝ) * ((b : ℝ) ^ (l + d) - (b : ℝ) ^ l)| →
-      ‖∫ ω, ee (ξ * pt T ω) ∂coinMeasure‖ ≤ G d l := fun l d ξ hξ ↦
+      ‖∫ ω, ee (ξ * pt allFree ω) ∂coinMeasure‖ ≤ G d l := fun l d ξ hξ ↦
     charFun_le_Hf ξ (e + a * l) j _ (hξ.trans (hfreq l d))
   have hpair := pair_sum_le
-    (fun n m' ↦ ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m')) * pt T ω) ∂coinMeasure‖) G
+    (fun n m' ↦ ‖∫ ω, ee ((h * ((b : ℝ) ^ n - (b : ℝ) ^ m')) * pt allFree ω) ∂coinMeasure‖) G
     (fun d l ↦ Hf_nonneg _ _ _ _) (fun n ↦ charFun_le_one _)
     (fun n m' hmn ↦ hΦ m' (n - m') _ (by rw [show m' + (n - m') = n by omega]))
     (fun n m' hmn ↦ hΦ n (m' - n) _ (by
@@ -155,8 +155,8 @@ theorem secondMoment_le_three_dvd {b a m : ℕ} (hbam : b = 3 ^ a * m) (ha : 1 �
         have := Nat.dvd_sub h3b hc
         rw [Nat.sub_sub_self (Nat.one_le_pow d b (by omega))] at this
         omega
-    have := sum_Hf_le_b T hm hm3 0 j (h' * (b ^ d - 1)) hc N
-    rw [card_posSet_T] at this
+    have := sum_Hf_le_b allFree hm hm3 0 j (h' * (b ^ d - 1)) hc N
+    rw [card_posSet_allFree] at this
     have h3j' : (2 * 3 ^ j : ℝ) ≤ 2 * N := by exact_mod_cast Nat.mul_le_mul_left 2 h3j
     calc _ ≤ _ := this
       _ ≤ (N + 2 * N) * Tc * P := by gcongr
@@ -172,11 +172,11 @@ theorem secondMoment_le_three_dvd {b a m : ℕ} (hbam : b = 3 ^ a * m) (ha : 1 �
 /-- A bound of the shape used along Morris's schedule gives almost sure normality. -/
 theorem ae_isNormal_of_bound {b : ℕ} (hb : 2 ≤ b)
     (H : ∀ h : ℤ, h ≠ 0 → ∃ C : ℝ, 0 < C ∧ ∀ N : ℕ, 1 ≤ N →
-      ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt T ω)‖ ^ 2 ∂coinMeasure ≤
+      ∫ ω, ‖∑ k ∈ Finset.range N, ee (h * (b : ℝ) ^ k * pt allFree ω)‖ ^ 2 ∂coinMeasure ≤
         C * (N : ℝ) ^ 2 * (Real.exp (-(Real.log (3 / 2) / 2) *
           freeCount isFree (Nat.log 3 N / 2)) + (N : ℝ) ^ (-(1 / 2 : ℝ)))) :
-    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt T ω) := by
-  refine ae_isNormal_of_secondMoment coinMeasure hb _ (measurable_pt T) sched
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt allFree ω) := by
+  refine ae_isNormal_of_secondMoment coinMeasure hb _ (measurable_pt allFree) sched
     sched_strictMono sched_ratio ?_
   intro h hh
   obtain ⟨C, hC, hB⟩ := H h hh
@@ -199,7 +199,7 @@ theorem exp_freeCount_le {F M : ℕ} (hFM : F ≤ M) :
 theorem freeCount_le_self (free : ℕ → Bool) (M : ℕ) : freeCount free M ≤ M := by
   unfold freeCount; exact (Finset.card_filter_le _ _).trans (by simp)
 
-theorem freeCount_T (M : ℕ) : freeCount T M = M := by
+theorem freeCount_allFree (M : ℕ) : freeCount allFree M = M := by
   simp [freeCount]
 
 theorem le_rpow_neg_half {N : ℕ} (hN : 1 ≤ N) :
@@ -214,18 +214,18 @@ theorem le_rpow_neg_half {N : ℕ} (hN : 1 ≤ N) :
   nlinarith
 
 theorem ae_isNormal_of_not_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : ¬ 3 ∣ b) :
-    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt T ω) := by
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt allFree ω) := by
   refine ae_isNormal_of_bound hb fun h hh ↦ ⟨16 * (b : ℝ) ^ 6 * |(h : ℝ)|, ?_, fun N hN ↦ ?_⟩
   · have : (h : ℝ) ≠ 0 := by exact_mod_cast hh
     positivity
-  have h1 : Real.exp (-(Real.log (3 / 2) / 2) * (freeCount T (Nat.log 3 N / 2) : ℝ)) ≤
+  have h1 : Real.exp (-(Real.log (3 / 2) / 2) * (freeCount allFree (Nat.log 3 N / 2) : ℝ)) ≤
       Real.exp (-(Real.log (3 / 2) / 2) * (freeCount isFree (Nat.log 3 N / 2) : ℝ)) := by
-    rw [freeCount_T]; exact exp_freeCount_le (freeCount_le_self _ _)
-  exact (secondMoment_le_b T hb h3 h hh N hN).trans
+    rw [freeCount_allFree]; exact exp_freeCount_le (freeCount_le_self _ _)
+  exact (secondMoment_le_b allFree hb h3 h hh N hN).trans
     (mul_le_mul_of_nonneg_left (add_le_add_left h1 _) (by positivity))
 
 theorem ae_isNormal_of_three_dvd {b : ℕ} (hb : 2 ≤ b) (h3 : 3 ∣ b) (hpow : ∀ k : ℕ, b ≠ 3 ^ k) :
-    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt T ω) := by
+    ∀ᵐ ω ∂coinMeasure, IsNormal b (pt allFree ω) := by
   obtain ⟨a, m, hm3, hbam⟩ := Nat.exists_eq_pow_mul_and_not_dvd (by omega : b ≠ 0) 3 (by norm_num)
   have hm0 : m ≠ 0 := by rintro rfl; simp at hbam; omega
   have hm1 : m ≠ 1 := by rintro rfl; exact hpow a (by simpa using hbam)

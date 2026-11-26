@@ -32,6 +32,8 @@ dependent (`Real.isNormalIn_iff_of_pow_eq_pow`). **Schmidt** (1960) proved the c
   implies normality in base `c` exactly when `b` and `c` are multiplicatively dependent.
 * `Real.exists_isNormalIn_not_isNormalIn`: **Schmidt's theorem** for arbitrary bases
   (`Real.SchmidtGeneral`).
+* `Real.exists_isNormalIn_forall_not_isNormalIn_pow`: the strong form, normal in base `b` and in
+  no base `cʲ`.
 * `Real.forall_isNormalIn_imp_iff`: normality in base `b` implies normality in base `c` exactly
   when `b` and `c` are multiplicatively dependent.
 -/
@@ -92,6 +94,13 @@ theorem exists_isNormalIn_not_isNormalIn {b c : ℕ} (hb : 2 ≤ b) (hc : 2 ≤ 
     ∃ x : ℝ, IsNormalIn b x ∧ ¬ IsNormalIn c x := by
   obtain ⟨x, hx, hnot⟩ := SchmidtGeneral.exists_isNormalIn_forall_not_isNormalIn_pow hb hc h
   exact ⟨x, hx, by simpa using hnot 1 le_rfl⟩
+
+/-- **Schmidt's theorem**, strong form. If `b, c ≥ 2` and `bᵐ ≠ cⁿ` for all `m, n ≥ 1`, some real
+number is normal in base `b` and in no base `cʲ`, `j ≥ 1`. -/
+theorem exists_isNormalIn_forall_not_isNormalIn_pow {b c : ℕ} (hb : 2 ≤ b) (hc : 2 ≤ c)
+    (h : ∀ m n : ℕ, 0 < m → 0 < n → b ^ m ≠ c ^ n) :
+    ∃ x : ℝ, IsNormalIn b x ∧ ∀ j, 1 ≤ j → ¬ IsNormalIn (c ^ j) x :=
+  SchmidtGeneral.exists_isNormalIn_forall_not_isNormalIn_pow hb hc h
 
 /-- Normality in base `b` implies normality in base `c` if and only if `b` and `c` are
 multiplicatively dependent. -/
