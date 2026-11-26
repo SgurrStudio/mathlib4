@@ -6741,6 +6741,7 @@ public import Mathlib.NumberTheory.Normal.Preservation
 public import Mathlib.NumberTheory.Normal.QuarterCantorDecay
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Ridout
+public import Mathlib.NumberTheory.Normal.Rigidity
 public import Mathlib.NumberTheory.Normal.Schmidt
 public import Mathlib.NumberTheory.Normal.SchmidtGeneral
 public import Mathlib.NumberTheory.Normal.SchmidtPrimePower

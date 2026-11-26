@@ -19,13 +19,12 @@ preserve normality in a fixed base `b ≥ 2` or absolute normality:
 
 * Multiplicative rigidity for fixed base `b ≥ 2` and for absolute normality
   (Dayan–Ganguly–Weiss; Hochman–Shmerkin; arXiv:2609.24665).
-* `C²` affine rigidity: every `C²` map preserving base-`b` normality or absolute normality is
-  affine-linear (arXiv:2609.24665).
 * Sharpness of `C²` rigidity: existence of a non-affine `C^{1,1}` diffeomorphism of `ℝ`
   preserving absolute normality (arXiv:2609.24665).
 
 Non-preservation under squaring, inversion, the exponential and Möbius maps, in every base and
-for absolute normality, is proved in `Mathlib.NumberTheory.Normal.NonPreservation`.
+for absolute normality, is proved in `Mathlib.NumberTheory.Normal.NonPreservation`, and `C²`
+affine rigidity in `Mathlib.NumberTheory.Normal.Rigidity`.
 -/
 
 namespace Real
@@ -45,23 +44,6 @@ normality under multiplication if and only if `α` is a nonzero rational number.
 proof_wanted preserves_isAbsolutelyNormal_mul_iff {α : ℝ} :
     (∀ x : ℝ, IsAbsolutelyNormal x → IsAbsolutelyNormal (α * x)) ↔
       ∃ q : ℚ, q ≠ 0 ∧ (q : ℝ) = α
-
-/-! ### Smooth (`C²`) affine rigidity -/
-
-/-- **`C²` affine rigidity in a fixed base** (arXiv:2609.24665): any `C²` function `f : ℝ → ℝ`
-that maps every base-`b` normal number (`b ≥ 2`) to a base-`b` normal number is affine-linear. -/
-proof_wanted exists_affine_of_contDiff_two_preserves_isNormalIn {b : ℕ} (hb : 2 ≤ b)
-    {f : ℝ → ℝ} (hf : ContDiff ℝ 2 f)
-    (hpres : ∀ x : ℝ, IsNormalIn b x → IsNormalIn b (f x)) :
-    ∃ a c : ℝ, ∀ x : ℝ, f x = a * x + c
-
-/-- **`C²` affine rigidity for absolute normality** (arXiv:2609.24665): any `C²` function
-`f : ℝ → ℝ` that maps every absolutely normal number to an absolutely normal number is
-affine-linear. -/
-proof_wanted exists_affine_of_contDiff_two_preserves_isAbsolutelyNormal {f : ℝ → ℝ}
-    (hf : ContDiff ℝ 2 f)
-    (hpres : ∀ x : ℝ, IsAbsolutelyNormal x → IsAbsolutelyNormal (f x)) :
-    ∃ a c : ℝ, ∀ x : ℝ, f x = a * x + c
 
 /-! ### Sharpness of `C²` rigidity -/
 
