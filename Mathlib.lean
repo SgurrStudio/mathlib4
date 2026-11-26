@@ -5153,6 +5153,7 @@ public import Mathlib.Imported.NormalNumbers.BaryBlockCount
 public import Mathlib.Imported.NormalNumbers.BlockRigidity
 public import Mathlib.Imported.NormalNumbers.Bridge
 public import Mathlib.Imported.NormalNumbers.CFConcat
+public import Mathlib.Imported.NormalNumbers.CantorCylinders
 public import Mathlib.Imported.NormalNumbers.CantorLiouville
 public import Mathlib.Imported.NormalNumbers.CantorLiouvilleAll
 public import Mathlib.Imported.NormalNumbers.CantorSelfSimilar

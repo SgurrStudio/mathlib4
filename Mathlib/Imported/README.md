@@ -83,6 +83,12 @@ this branch's Mathlib.
   `prod_le_one` become their `₀` versions, `measurable_pi_lambda` becomes `measurable_pi_iff.2`,
   `*_finset_sum` becomes `*_finsetSum`, a few `norm_num` and `convert` steps are re-closed, one
   `Computable.comp` gets explicit arguments, and missing imports are added.
+* Also imported, from the same commit: `NormalNumbers.CantorCylinders` (the depth-`m` cylinder
+  decomposition `pushFourier_cylinders` of the quarter-Cantor Fourier transform), made into a module
+  like the files above. It is the first step of
+  `Mathlib/NumberTheory/Normal/QuarterCantorDecay.lean`, which proves Kaufman-type polynomial
+  decay and so discharges the `√` case of the cited `ExplicitSquare.BakerBanajiQuarterCantor`
+  (`NormalNumbers.QuarterCantorDecay.polyDecay_sqrt`).
 
 ## Porting changes to `TauCeti/`
 
