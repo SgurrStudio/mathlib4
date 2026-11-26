@@ -6703,6 +6703,7 @@ public import Mathlib.NumberTheory.MulChar.Lemmas
 public import Mathlib.NumberTheory.Multiplicity
 public import Mathlib.NumberTheory.Niven
 public import Mathlib.NumberTheory.Normal.Algebraic
+public import Mathlib.NumberTheory.Normal.BaileyCrandall
 public import Mathlib.NumberTheory.Normal.BaireCategory
 public import Mathlib.NumberTheory.Normal.BasePow
 public import Mathlib.NumberTheory.Normal.Basic
@@ -6718,8 +6719,11 @@ public import Mathlib.NumberTheory.Normal.DavenportErdos
 public import Mathlib.NumberTheory.Normal.DifferenceTest
 public import Mathlib.NumberTheory.Normal.Discrepancy
 public import Mathlib.NumberTheory.Normal.ErdosTuran
+public import Mathlib.NumberTheory.Normal.Exp
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.MorseHedlund
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
+public import Mathlib.NumberTheory.Normal.Pi
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
 public import Mathlib.NumberTheory.Normal.Rational
 public import Mathlib.NumberTheory.Normal.Schmidt
