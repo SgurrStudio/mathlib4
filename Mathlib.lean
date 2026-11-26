@@ -6721,6 +6721,7 @@ public import Mathlib.NumberTheory.Normal.Discrepancy
 public import Mathlib.NumberTheory.Normal.ErdosTuran
 public import Mathlib.NumberTheory.Normal.Exp
 public import Mathlib.NumberTheory.Normal.FejerCount
+public import Mathlib.NumberTheory.Normal.MorseHedlund
 public import Mathlib.NumberTheory.Normal.NakaiShiokawa
 public import Mathlib.NumberTheory.Normal.Pi
 public import Mathlib.NumberTheory.Normal.PiatetskiShapiro
