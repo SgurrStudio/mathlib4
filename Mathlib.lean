@@ -6719,6 +6719,7 @@ public import Mathlib.NumberTheory.Normal.BitCount
 public import Mathlib.NumberTheory.Normal.BlockCipher
 public import Mathlib.NumberTheory.Normal.Borel
 public import Mathlib.NumberTheory.Normal.Bridge
+public import Mathlib.NumberTheory.Normal.C11Sharpness
 public import Mathlib.NumberTheory.Normal.Cassels
 public import Mathlib.NumberTheory.Normal.Champernowne
 public import Mathlib.NumberTheory.Normal.Complexity
